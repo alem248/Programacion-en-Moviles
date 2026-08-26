@@ -30,3 +30,7 @@ fun mostrarDetalle(producto: List<Producto>){
         i++
     }
 }
+
+fun buscar producto(productos List<Producto>, nombre: String): Producto? {
+    return productos.find{it.nombre.equals, ignoreCase = true }
+}
