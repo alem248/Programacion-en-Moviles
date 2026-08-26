@@ -76,7 +76,35 @@ val scanner = Scanner(System. `in`)
         println("0. Finalizar compra y generar recibo")
         print("Seleccione una opción: ")
 
+        opcion = scanner.nextInt()
 
+        if (opcion in 1..productosDisponibles.size) {
+            val prodSeleccionado = productosDisponibles[opcion - 1]
+
+            print("Ingrese la cantidad para ${prodSeleccionado.nombre}: ")
+            val cantidad = scanner.nextInt()
+
+            if (cantidad >0){
+                val existe = carrito.find { it.nombre == prodSeleccionado.nombre }
+                if (existe != null) {
+                    existe.cantidad += cantidad
+                } else {
+                    carrito.add(Producto(prodSeleccionado.nombre, prodSeleccionado.precio, cantidad))
+                }
+                println("-> Producto agregado al carrito.\n")
+            } else {
+                println("-> Cantidad no válida.\n")
+            }
+        } else if (opcion != 0) {
+            println("-> Opción no válida. Intente de nuevo.\n")
+        }
+
+    } while (opcion != 0
+
+        if (carrito.isEmpty()){
+            println("\nEl carrito está vacío. ¡Gracias por su visita, $nombreCliente!")
+            return
+            }
 
 
 
