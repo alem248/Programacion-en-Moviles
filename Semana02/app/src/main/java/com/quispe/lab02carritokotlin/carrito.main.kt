@@ -34,7 +34,7 @@ fun mostrarDetalle(producto: List<Producto>){
 }
 
 fun buscar producto(productos List<Producto>, nombre: String): Producto? {
-    return productos.find{it.nombre.equals, ignoreCase = true }
+    return productos.find{it.nombre.equals,ignoreCase = true }
 }
 
 fun calcularDescuento(total: Double):Doble {
@@ -107,5 +107,36 @@ val scanner = Scanner(System. `in`)
             }
 
 
+    println("\n=========================================")
+    println("             RECIBO DE COMPRA            ")
+    println("=========================================")
+    println("Cliente: $nombreCliente")
 
+    mostrarDetalleRecibo(carrito)
+
+    val subtotal = calcularSubtotal(carrito)
+    val igv = calcularIGV(subtotal)
+    val total = calcularTotal(subtotal, igv)
+
+    println(String.format("%-22s : %d", "Cantidad de productos", carrito.size))
+    println(String.format("%-22s : S/ %7.2f", "Subtotal", subtotal))
+    println(String.format("%-22s : S/ %7.2f", "IGV (18%)", igv))
+    println(String.format("%-22s : S/ %7.2f", "TOTAL A PAGAR", total))
+
+    val masCaro = carrito.maxByOrNull { it.precio }
+    if (masCaro != null) {
+        println("\nProducto mas caro: ${masCaro.nombre} " + String.format("(S/%.2f)", masCaro.precio))
+    }
+
+    val descuento = calcularDescuento(total)
+    val totalConDescuento = total - descuento
+
+    if (descuento > 0.0) {
+        val porcentaje = if (total > 5000) "10%" else "5%"
+        println("Descuento aplicado: $porcentaje por compra mayor a S/ 3000")
+        println(String.format("%-22s : S/ %7.2f", "TOTAL CON DESCUENTO", totalConDescuento))
+    }
+
+    println("\n¡Gracias por su compra, $nombreCliente!")
 }
+
