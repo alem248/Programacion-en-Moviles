@@ -32,10 +32,6 @@ fun mostrarDetalle(productos: List<Producto>) {
     }
 }
 
-fun buscarProducto(productos: List<Producto>, nombre: String): Producto? {
-    return productos.find { it.nombre.equals(nombre, ignoreCase = true) }
-}
-
 fun calcularDescuento(total: Double): Double {
     return when {
         total > 5000 -> total * 0.10
