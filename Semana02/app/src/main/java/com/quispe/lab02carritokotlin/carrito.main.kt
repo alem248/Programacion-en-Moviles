@@ -17,3 +17,8 @@ fun calcularSubtotal(productos: List<Producto>):Double {
 fun calcularIGV(subtotal: Double): Double {
     return subtotal * 0.18
 }
+
+fun calcularTotal(subtotal:Double, igv: Double): Double {
+    return subtotal + igv
+}
+
