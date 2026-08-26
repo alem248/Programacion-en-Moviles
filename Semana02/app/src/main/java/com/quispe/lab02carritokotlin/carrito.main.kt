@@ -1,5 +1,7 @@
 #!/usr/bin/env kotlin
 
+import java.util.Scanner
+
 data class Producto(
     val nombre: String,
     val precio: Double,
@@ -43,4 +45,39 @@ fun calcularDescuento(total: Double):Doble {
     }
 }
 
-fun
+fun main(){
+val scanner = Scanner(System. `in`)
+
+    println("=========================================")
+    println("   CARRITO DE COMPRAS - TIENDA TECSUP    ")
+    println("=========================================")
+
+    print("Ingrese su nombre")
+    val nombreCLiente = scanner.nextLine().ifBlank{"Cliente Tecsup"}
+    println()
+
+    val productosDisponibles = listOf(
+        Producto("Laptop HP", 2500.0, 1),
+        Producto("Mouse Logitech", 45.5, 1),
+        Producto("Audifonos Sony", 120.0, 1),
+        Producto("USB Kingston 64GB", 25.0, 1),
+        Producto("Teclado Mecanico", 180.0, 1)
+    )
+
+    val carrito = mutableListOf<Producto>()
+    var opcion: Int
+
+    do {
+        println("--- PRODUCTOS DISPONIBLES ---")
+        for (i in productosDisponibles.indices) {
+            val prod = productosDisponibles[i]
+            println("${i + 1}. ${prod.nombre} - S/ ${prod.precio}")
+        }
+        println("0. Finalizar compra y generar recibo")
+        print("Seleccione una opción: ")
+
+
+
+
+
+}
