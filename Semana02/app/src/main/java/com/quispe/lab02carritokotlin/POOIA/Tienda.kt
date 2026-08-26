@@ -23,6 +23,9 @@ class Tienda(private val nombreTienda: String = "TIENDA TECSUP") {
 
     private val carrito = Carrito()
 
+    // Opción del menú para quitar productos (siempre después del catálogo)
+    private val OPCION_QUITAR = catalogo.size + 1
+
     fun iniciar() {
         mostrarBienvenida()
 
@@ -53,6 +56,7 @@ class Tienda(private val nombreTienda: String = "TIENDA TECSUP") {
             // Cada producto "se describe a sí mismo" según su clase real.
             println("${i + 1}. ${catalogo[i].descripcion()}")
         }
+        println("$OPCION_QUITAR. Quitar un producto del carrito")
         println("0. Finalizar compra y generar recibo")
     }
 
@@ -67,8 +71,26 @@ class Tienda(private val nombreTienda: String = "TIENDA TECSUP") {
             } else {
                 println("-> Cantidad no válida.\n")
             }
+        } else if (opcion == OPCION_QUITAR) {
+            quitarProductoDelCarrito()
         } else if (opcion != 0) {
             println("-> Opción no válida. Intente de nuevo.\n")
+        }
+    }
+
+    /**
+     * ENCAPSULAMIENTO en acción: la Tienda no manipula la lista interna
+     * del carrito; solo le pide al objeto que quite el producto.
+     */
+    private fun quitarProductoDelCarrito() {
+        scanner.nextLine() // consumir el salto de línea pendiente
+        print("Ingrese el nombre del producto a quitar: ")
+        val nombre = scanner.nextLine().trim()
+
+        if (carrito.quitarProducto(nombre)) {
+            println("-> Producto quitado del carrito.\n")
+        } else {
+            println("-> El producto no está en el carrito.\n")
         }
     }
 
