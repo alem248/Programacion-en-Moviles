@@ -34,3 +34,13 @@ fun mostrarDetalle(producto: List<Producto>){
 fun buscar producto(productos List<Producto>, nombre: String): Producto? {
     return productos.find{it.nombre.equals, ignoreCase = true }
 }
+
+fun calcularDescuento(total: Double):Doble {
+    return when{
+        total > 5000 -> total * 0.10;
+        total > 3000 -> total * 0.05
+        else -> 0.0
+    }
+}
+
+fun
