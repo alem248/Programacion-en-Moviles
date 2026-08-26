@@ -1,5 +1,3 @@
-import java.util.Scanner
-
 data class Producto(
     val nombre: String,
     val precio: Double,
@@ -7,11 +5,7 @@ data class Producto(
 )
 
 fun calcularSubtotal(productos: List<Producto>): Double {
-    var subtotal = 0.0
-    for (p in productos) {
-        subtotal += p.precio * p.cantidad
-    }
-    return subtotal
+    return productos.sumOf { it.precio * it.cantidad }
 }
 
 fun calcularIGV(subtotal: Double): Double {
@@ -23,33 +17,28 @@ fun calcularTotal(subtotal: Double, igv: Double): Double {
 }
 
 fun mostrarDetalle(productos: List<Producto>) {
-    println("DETALLE DEL CARRITO")
-    var i = 1
-    for (p in productos) {
+    println("\nDETALLE DEL CARRITO")
+    productos.forEachIndexed { i, p ->
         val importe = p.precio * p.cantidad
-        println(String.format("%d. %-20s x%d S/ %8.2f", i, p.nombre, p.cantidad, importe))
-        i++
+        println(String.format("%d. %-20s x%d S/ %8.2f", i + 1, p.nombre, p.cantidad, importe))
     }
 }
 
-
-fun calcularDescuento(total: Double): Double {
+fun calcularDescuento(subtotal: Double): Double {
     return when {
-        total > 5000 -> total * 0.10
-        total > 3000 -> total * 0.05
+        subtotal > 5000 -> subtotal * 0.10
+        subtotal > 3000 -> subtotal * 0.05
         else -> 0.0
     }
 }
 
 fun main() {
-    val scanner = Scanner(System.`in`)
-
     println("=========================================")
     println("   CARRITO DE COMPRAS - TIENDA TECSUP    ")
     println("=========================================")
 
     print("Ingrese su nombre: ")
-    val nombreCliente = scanner.nextLine().ifBlank { "Cliente Tecsup" }
+    val nombreCliente = readln().ifBlank { "Cliente Tecsup" }
     println()
 
     val productosDisponibles = listOf(
@@ -61,24 +50,23 @@ fun main() {
     )
 
     val carrito = mutableListOf<Producto>()
-    var opcion: Int
+    var opcion: Int?
 
     do {
         println("--- PRODUCTOS DISPONIBLES ---")
-        for (i in productosDisponibles.indices) {
-            val prod = productosDisponibles[i]
+        productosDisponibles.forEachIndexed { i, prod ->
             println("${i + 1}. ${prod.nombre} - S/ ${prod.precio}")
         }
         println("0. Finalizar compra y generar recibo")
         print("Seleccione una opción: ")
 
-        opcion = scanner.nextInt()
+        opcion = readlnOrNull()?.toIntOrNull()
 
-        if (opcion in 1..productosDisponibles.size) {
+        if (opcion != null && opcion in 1..productosDisponibles.size) {
             val prodSeleccionado = productosDisponibles[opcion - 1]
 
             print("Ingrese la cantidad para ${prodSeleccionado.nombre}: ")
-            val cantidad = scanner.nextInt()
+            val cantidad = readlnOrNull()?.toIntOrNull() ?: 0
 
             if (cantidad > 0) {
                 val existe = carrito.find { it.nombre == prodSeleccionado.nombre }
@@ -109,27 +97,28 @@ fun main() {
 
     mostrarDetalle(carrito)
 
-    val subtotal = calcularSubtotal(carrito)
-    val igv = calcularIGV(subtotal)
-    val total = calcularTotal(subtotal, igv)
+    val subtotalBruto = calcularSubtotal(carrito)
+    val descuento = calcularDescuento(subtotalBruto)
+    val subtotalNeto = subtotalBruto - descuento
+    val igv = calcularIGV(subtotalNeto)
+    val total = calcularTotal(subtotalNeto, igv)
 
-    println(String.format("%-22s : %d", "Cantidad de productos", carrito.size))
-    println(String.format("%-22s : S/ %7.2f", "Subtotal", subtotal))
+    val totalItems = carrito.sumOf { it.cantidad }
+    println(String.format("%-22s : %d", "Cantidad total ítems", totalItems))
+    println(String.format("%-22s : S/ %7.2f", "Subtotal", subtotalBruto))
+
+    if (descuento > 0.0) {
+        val porcentaje = if (subtotalBruto > 5000) "10%" else "5%"
+        println(String.format("%-22s : S/ %7.2f (%s)", "Descuento aplicado", descuento, porcentaje))
+        println(String.format("%-22s : S/ %7.2f", "Subtotal con desc.", subtotalNeto))
+    }
+
     println(String.format("%-22s : S/ %7.2f", "IGV (18%)", igv))
     println(String.format("%-22s : S/ %7.2f", "TOTAL A PAGAR", total))
 
     val masCaro = carrito.maxByOrNull { it.precio }
     if (masCaro != null) {
-        println("\nProducto mas caro: ${masCaro.nombre} " + String.format("(S/%.2f)", masCaro.precio))
-    }
-
-    val descuento = calcularDescuento(total)
-    val totalConDescuento = total - descuento
-
-    if (descuento > 0.0) {
-        val porcentaje = if (total > 5000) "10%" else "5%"
-        println("Descuento aplicado: $porcentaje por compra mayor a S/ 3000")
-        println(String.format("%-22s : S/ %7.2f", "TOTAL CON DESCUENTO", totalConDescuento))
+        println("\nProducto más caro elegido: ${masCaro.nombre} " + String.format("(S/ %.2f)", masCaro.precio))
     }
 
     println("\n¡Gracias por su compra, $nombreCliente!")
