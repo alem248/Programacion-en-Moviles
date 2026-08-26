@@ -32,6 +32,7 @@ fun mostrarDetalle(productos: List<Producto>) {
     }
 }
 
+
 fun calcularDescuento(total: Double): Double {
     return when {
         total > 5000 -> total * 0.10
