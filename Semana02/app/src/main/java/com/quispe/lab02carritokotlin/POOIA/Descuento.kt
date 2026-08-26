@@ -29,3 +29,16 @@ class DescuentoPorMonto : CalculadoraDescuento {
         return "Descuento aplicado: $porcentaje por compra mayor a S/ 3000"
     }
 }
+
+/**
+ * Estrategia alternativa: no aplicar descuento alguno.
+ * Demuestra el POLIMORFISMO por interfaz: el Recibo puede recibir
+ * esta clase o DescuentoPorMonto sin cambiar ni una línea de su código
+ * (por ejemplo, para campañas donde el descuento está desactivado).
+ */
+class SinDescuento : CalculadoraDescuento {
+
+    override fun calcular(total: Double): Double = 0.0
+
+    override fun describir(total: Double): String = "Sin descuento aplicable"
+}
