@@ -51,6 +51,23 @@ class Carrito {
     fun calcularTotal(): Double = calcularSubtotal() + calcularIGV()
 
     /**
+     * Quita por completo un producto del carrito.
+     * Devuelve false si el producto no estaba agregado.
+     */
+    fun quitarProducto(nombre: String): Boolean {
+        val item = buscarItem(nombre) ?: return false
+        items.remove(item)
+        return true
+    }
+
+    /**
+     * Vacía el carrito por completo (útil para reiniciar la compra).
+     */
+    fun vaciar() {
+        items.clear()
+    }
+
+    /**
      * POLIMORFISMO: aunque la lista mezcla ProductoElectronico y
      * ProductoAccesorio, aquí se tratan todos como Producto.
      */
