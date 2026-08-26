@@ -34,7 +34,7 @@ class Tienda(private val nombreTienda: String = "TIENDA TECSUP") {
         do {
             mostrarCatalogo()
             print("Seleccione una opción: ")
-            opcion = scanner.nextInt()
+            opcion = leerEntero()
             procesarOpcion(opcion)
         } while (opcion != 0)
 
@@ -60,7 +60,7 @@ class Tienda(private val nombreTienda: String = "TIENDA TECSUP") {
         if (opcion in 1..catalogo.size) {
             val producto = catalogo[opcion - 1]
             print("Ingrese la cantidad para ${producto.nombre}: ")
-            val cantidad = scanner.nextInt()
+            val cantidad = leerEntero()
 
             if (carrito.agregarProducto(producto, cantidad)) {
                 println("-> Producto agregado al carrito.\n")
@@ -70,6 +70,19 @@ class Tienda(private val nombreTienda: String = "TIENDA TECSUP") {
         } else if (opcion != 0) {
             println("-> Opción no válida. Intente de nuevo.\n")
         }
+    }
+
+    /**
+     * Lee un entero validando la entrada: si el usuario escribe texto,
+     * se descarta y se vuelve a pedir (el programa ya no se detiene
+     * con una excepción como ocurría con scanner.nextInt() directo).
+     */
+    private fun leerEntero(): Int {
+        while (!scanner.hasNextInt()) {
+            scanner.next()
+            print("-> Ingrese un número válido: ")
+        }
+        return scanner.nextInt()
     }
 
     private fun finalizarCompra(cliente: Cliente) {
