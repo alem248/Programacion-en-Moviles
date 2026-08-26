@@ -1,5 +1,3 @@
-#!/usr/bin/env kotlin
-
 import java.util.Scanner
 
 data class Producto(
@@ -8,7 +6,7 @@ data class Producto(
     var cantidad: Int
 )
 
-fun calcularSubtotal(productos: List<Producto>):Double {
+fun calcularSubtotal(productos: List<Producto>): Double {
     var subtotal = 0.0
     for (p in productos) {
         subtotal += p.precio * p.cantidad
@@ -20,10 +18,11 @@ fun calcularIGV(subtotal: Double): Double {
     return subtotal * 0.18
 }
 
-fun calcularTotal(subtotal:Double, igv: Double): Double {
+fun calcularTotal(subtotal: Double, igv: Double): Double {
     return subtotal + igv
 }
-fun mostrarDetalle(producto: List<Producto>){
+
+fun mostrarDetalle(productos: List<Producto>) {
     println("DETALLE DEL CARRITO")
     var i = 1
     for (p in productos) {
@@ -33,27 +32,27 @@ fun mostrarDetalle(producto: List<Producto>){
     }
 }
 
-fun buscar producto(productos List<Producto>, nombre: String): Producto? {
-    return productos.find{it.nombre.equals,ignoreCase = true }
+fun buscarProducto(productos: List<Producto>, nombre: String): Producto? {
+    return productos.find { it.nombre.equals(nombre, ignoreCase = true) }
 }
 
-fun calcularDescuento(total: Double):Doble {
-    return when{
-        total > 5000 -> total * 0.10;
+fun calcularDescuento(total: Double): Double {
+    return when {
+        total > 5000 -> total * 0.10
         total > 3000 -> total * 0.05
         else -> 0.0
     }
 }
 
-fun main(){
-val scanner = Scanner(System. `in`)
+fun main() {
+    val scanner = Scanner(System.`in`)
 
     println("=========================================")
     println("   CARRITO DE COMPRAS - TIENDA TECSUP    ")
     println("=========================================")
 
-    print("Ingrese su nombre")
-    val nombreCLiente = scanner.nextLine().ifBlank{"Cliente Tecsup"}
+    print("Ingrese su nombre: ")
+    val nombreCliente = scanner.nextLine().ifBlank { "Cliente Tecsup" }
     println()
 
     val productosDisponibles = listOf(
@@ -84,7 +83,7 @@ val scanner = Scanner(System. `in`)
             print("Ingrese la cantidad para ${prodSeleccionado.nombre}: ")
             val cantidad = scanner.nextInt()
 
-            if (cantidad >0){
+            if (cantidad > 0) {
                 val existe = carrito.find { it.nombre == prodSeleccionado.nombre }
                 if (existe != null) {
                     existe.cantidad += cantidad
@@ -99,20 +98,19 @@ val scanner = Scanner(System. `in`)
             println("-> Opción no válida. Intente de nuevo.\n")
         }
 
-    } while (opcion != 0
+    } while (opcion != 0)
 
-        if (carrito.isEmpty()){
-            println("\nEl carrito está vacío. ¡Gracias por su visita, $nombreCliente!")
-            return
-            }
-
+    if (carrito.isEmpty()) {
+        println("\nEl carrito está vacío. ¡Gracias por su visita, $nombreCliente!")
+        return
+    }
 
     println("\n=========================================")
     println("             RECIBO DE COMPRA            ")
     println("=========================================")
     println("Cliente: $nombreCliente")
 
-    mostrarDetalleRecibo(carrito)
+    mostrarDetalle(carrito)
 
     val subtotal = calcularSubtotal(carrito)
     val igv = calcularIGV(subtotal)
@@ -139,4 +137,3 @@ val scanner = Scanner(System. `in`)
 
     println("\n¡Gracias por su compra, $nombreCliente!")
 }
-
