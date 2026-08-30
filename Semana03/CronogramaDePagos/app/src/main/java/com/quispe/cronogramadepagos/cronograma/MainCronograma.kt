@@ -65,13 +65,13 @@ private fun leerNumeroCuotas(): Int {
     println(" Opciones de cuotas e interes:")
     println("  -  6 cuotas  -> 20% interes")
     println("  - 12 cuotas  -> 40% interes")
-    println("  - 40 cuotas  -> 60% interes")
+    println("  - 24 cuotas  -> 60% interes")
     while (true) {
-        val input = leerLineaOSalir("Ingrese el numero de cuotas (6, 12 o 40): ")
+        val input = leerLineaOSalir("Ingrese el numero de cuotas (6, 12 o 24): ")
         val valor = input.toIntOrNull()
         if (valor != null && valor > 0) {
-            if (valor != 6 && valor != 12 && valor != 40) {
-                println(" -> Advertencia: solo 6, 12 y 40 tienen interes definido (otros = 0%).")
+            if (valor != 6 && valor != 12 && valor != 24) {
+                println(" -> Advertencia: solo 6, 12 y 24 tienen interes definido (otros = 0%).")
                 val conf = leerLineaOSalir(" ¿Desea continuar con $valor cuotas? (s/n): ").lowercase()
                 if (conf == "s" || conf == "si" || conf == "sí") return valor
                 else continue

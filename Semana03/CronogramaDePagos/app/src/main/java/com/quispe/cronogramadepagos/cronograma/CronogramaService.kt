@@ -23,7 +23,7 @@ class CronogramaService {
         println(String.format(" Numero de cuotas      : %d", prestamo.getNumeroCuotas()))
         println(String.format(" Tasa de interes       : %d%%", prestamo.obtenerPorcentajeInteres()))
         if (tasa == 0.0) {
-            println("   -> Advertencia: Nro. de cuotas no es 6, 12 ni 40. Se aplica 0% de interes.")
+            println("   -> Advertencia: Nro. de cuotas no es 6, 12 ni 24. Se aplica 0% de interes.")
         }
         println(String.format(" Interes total         : S/ %10.2f", interesTotal))
         println(String.format(" Monto total a pagar   : S/ %10.2f", total))
