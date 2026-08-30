@@ -21,7 +21,7 @@ class Prestamo(
     fun obtenerTasaInteres(): Double = when (numeroCuotas) {
         6 -> 0.20
         12 -> 0.40
-        40 -> 0.60
+        24 -> 0.60
         else -> 0.0
     }
 

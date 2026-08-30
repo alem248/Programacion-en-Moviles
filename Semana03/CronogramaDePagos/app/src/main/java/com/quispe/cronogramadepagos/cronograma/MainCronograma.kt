@@ -78,7 +78,7 @@ private fun leerNumeroCuotas(): Int {
             }
             return valor
         }
-        println(" -> Numero de cuotas invalido. Ingrese 6, 12 o 40.")
+        println(" -> Numero de cuotas invalido. Ingrese 6, 12 o 24.")
     }
 }
 
