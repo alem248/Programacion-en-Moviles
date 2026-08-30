@@ -1,7 +1,5 @@
 package com.quispe.cronogramadepagos.cronograma
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import java.time.LocalDate
 
 
@@ -41,7 +39,6 @@ class Prestamo(
         return calcularMontoTotalConInteres() / numeroCuotas
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun generarCronograma(): List<Cuota> {
         val pagoMensual = calcularPagoMensual()
         val totalConInteres = calcularMontoTotalConInteres()

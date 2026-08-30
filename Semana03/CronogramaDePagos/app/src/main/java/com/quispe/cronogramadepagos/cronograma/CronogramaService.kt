@@ -1,16 +1,12 @@
 package com.quispe.cronogramadepagos.cronograma
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import java.time.format.DateTimeFormatter
 class CronogramaService {
 
     companion object {
-        @RequiresApi(Build.VERSION_CODES.O)
         private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun imprimirCronograma(prestamo: Prestamo) {
         val tasa = prestamo.obtenerTasaInteres()
         val total = prestamo.calcularMontoTotalConInteres()

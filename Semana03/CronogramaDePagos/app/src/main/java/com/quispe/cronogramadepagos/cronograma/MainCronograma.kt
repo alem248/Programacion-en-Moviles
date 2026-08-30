@@ -1,13 +1,10 @@
 package com.quispe.cronogramadepagos.cronograma
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import kotlin.system.exitProcess
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun main() {
     println("=========================================")
     println("   SISTEMA DE CRONOGRAMA DE PAGOS")
@@ -85,7 +82,6 @@ private fun leerNumeroCuotas(): Int {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 private fun leerFechaPrimerPago(): LocalDate {
     // Soporta 4 formatos comunes; se prueba en orden
     val formatters = listOf(

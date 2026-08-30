@@ -54,3 +54,18 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
+
+// Tarea para ejecutar el programa en la terminal
+tasks.register<JavaExec>("ejecutarTerminal") {
+    group = "application"
+    mainClass.set("com.quispe.cronogramadepagos.cronograma.MainCronogramaKt")
+    
+    // Esta es la forma más segura de obtener la ruta de las clases compiladas
+    val compileKotlinTask = tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileDebugKotlin")
+    
+    classpath = files(compileKotlinTask.map { it.destinationDirectory }) + 
+                configurations.getByName("debugRuntimeClasspath")
+    
+    standardInput = System.`in`
+    dependsOn(compileKotlinTask)
+}
