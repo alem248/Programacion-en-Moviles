@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.quispe.lab03.ui.theme.Lab03Theme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,8 +114,8 @@ fun PantallaRegistro(modifier: Modifier = Modifier) {
         if (mostrarResumen) {
             val precioNum = precio.toDoubleOrNull() ?: 0.0
             val cantidadNum = cantidad.toIntOrNull() ?: 0
-            val importe = 0.0 //
-            val total = precioNum * cantidadNum
+            val importe = precioNum * cantidadNum//
+
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -126,8 +127,13 @@ fun PantallaRegistro(modifier: Modifier = Modifier) {
                     Text(nombre, style = MaterialTheme.typography.titleLarge)
                     Text("Precio: S/ " + String.format("%.2f", precioNum))
                     Text("Cantidad: " + cantidad)
-                    Text("Importe total: S/ " + total)
+                    Text("Importe total: S/ " + importe)
                 }
+                Text(
+                    text = "✓ Producto registrado correctamente",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF2E7D32)
+                )
             }
         }
     }
