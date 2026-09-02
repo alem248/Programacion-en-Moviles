@@ -129,12 +129,12 @@ fun PantallaRegistro(modifier: Modifier = Modifier) {
                     Text("Cantidad: " + cantidad)
                     Text("Importe total: S/ " + importe)
                 }
-                Text(
-                    text = "✓ Producto registrado correctamente",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF2E7D32)
-                )
             }
+            Text(
+                text = "✓ Producto registrado correctamente",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF2E7D32)
+            )
         }
     }
 
