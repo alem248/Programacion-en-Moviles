@@ -130,3 +130,131 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RegistroNotasScreen(viewModel: NotasViewModel = viewModel()) {
+    val degradado = Brush.verticalGradient(
+        colors = listOf(Color(0xFFEDE7F6), Color(0xFFFFFFFF))
+    )
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Registro de Notas", fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF5E35B1),
+                    titleContentColor = Color.White
+                )
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(degradado)
+                .padding(innerPadding)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Notas del ciclo",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "Desliza para asignar cada nota (0 a 20)",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            )
+
+            viewModel.cursos.forEach { curso ->
+                CursoSliderRow(
+                    curso = curso,
+                    onNotaChange = { viewModel.actualizarNota(curso.id, it) }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Redondear promedio final", fontSize = 15.sp)
+                Switch(
+                    checked = viewModel.redondear,
+                    onCheckedChange = { viewModel.toggleRedondear(it) }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = viewModel.confirmado,
+                    onCheckedChange = { viewModel.toggleConfirmacion(it) }
+                )
+                Text("Confirmo que las notas son correctas", fontSize = 14.sp)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { viewModel.calcularPromedio() },
+                enabled = viewModel.confirmado,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(26.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF5E35B1),
+                    disabledContainerColor = Color(0xFFC2B8D9)
+                )
+            ) {
+                Text("CALCULAR PROMEDIO", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (viewModel.mostrarResultados) {
+                ResultadosCard(viewModel)
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "✓ Promedio calculado correctamente",
+                    color = Color(0xFF2E7D32),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+                TextButton(onClick = { viewModel.limpiar() }) {
+                    Text("LIMPIAR", color = Color.Gray)
+                }
+            } else {
+                Text(
+                    text = "Asigna las notas y confirma para calcular",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f, fill = false))
+
+            Text(
+                text = "Desarrollado por: Alexandra Ximena Quispe Mallqui",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
+            )
+        }
+    }
+}
