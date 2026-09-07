@@ -258,3 +258,53 @@ fun RegistroNotasScreen(viewModel: NotasViewModel = viewModel()) {
         }
     }
 }
+@Composable
+fun CursoSliderRow(curso: Curso, onNotaChange: (Int) -> Unit) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = curso.nombre, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                Text(
+                    text = " (${curso.peso}%)",
+                    fontSize = 12.sp,
+                    color = Color(0xFF5E35B1)
+                )
+            }
+
+            val esAprobatorio = curso.nota >= 13
+            val badgeColor = if (esAprobatorio) Color(0xFFE8F5E9) else Color(0xFFF3E5F5)
+            val textColor = if (esAprobatorio) Color(0xFF2E7D32) else Color(0xFF5E35B1)
+
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = badgeColor,
+                modifier = Modifier.padding(start = 8.dp)
+            ) {
+                Text(
+                    text = curso.nota.toString(),
+                    color = textColor,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+            }
+        }
+
+        Slider(
+            value = curso.nota.toFloat(),
+            onValueChange = { onNotaChange(it.toInt()) },
+            valueRange = 0f..20f,
+            steps = 19,
+            colors = SliderDefaults.colors(
+                thumbColor = Color(0xFF5E35B1),
+                activeTrackColor = Color(0xFF5E35B1),
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent
+            )
+        )
+    }
+}
+
