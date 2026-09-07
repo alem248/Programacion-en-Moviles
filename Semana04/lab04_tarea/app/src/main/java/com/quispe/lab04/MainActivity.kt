@@ -308,3 +308,87 @@ fun CursoSliderRow(curso: Curso, onNotaChange: (Int) -> Unit) {
     }
 }
 
+@Composable
+fun ResultadosCard(viewModel: NotasViewModel) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = "Promedio ponderado:  ${String.format("%.2f", viewModel.promedioPonderado)}",
+                fontSize = 15.sp,
+                color = Color.DarkGray
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = "Promedio final: ",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF5E35B1)
+                )
+                Text(
+                    text = if (viewModel.redondear) viewModel.promedioFinal.toInt()
+                        .toString() else String.format("%.2f", viewModel.promedioFinal),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF5E35B1)
+                )
+            }
+
+            if (viewModel.redondear) {
+                Text(
+                    text = "(redondeado)",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = viewModel.colorObservacion.copy(alpha = 0.15f)
+            ) {
+                Text(
+                    text = viewModel.observacion,
+                    color = viewModel.colorObservacion,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            viewModel.cursos.forEach { curso ->
+                val aporte = curso.nota * (curso.peso / 100.0)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "${curso.nombre.take(15)}...",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "${curso.nota} × ${curso.peso}% = ${String.format("%.2f", aporte)}",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+        }
+    }
+}
