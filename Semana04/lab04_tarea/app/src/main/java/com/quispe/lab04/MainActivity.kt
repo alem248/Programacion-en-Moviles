@@ -25,6 +25,8 @@ import kotlin.math.roundToInt
 
 import androidx.compose.ui.tooling.preview.Preview
 
+val ColorTextoPrincipal = Color(0xFF1D111F)
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun RegistroNotasPreview() {
@@ -161,12 +163,13 @@ fun RegistroNotasScreen(viewModel: NotasViewModel = viewModel()) {
                 text = "Notas del ciclo",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
+                color = ColorTextoPrincipal,
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
                 text = "Desliza para asignar cada nota (0 a 20)",
                 fontSize = 14.sp,
-                color = Color.Gray,
+                color = ColorTextoPrincipal.copy(alpha = 0.7f),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp)
@@ -187,7 +190,7 @@ fun RegistroNotasScreen(viewModel: NotasViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Redondear promedio final", fontSize = 15.sp)
+                Text("Redondear promedio final", fontSize = 15.sp, color = ColorTextoPrincipal)
                 Switch(
                     checked = viewModel.redondear,
                     onCheckedChange = { viewModel.toggleRedondear(it) }
@@ -202,7 +205,7 @@ fun RegistroNotasScreen(viewModel: NotasViewModel = viewModel()) {
                     checked = viewModel.confirmado,
                     onCheckedChange = { viewModel.toggleConfirmacion(it) }
                 )
-                Text("Confirmo que las notas son correctas", fontSize = 14.sp)
+                Text("Confirmo que las notas son correctas", fontSize = 14.sp, color = ColorTextoPrincipal)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -237,12 +240,12 @@ fun RegistroNotasScreen(viewModel: NotasViewModel = viewModel()) {
 
                 Spacer(modifier = Modifier.height(4.dp))
                 TextButton(onClick = { viewModel.limpiar() }) {
-                    Text("LIMPIAR", color = Color.Gray)
+                    Text("LIMPIAR", color = ColorTextoPrincipal.copy(alpha = 0.6f))
                 }
             } else {
                 Text(
                     text = "Asigna las notas y confirma para calcular",
-                    color = Color.Gray,
+                    color = ColorTextoPrincipal.copy(alpha = 0.6f),
                     fontSize = 14.sp
                 )
             }
@@ -251,7 +254,7 @@ fun RegistroNotasScreen(viewModel: NotasViewModel = viewModel()) {
 
             Text(
                 text = "Desarrollado por: Alexandra Ximena Quispe Mallqui",
-                color = Color.Gray,
+                color = ColorTextoPrincipal.copy(alpha = 0.5f),
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
             )
@@ -267,7 +270,12 @@ fun CursoSliderRow(curso: Curso, onNotaChange: (Int) -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = curso.nombre, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                Text(
+                    text = curso.nombre,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = ColorTextoPrincipal
+                )
                 Text(
                     text = " (${curso.peso}%)",
                     fontSize = 12.sp,
@@ -322,7 +330,7 @@ fun ResultadosCard(viewModel: NotasViewModel) {
             Text(
                 text = "Promedio ponderado:  ${String.format("%.2f", viewModel.promedioPonderado)}",
                 fontSize = 15.sp,
-                color = Color.DarkGray
+                color = ColorTextoPrincipal
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -347,7 +355,7 @@ fun ResultadosCard(viewModel: NotasViewModel) {
                 Text(
                     text = "(redondeado)",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = ColorTextoPrincipal.copy(alpha = 0.6f)
                 )
             }
 
@@ -378,12 +386,12 @@ fun ResultadosCard(viewModel: NotasViewModel) {
                     Text(
                         text = "${curso.nombre.take(15)}...",
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = ColorTextoPrincipal.copy(alpha = 0.7f)
                     )
                     Text(
                         text = "${curso.nota} × ${curso.peso}% = ${String.format("%.2f", aporte)}",
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = ColorTextoPrincipal.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Medium
                     )
                 }
