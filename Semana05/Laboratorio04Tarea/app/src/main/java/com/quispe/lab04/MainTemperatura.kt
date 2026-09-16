@@ -9,11 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.quispe.lab04.ui.theme.Lab04Theme
 
 
 @Composable
-fun TemperatureDisplay() {
+fun TemperatureDisplay(modifier: Modifier = Modifier) {
     var temperatura by remember { mutableStateOf(20) }
 
     val textColor = when {
@@ -23,7 +25,7 @@ fun TemperatureDisplay() {
     }
 
     Column(
-        modifier = Modifier.padding(16.dp),
+        modifier = modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -54,5 +56,13 @@ fun TemperatureDisplay() {
         Button(onClick = { temperatura = 20 }) {
             Text("Resetear")
         }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun TemperatureDisplayPreview() {
+    Lab04Theme {
+        TemperatureDisplay()
     }
 }
