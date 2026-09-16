@@ -20,8 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Lab04Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                    TemperatureDisplay(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -38,10 +37,10 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun GreetingPreview() {
+fun MainActivityPreview() {
     Lab04Theme {
-        Greeting("Android")
+        TemperatureDisplay()
     }
 }
