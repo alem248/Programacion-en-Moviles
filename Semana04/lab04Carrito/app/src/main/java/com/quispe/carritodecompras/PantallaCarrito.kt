@@ -1,9 +1,12 @@
 package com.quispe.carritodecompras
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -35,7 +38,6 @@ fun PantallaCarrito() {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // Campo: Nombre del producto
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { nombre = it },
@@ -46,7 +48,6 @@ fun PantallaCarrito() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Fila: Precio y Cantidad
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -90,11 +91,20 @@ fun PantallaCarrito() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-
-            Text(
-                text = "Productos en lista: ${productos.size}",
-                style = MaterialTheme.typography.titleMedium
-            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(productos) { producto ->
+                    TarjetaProducto(
+                        producto = producto,
+                        onEliminar = { productos.remove(producto) }
+                    )
+                }
+            }
         }
     }
 }
+
