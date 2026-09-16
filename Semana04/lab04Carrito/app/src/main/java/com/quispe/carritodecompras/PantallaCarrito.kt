@@ -25,10 +25,19 @@ fun PantallaCarrito() {
 
     val productos = remember { mutableStateListOf<Producto>() }
 
-    // --- Etapa 4: Cálculos dinámicos de Totales ---
+    var productoAEliminar by remember { mutableStateOf<Producto?>(null) }
+
     val subtotal = productos.sumOf { it.precio * it.cantidad }
     val igv = subtotal * 0.18
-    val total = subtotal + igv
+    val totalBruto = subtotal + igv
+
+    val descuentoPorcentaje = when {
+        totalBruto > 5000 -> 0.10
+        totalBruto > 3000 -> 0.05
+        else -> 0.0
+    }
+    val montoDescuento = totalBruto * descuentoPorcentaje
+    val totalFinal = totalBruto - montoDescuento
 
     Scaffold(
         topBar = {
@@ -47,7 +56,6 @@ fun PantallaCarrito() {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // --- Formulario de ingreso ---
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { nombre = it },
@@ -133,7 +141,7 @@ fun PantallaCarrito() {
                     items(productos) { producto ->
                         TarjetaProducto(
                             producto = producto,
-                            onEliminar = { productos.remove(producto) }
+                            onEliminar = { productoAEliminar = producto }
                         )
                     }
                 }
@@ -141,7 +149,6 @@ fun PantallaCarrito() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // --- Etapa 4: Panel de Totales (Fijo en la parte inferior) ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -170,6 +177,22 @@ fun PantallaCarrito() {
                         Text("IGV (18%)", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(String.format(Locale.US, "S/ %.2f", igv))
                     }
+
+                    if (descuentoPorcentaje > 0.0) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Descuento (${(descuentoPorcentaje * 100).toInt()}%)",
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                String.format(Locale.US, "- S/ %.2f", montoDescuento),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
 
                 Row(
@@ -184,7 +207,7 @@ fun PantallaCarrito() {
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = String.format(Locale.US, "S/ %.2f", total),
+                        text = String.format(Locale.US, "S/ %.2f", totalFinal),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -192,6 +215,29 @@ fun PantallaCarrito() {
                 }
             }
         }
+    }
+
+    productoAEliminar?.let { producto ->
+        AlertDialog(
+            onDismissRequest = { productoAEliminar = null },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Deseas eliminar \"${producto.nombre}\" del carrito?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        productos.remove(producto)
+                        productoAEliminar = null
+                    }
+                ) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { productoAEliminar = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 
