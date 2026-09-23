@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.quispe.appnavegation.navigation.Screen
 
-
 @Composable
 fun ProfileScreen(navController: NavController) {
     Column(
