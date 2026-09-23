@@ -1,14 +1,16 @@
 package com.quispe.appnavegation.screens
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.quispe.appnavegation.navigation.Screen
+import com.quispe.appnavegation.ui.theme.AppNavegationTheme
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -37,5 +39,13 @@ fun HomeScreen(navController: NavController) {
         ) {
             Text("Mi perfil")
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    AppNavegationTheme {
+        HomeScreen(rememberNavController())
     }
 }
