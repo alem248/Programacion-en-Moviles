@@ -6,8 +6,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.quispe.appnavegation.screens.*
-import com.quispe.appnavegation.screens.compose.foundation.lazy.LazyColumn.ListScreen
+import com.quispe.appnavegation.screens.DetailScreen
+import com.quispe.appnavegation.screens.HomeScreen
+import com.quispe.appnavegation.screens.ListScreen
+import com.quispe.appnavegation.screens.LoginScreen
+import com.quispe.appnavegation.screens.ProfileScreen
 
 @Composable
 fun AppNavigation() {
@@ -15,8 +18,11 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Login.route
     ) {
+        composable(Screen.Login.route) {
+            LoginScreen(navController)
+        }
         composable(Screen.Home.route) {
             HomeScreen(navController)
         }
@@ -31,11 +37,11 @@ fun AppNavigation() {
             arguments = listOf(
                 navArgument(name = "itemId") {
                     type = NavType.IntType
-                    defaultValue = 0
+                    defaultValue = 1
                 }
             )
         ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getInt("itemId") ?: 0
+            val itemId = backStackEntry.arguments?.getInt("itemId") ?: 1
             DetailScreen(navController, itemId)
         }
     }
