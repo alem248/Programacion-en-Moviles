@@ -7,7 +7,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.quispe.appnavegation.screens.*
-import com.quispe.appnavegation.screens.compose.foundation.lazy.LazyColumn.ListScreen
 
 @Composable
 fun AppNavigation() {
