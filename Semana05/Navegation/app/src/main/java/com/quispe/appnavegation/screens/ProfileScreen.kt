@@ -82,7 +82,7 @@ fun ProfileScreen(navController: NavController) {
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = "JL",
+                                text = "AQ",
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = PurplePrimary
@@ -94,7 +94,7 @@ fun ProfileScreen(navController: NavController) {
 
                     // Nombre del usuario centrado
                     Text(
-                        text = "Juan León Suiyon",
+                        text = "Alexandra Ximena Quispe Mallqui",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -130,7 +130,7 @@ fun ProfileScreen(navController: NavController) {
                     )
                 },
                 headlineContent = { Text("Nombre Completo") },
-                supportingContent = { Text("Juan León Suiyon") }
+                supportingContent = { Text("Alexandra Ximena Quispe Mallqui") }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
@@ -143,7 +143,7 @@ fun ProfileScreen(navController: NavController) {
                     )
                 },
                 headlineContent = { Text("Correo de Tecsup") },
-                supportingContent = { Text("juan.leon@tecsup.edu.pe") }
+                supportingContent = { Text("alexandra.quispe.m@gmail.com") }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
@@ -156,7 +156,7 @@ fun ProfileScreen(navController: NavController) {
                     )
                 },
                 headlineContent = { Text("Teléfono") },
-                supportingContent = { Text("+51 987 654 321") }
+                supportingContent = { Text("+51 939 721 422") }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -179,7 +179,7 @@ fun ProfileScreen(navController: NavController) {
                     )
                 },
                 headlineContent = { Text("Carrera Profesional") },
-                supportingContent = { Text("Diseño y Desarrollo de Software / Ingeniería de Software") }
+                supportingContent = { Text("Diseño y Desarrollo de Software") }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
@@ -192,7 +192,7 @@ fun ProfileScreen(navController: NavController) {
                     )
                 },
                 headlineContent = { Text("Ciclo Actual") },
-                supportingContent = { Text("V Ciclo - Semestre 2026-I") }
+                supportingContent = { Text("IV Ciclo") }
             )
 
             Spacer(modifier = Modifier.height(32.dp))

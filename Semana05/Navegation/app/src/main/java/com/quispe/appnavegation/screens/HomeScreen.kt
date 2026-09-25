@@ -52,7 +52,7 @@ fun HomeScreen(navController: NavController) {
 
             // Textos superiores en blanco
             Text(
-                text = "Bienvenido, Juan León",
+                text = "Bienvenido, Alexandra",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

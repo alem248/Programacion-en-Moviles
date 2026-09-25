@@ -28,7 +28,7 @@ import com.quispe.appnavegation.ui.theme.PurplePrimary
 
 @Composable
 fun LoginScreen(navController: NavController) {
-    var email by remember { mutableStateOf("juan.leon@tecsup.edu.pe") }
+    var email by remember { mutableStateOf("alexandra.quispe.m@gmail.com") }
     var password by remember { mutableStateOf("123456") }
     var passwordVisible by remember { mutableStateOf(false) }
 

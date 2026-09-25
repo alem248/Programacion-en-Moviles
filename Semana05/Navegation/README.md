@@ -10,7 +10,7 @@ Este proyecto ha sido rediseñado como un **Portal Académico** moderno implemen
 >
 > **Pantalla de Login:** Un contenedor centrado verticalmente con el título 'Portal Académico' y el subtítulo 'Accede a tu cuenta'. Incluye dos OutlinedTextField (Correo institucional y Contraseña, este último con un ícono de visibilidad al final) y un Button ancho de color morado con el texto 'INICIAR SESIÓN'.
 >
-> **HomeScreen:** Un fondo con degradado morado suave. En la parte superior, el texto en blanco 'Bienvenido, Juan León' y '¿Qué deseas gestionar hoy?'. Debajo, dos tarjetas (Card) grandes tipo botón: 'Directorio de Alumnos' y 'Mi Perfil Académico', ambas con un ícono a la izquierda. Al fondo de la pantalla, un TextButton rojo con el ícono de salir y el texto 'Cerrar Sesión Segura'.
+> **HomeScreen:** Un fondo con degradado morado suave. En la parte superior, el texto en blanco 'Bienvenido, Alexandra' y '¿Qué deseas gestionar hoy?'. Debajo, dos tarjetas (Card) grandes tipo botón: 'Directorio de Alumnos' y 'Mi Perfil Académico', ambas con un ícono a la izquierda. Al fondo de la pantalla, un TextButton rojo con el ícono de salir y el texto 'Cerrar Sesión Segura'.
 >
 > **ListScreen (Directorio de Alumnos):** Utiliza un Scaffold con un TopAppBar que tenga una flecha de retroceso. El contenido debe ser una LazyColumn donde cada elemento muestre un avatar circular (foto de perfil temporal), el nombre del alumno en negrita, su carrera debajo y un ícono de flecha (chevron) a la derecha. Al hacer clic, debe navegar a la ruta de detalle.
 >
@@ -33,7 +33,7 @@ Este proyecto ha sido rediseñado como un **Portal Académico** moderno implemen
 
 2. **`HomeScreen` (Pantalla Principal)**
    - Fondo con degradado morado suave (`Brush.verticalGradient`).
-   - Saludo en blanco: *"Bienvenido, Juan León"* y *"¿Qué deseas gestionar hoy?"*.
+   - Saludo en blanco: *"Bienvenido, Alexandra"* y *"¿Qué deseas gestionar hoy?"*.
    - Dos tarjetas (`Card`) grandes tipo botón:
      - *"Directorio de Alumnos"* con ícono de escuela/alumnos.
      - *"Mi Perfil Académico"* con ícono de perfil.
@@ -54,7 +54,7 @@ Este proyecto ha sido rediseñado como un **Portal Académico** moderno implemen
 
 5. **`ProfileScreen` (Configuración de Perfil)**
    - `TopAppBar` de retroceso.
-   - Cabecera morada con avatar circular y nombre centrado (*"Juan León Suiyon"*).
+   - Cabecera morada con avatar circular y nombre centrado (*"Alexandra Ximena Quispe Mallqui"*).
    - Sección **INFORMACIÓN PERSONAL** utilizando `ListItem` (Nombre, Correo Tecsup, Teléfono).
    - Sección **ACADÉMICO** utilizando `ListItem` (Carrera Profesional, Ciclo Actual).
    - Botón rojo de *"Cerrar Sesión"* al final.
