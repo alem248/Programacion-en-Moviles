@@ -14,3 +14,8 @@ val Pink40 = Color(0xFF7D5260)
 val VerdeOscuro = Color(0xFF00604B)
 val VerdeClaro = Color(0xFFD7EFE7)
 val GrisClaro = Color(0xFFEDEDED)
+
+// Colores de texto y fondo para garantizar contraste en las tarjetas
+val FondoApp = Color(0xFFF1F4F3)
+val TextoPrincipal = Color(0xFF12181A)
+val TextoSecundario = Color(0xFF414A4D)
