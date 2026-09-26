@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quispe.tecsupfit.modelos.clasePorId
 import com.quispe.tecsupfit.ui.theme.GrisClaro
+import com.quispe.tecsupfit.ui.theme.TextoPrincipal
+import com.quispe.tecsupfit.ui.theme.TextoSecundario
 import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
 @Composable
@@ -70,12 +72,13 @@ fun ConfirmacionScreen(
             text = "¡Cupo reservado!",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
+            color = TextoPrincipal,
             modifier = Modifier.padding(top = 24.dp)
         )
         Text(
             text = "Tu reserva se registro correctamente.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = TextoSecundario,
             modifier = Modifier.padding(top = 8.dp)
         )
 
@@ -134,12 +137,13 @@ private fun FilaResumen(etiqueta: String, valor: String) {
         Text(
             text = etiqueta,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TextoSecundario
         )
         Text(
             text = valor,
             style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = TextoPrincipal
         )
     }
 }

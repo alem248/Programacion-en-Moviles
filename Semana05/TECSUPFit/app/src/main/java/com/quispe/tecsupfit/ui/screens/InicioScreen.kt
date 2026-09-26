@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quispe.tecsupfit.modelos.ClaseFit
 import com.quispe.tecsupfit.modelos.clasesDisponibles
+import com.quispe.tecsupfit.ui.theme.TextoPrincipal
+import com.quispe.tecsupfit.ui.theme.TextoSecundario
 import com.quispe.tecsupfit.ui.theme.VerdeClaro
 import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
@@ -69,8 +71,9 @@ fun InicioScreen(
             )
             Text(
                 text = "Hola, Alexandra",
-                color = Color(0xFFBFE3D8),
+                color = VerdeClaro,
                 fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
@@ -97,9 +100,9 @@ fun InicioScreen(
                 ) {
                     Text(
                         text = filtro,
-                        color = if (seleccionado) Color.White else Color(0xFF444444),
+                        color = if (seleccionado) Color.White else TextoSecundario,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Medium
                     )
                 }
             }
@@ -115,6 +118,7 @@ fun InicioScreen(
                     text = "Clases disponibles",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
+                    color = TextoPrincipal,
                     modifier = Modifier.padding(top = 4.dp, bottom = 6.dp)
                 )
             }
@@ -155,7 +159,8 @@ private fun TarjetaClase(clase: ClaseFit, onClick: () -> Unit) {
                 Text(
                     text = clase.nombre,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = TextoPrincipal
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -165,12 +170,12 @@ private fun TarjetaClase(clase: ClaseFit, onClick: () -> Unit) {
                         imageVector = Icons.Outlined.Schedule,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = TextoSecundario
                     )
                     Text(
                         text = clase.horario,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = TextoSecundario,
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }
@@ -182,12 +187,12 @@ private fun TarjetaClase(clase: ClaseFit, onClick: () -> Unit) {
                         imageVector = Icons.Outlined.LocationOn,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = TextoSecundario
                     )
                     Text(
                         text = clase.sala,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = TextoSecundario,
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }

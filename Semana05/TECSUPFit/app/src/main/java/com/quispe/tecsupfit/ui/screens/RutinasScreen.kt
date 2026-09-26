@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.quispe.tecsupfit.ui.theme.TextoPrincipal
+import com.quispe.tecsupfit.ui.theme.TextoSecundario
 import com.quispe.tecsupfit.ui.theme.VerdeClaro
 import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
@@ -45,6 +47,7 @@ fun RutinasScreen(modifier: Modifier = Modifier) {
             text = "Mis rutinas",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = TextoPrincipal,
             modifier = Modifier
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -80,16 +83,18 @@ fun RutinasScreen(modifier: Modifier = Modifier) {
                             Text(
                                 text = rutina.nombre,
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = TextoPrincipal
                             )
                             Text(
                                 text = rutina.dias,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextoSecundario
                             )
                             Text(
                                 text = rutina.detalle,
                                 style = MaterialTheme.typography.bodyMedium,
+                                color = TextoSecundario,
                                 modifier = Modifier.padding(top = 4.dp)
                             )
                         }

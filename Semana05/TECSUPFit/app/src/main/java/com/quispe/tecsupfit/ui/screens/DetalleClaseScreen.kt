@@ -42,6 +42,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quispe.tecsupfit.modelos.clasePorId
+import com.quispe.tecsupfit.ui.theme.TextoPrincipal
+import com.quispe.tecsupfit.ui.theme.TextoSecundario
 import com.quispe.tecsupfit.ui.theme.VerdeClaro
 import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
@@ -72,6 +74,7 @@ fun DetalleClaseScreen(
                 text = "Detalle de clase",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = TextoPrincipal,
                 modifier = Modifier.padding(start = 4.dp)
             )
         }
@@ -102,6 +105,7 @@ fun DetalleClaseScreen(
                 text = clase.nombre,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
+                color = TextoPrincipal,
                 modifier = Modifier.padding(top = 20.dp)
             )
 
@@ -114,12 +118,13 @@ fun DetalleClaseScreen(
                 text = "Descripcion",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = TextoPrincipal,
                 modifier = Modifier.padding(top = 16.dp)
             )
             Text(
                 text = clase.descripcion,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = TextoSecundario,
                 modifier = Modifier.padding(top = 6.dp, bottom = 20.dp)
             )
 
@@ -137,7 +142,7 @@ fun DetalleClaseScreen(
                         Text(
                             text = "Cupos restantes",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = TextoSecundario
                         )
                         Text(
                             text = "${clase.cupos} de 20",

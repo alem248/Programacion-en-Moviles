@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.quispe.tecsupfit.modelos.EstadoReserva
 import com.quispe.tecsupfit.modelos.Reserva
 import com.quispe.tecsupfit.ui.theme.GrisClaro
+import com.quispe.tecsupfit.ui.theme.TextoPrincipal
+import com.quispe.tecsupfit.ui.theme.TextoSecundario
 import com.quispe.tecsupfit.ui.theme.VerdeClaro
 import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
@@ -43,6 +45,7 @@ fun MisReservasScreen(
             text = "Mis reservas",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = TextoPrincipal,
             modifier = Modifier
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -52,7 +55,7 @@ fun MisReservasScreen(
             Text(
                 text = "Todavia no tienes reservas.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = TextoSecundario,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         } else {
@@ -91,19 +94,20 @@ private fun TarjetaReserva(reserva: Reserva) {
                 Text(
                     text = reserva.clase.nombre,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = TextoPrincipal
                 )
                 Text(
                     text = "${reserva.clase.dia} - ${reserva.clase.horario}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = TextoSecundario,
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 Text(
                     text = if (confirmada) "Confirmada" else "Completada",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (confirmada) VerdeOscuro else Color(0xFF555555),
+                    color = if (confirmada) VerdeOscuro else TextoSecundario,
                     modifier = Modifier
                         .padding(top = 10.dp)
                         .background(

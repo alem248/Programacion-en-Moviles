@@ -33,6 +33,7 @@ import com.quispe.tecsupfit.modelos.Reserva
 import com.quispe.tecsupfit.modelos.clasePorId
 import com.quispe.tecsupfit.navegacion.AppNavigation
 import com.quispe.tecsupfit.navegacion.Rutas
+import com.quispe.tecsupfit.ui.theme.TextoSecundario
 import com.quispe.tecsupfit.ui.theme.VerdeClaro
 import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
@@ -66,11 +67,10 @@ fun MainScreen() {
     val view = LocalView.current
     if (!view.isInEditMode) {
         // Iconos blancos sobre el header verde de inicio, oscuros en el resto
-        val oscuro = androidx.compose.foundation.isSystemInDarkTheme()
         SideEffect {
             val activity = view.context as Activity
             WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars =
-                rutaActual != Rutas.INICIO && !oscuro
+                rutaActual != Rutas.INICIO
         }
     }
 
@@ -103,8 +103,8 @@ fun MainScreen() {
                                 selectedIconColor = VerdeOscuro,
                                 selectedTextColor = VerdeOscuro,
                                 indicatorColor = VerdeClaro,
-                                unselectedIconColor = Color(0xFF9A9A9A),
-                                unselectedTextColor = Color(0xFF9A9A9A)
+                                unselectedIconColor = TextoSecundario,
+                                unselectedTextColor = TextoSecundario
                             )
                         )
                     }

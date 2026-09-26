@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.quispe.tecsupfit.ui.theme.TextoPrincipal
+import com.quispe.tecsupfit.ui.theme.TextoSecundario
 import com.quispe.tecsupfit.ui.theme.VerdeClaro
 import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
@@ -40,6 +42,7 @@ fun PerfilScreen(modifier: Modifier = Modifier) {
             text = "Perfil",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = TextoPrincipal,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -63,6 +66,7 @@ fun PerfilScreen(modifier: Modifier = Modifier) {
             text = "Alexandra Quispe",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = TextoPrincipal,
             modifier = Modifier.padding(top = 14.dp)
         )
 
@@ -125,7 +129,7 @@ private fun TarjetaEstadistica(valor: String, etiqueta: String, modifier: Modifi
             Text(
                 text = etiqueta,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = TextoSecundario,
                 modifier = Modifier.padding(top = 2.dp)
             )
         }
