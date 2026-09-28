@@ -1,5 +1,8 @@
 package com.quispe.tecsupfit.ui.screens
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,17 +29,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quispe.tecsupfit.modelos.clasePorId
-import com.quispe.tecsupfit.ui.theme.GrisClaro
-import com.quispe.tecsupfit.ui.theme.TextoPrincipal
-import com.quispe.tecsupfit.ui.theme.TextoSecundario
-import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
 @Composable
 fun ConfirmacionScreen(
@@ -45,6 +49,22 @@ fun ConfirmacionScreen(
     modifier: Modifier = Modifier
 ) {
     val clase = clasePorId(claseId)
+
+    var animarIcono by remember { mutableStateOf(false) }
+
+    // Animacion de rebote elastico al aparecer el icono de confirmacion
+    val escalaIcono by animateFloatAsState(
+        targetValue = if (animarIcono) 1.0f else 0.2f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "EscalaIconoConfirmacion"
+    )
+
+    LaunchedEffect(Unit) {
+        animarIcono = true
+    }
 
     Column(
         modifier = modifier
@@ -57,14 +77,18 @@ fun ConfirmacionScreen(
             modifier = Modifier
                 .padding(top = 48.dp)
                 .size(110.dp)
-                .background(VerdeOscuro, CircleShape),
+                .scale(escalaIcono)
+                .background(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Filled.CheckCircle,
                 contentDescription = null,
                 modifier = Modifier.size(76.dp),
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.onPrimary
             )
         }
 
@@ -72,13 +96,13 @@ fun ConfirmacionScreen(
             text = "¡Cupo reservado!",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = TextoPrincipal,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(top = 24.dp)
         )
         Text(
             text = "Tu reserva se registro correctamente.",
             style = MaterialTheme.typography.bodyMedium,
-            color = TextoSecundario,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
         )
 
@@ -87,16 +111,18 @@ fun ConfirmacionScreen(
                 .fillMaxWidth()
                 .padding(top = 28.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                 FilaResumen(etiqueta = "Clase", valor = clase.nombre)
-                HorizontalDivider()
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 FilaResumen(etiqueta = "Dia", valor = clase.dia)
-                HorizontalDivider()
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 FilaResumen(etiqueta = "Horario", valor = clase.horario)
-                HorizontalDivider()
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 FilaResumen(etiqueta = "Sala", valor = clase.sala)
             }
         }
@@ -112,8 +138,8 @@ fun ConfirmacionScreen(
                 .height(52.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = GrisClaro,
-                contentColor = Color(0xFF333333)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurface
             )
         ) {
             Text(
@@ -137,13 +163,13 @@ private fun FilaResumen(etiqueta: String, valor: String) {
         Text(
             text = etiqueta,
             style = MaterialTheme.typography.bodyMedium,
-            color = TextoSecundario
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = valor,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = TextoPrincipal
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

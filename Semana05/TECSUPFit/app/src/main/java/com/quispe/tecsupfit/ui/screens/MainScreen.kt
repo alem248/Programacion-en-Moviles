@@ -1,6 +1,7 @@
 package com.quispe.tecsupfit.ui.screens
 
 import android.app.Activity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -21,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -33,9 +34,6 @@ import com.quispe.tecsupfit.modelos.Reserva
 import com.quispe.tecsupfit.modelos.clasePorId
 import com.quispe.tecsupfit.navegacion.AppNavigation
 import com.quispe.tecsupfit.navegacion.Rutas
-import com.quispe.tecsupfit.ui.theme.TextoSecundario
-import com.quispe.tecsupfit.ui.theme.VerdeClaro
-import com.quispe.tecsupfit.ui.theme.VerdeOscuro
 
 private data class Pestana(val titulo: String, val ruta: String, val icono: ImageVector)
 
@@ -65,12 +63,14 @@ fun MainScreen() {
     val mostrarBarra = rutaActual in Rutas.conBarraInferior
 
     val view = LocalView.current
+    val isDarkTheme = isSystemInDarkTheme()
+
     if (!view.isInEditMode) {
-        // Iconos blancos sobre el header verde de inicio, oscuros en el resto
         SideEffect {
             val activity = view.context as Activity
+            // Iconos claros/oscuros en la barra de estado segun el tema y la pantalla
             WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars =
-                rutaActual != Rutas.INICIO
+                !isDarkTheme && rutaActual != Rutas.INICIO
         }
     }
 
@@ -79,7 +79,9 @@ fun MainScreen() {
         contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
             if (mostrarBarra) {
-                NavigationBar(containerColor = Color.White) {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
                     pestanas.forEach { pestana ->
                         NavigationBarItem(
                             selected = rutaActual == pestana.ruta,
@@ -100,11 +102,11 @@ fun MainScreen() {
                             },
                             label = { Text(pestana.titulo) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = VerdeOscuro,
-                                selectedTextColor = VerdeOscuro,
-                                indicatorColor = VerdeClaro,
-                                unselectedIconColor = TextoSecundario,
-                                unselectedTextColor = TextoSecundario
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
