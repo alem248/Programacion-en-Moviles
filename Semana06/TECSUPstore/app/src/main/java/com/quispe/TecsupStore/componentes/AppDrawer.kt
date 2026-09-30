@@ -9,28 +9,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-data class OpcionDrawer(
-    val titulo: String,
-    val icono: ImageVector
-)
 
 @Composable
 fun AppDrawer(
@@ -38,68 +31,77 @@ fun AppDrawer(
     navegarA: (String) -> Unit,
     cerrarDrawer: () -> Unit
 ) {
-    ModalDrawerSheet {
+    val moradoTecsup = Color(0xFF4A148C)
+    val moradoClaro = Color(0xFFEADDFF)
 
+    ModalDrawerSheet {
+        // Encabezado (Avatar "MR" o "AQ" e información)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.padding(end = 12.dp)
+                color = moradoClaro,
+                modifier = Modifier.padding(end = 16.dp)
             ) {
                 Text(
                     text = "AQ",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(16.dp)
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = moradoTecsup,
+                    modifier = Modifier.padding(14.dp)
                 )
             }
             Column {
                 Text(
                     text = "Alexandra Quispe",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "alexandra.quispe.m@tecsup.edu.pe",
+                    text = "ximenaperu13@gmail.com",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Gray
                 )
             }
         }
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-        Spacer(modifier = Modifier.height(12.dp))
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Lista de opciones del menú con sus respectivos íconos
-        val opciones = listOf(
-            OpcionDrawer("Inicio", Icons.Default.Home),
-            OpcionDrawer("Mis pedidos", Icons.Default.ShoppingBag),
-            OpcionDrawer("Favoritos", Icons.Default.Favorite),
-            OpcionDrawer("Perfil", Icons.Default.Person),
-            OpcionDrawer("Cerrar sesión", Icons.Default.ExitToApp)
-        )
+        val opciones = listOf("Inicio", "Mis pedidos", "Favoritos", "Perfil", "Cerrar sesion")
 
         opciones.forEach { opcion ->
-            val estaActivo = rutaActual == opcion.titulo
+            val estaActivo = rutaActual == opcion
 
             NavigationDrawerItem(
-                label = { Text(opcion.titulo) },
+                label = {
+                    Text(
+                        text = opcion,
+                        fontWeight = if (estaActivo) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
                 icon = {
                     Icon(
-                        imageVector = opcion.icono,
-                        contentDescription = opcion.titulo
+                        imageVector = Icons.Outlined.Circle,
+                        contentDescription = null,
+                        tint = if (estaActivo) moradoTecsup else Color.Gray
                     )
                 },
                 selected = estaActivo,
+                colors = NavigationDrawerItemDefaults.colors(
+                    selectedContainerColor = moradoClaro,
+                    selectedIconColor = moradoTecsup,
+                    selectedTextColor = moradoTecsup
+                ),
                 onClick = {
-                    navegarA(opcion.titulo)
+                    navegarA(opcion)
                     cerrarDrawer()
                 },
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
             )
         }
     }
