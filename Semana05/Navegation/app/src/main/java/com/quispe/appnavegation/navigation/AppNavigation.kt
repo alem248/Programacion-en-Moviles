@@ -6,7 +6,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.quispe.appnavegation.screens.*
 
 @Composable
 fun AppNavigation() {
@@ -14,7 +13,6 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
             HomeScreen(navController)
@@ -30,11 +28,9 @@ fun AppNavigation() {
             arguments = listOf(
                 navArgument(name = "itemId") {
                     type = NavType.IntType
-                    defaultValue = 0
                 }
             )
         ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getInt("itemId") ?: 0
             DetailScreen(navController, itemId)
         }
     }
