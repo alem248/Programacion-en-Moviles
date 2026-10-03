@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -29,6 +30,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -39,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,10 +57,11 @@ import com.tecsup.mibodega.ui.theme.VerdeBodega
 /**
  * Pantalla 3: Inicio / Productos (mockup "Cliente").
  * Usa Scaffold con topBar (badge del carrito) y bottomBar (NavigationBar
- * con 4 destinos). Un LazyRow de chips (Todos/Bebidas/Abarrotes/Snacks)
- * filtra la lista, que se dibuja con LazyColumn en dos columnas (se
- * agrupan de a dos productos por fila) para replicar el grid del mockup
- * sin perder el desplazamiento perezoso.
+ * con 4 destinos). Un campo de búsqueda filtra los productos en tiempo
+ * real por nombre y un LazyRow de chips (Todos/Bebidas/Abarrotes/Snacks)
+ * combina ese texto con la categoría seleccionada; el resultado se dibuja
+ * con LazyColumn en dos columnas (se agrupan de a dos productos por fila)
+ * para replicar el grid del mockup sin perder el desplazamiento perezoso.
  *
  * @param productos lista completa (fake por ahora, luego vendrá de un ViewModel)
  * @param cantidadCarrito para el badge del carrito en la topBar
@@ -71,10 +76,16 @@ fun PantallaInicio(
     onAgregarProducto: (Producto) -> Unit
 ) {
     var categoriaSeleccionada by remember { mutableStateOf(listaCategorias.first()) }
+    var textoBusqueda by remember { mutableStateOf("") }
 
-    // Filtro reactivo: al cambiar el chip vuelve a calcularse la lista.
+    // Filtro reactivo: se recalcula en cada tecla y al cambiar el chip,
+    // sin necesidad de ningún botón de "buscar".
     val productosFiltrados = productos.filter { producto ->
-        categoriaSeleccionada == "Todos" || producto.categoria == categoriaSeleccionada
+        val coincideCategoria =
+            categoriaSeleccionada == "Todos" || producto.categoria == categoriaSeleccionada
+        val coincideBusqueda =
+            producto.nombre.contains(textoBusqueda.trim(), ignoreCase = true)
+        coincideCategoria && coincideBusqueda
     }
 
     Scaffold(
@@ -104,6 +115,24 @@ fun PantallaInicio(
                 .padding(paddingInterno)
                 .padding(horizontal = 16.dp)
         ) {
+            OutlinedTextField(
+                value = textoBusqueda,
+                onValueChange = { textoBusqueda = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                placeholder = { Text("Buscar productos...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = GrisClaro,
+                    focusedContainerColor = GrisClaro,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = VerdeBodega
+                )
+            )
+
             Text(
                 text = "Productos destacados",
                 style = MaterialTheme.typography.titleMedium,
