@@ -18,6 +18,7 @@ import androidx.navigation.navArgument
 import com.tecsup.mibodega.ui.cliente.modelo.ItemCarrito
 import com.tecsup.mibodega.ui.cliente.modelo.Producto
 import com.tecsup.mibodega.ui.cliente.modelo.listaProductosFake
+import com.tecsup.mibodega.ui.cliente.screens.detalle.PantallaDetalleProducto
 import com.tecsup.mibodega.ui.cliente.screens.inicio.PantallaInicio
 import com.tecsup.mibodega.ui.cliente.screens.login.PantallaLogin
 import com.tecsup.mibodega.ui.cliente.screens.registro.PantallaCrearCuenta
@@ -77,7 +78,20 @@ fun AppNavegacion() {
         composable(
             route = Rutas.DETALLE,
             arguments = listOf(navArgument("productoId") { type = NavType.IntType })
-        ) { PantallaPlaceholder("Detalle") }
+        ) { backStackEntry ->
+            val productoId = backStackEntry.arguments?.getInt("productoId") ?: 0
+            val producto = listaProductosFake.first { it.id == productoId }
+
+            PantallaDetalleProducto(
+                producto = producto,
+                onVolver = { navController.popBackStack() },
+                onAgregarAlCarrito = { productoSeleccionado, cantidad ->
+                    carrito = agregarOSumarProducto(carrito, productoSeleccionado, cantidad)
+                    // Vuelve al listado con el carrito ya actualizado.
+                    navController.popBackStack()
+                }
+            )
+        }
         composable(Rutas.CARRITO) { PantallaPlaceholder("Carrito") }
         composable(Rutas.ENTREGA) { PantallaPlaceholder("Datos de entrega") }
         composable(
