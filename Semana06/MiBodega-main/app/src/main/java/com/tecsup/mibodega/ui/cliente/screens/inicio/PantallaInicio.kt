@@ -1,5 +1,7 @@
 package com.tecsup.mibodega.ui.cliente.screens.inicio
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
@@ -31,6 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -38,15 +43,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tecsup.mibodega.ui.cliente.modelo.Producto
+import com.tecsup.mibodega.ui.cliente.modelo.listaCategorias
 import com.tecsup.mibodega.ui.cliente.modelo.listaProductosFake
 import com.tecsup.mibodega.ui.componentes.ProductoCard
 import com.tecsup.mibodega.ui.theme.BodegaTheme
+import com.tecsup.mibodega.ui.theme.GrisClaro
 import com.tecsup.mibodega.ui.theme.VerdeBodega
 
 /**
  * Pantalla 3: Inicio / Productos (mockup "Cliente").
  * Usa Scaffold con topBar (badge del carrito) y bottomBar (NavigationBar
- * con 4 destinos). La lista se dibuja con LazyColumn en dos columnas (se
+ * con 4 destinos). Un LazyRow de chips (Todos/Bebidas/Abarrotes/Snacks)
+ * filtra la lista, que se dibuja con LazyColumn en dos columnas (se
  * agrupan de a dos productos por fila) para replicar el grid del mockup
  * sin perder el desplazamiento perezoso.
  *
@@ -62,6 +70,13 @@ fun PantallaInicio(
     onProductoClick: (Producto) -> Unit,
     onAgregarProducto: (Producto) -> Unit
 ) {
+    var categoriaSeleccionada by remember { mutableStateOf(listaCategorias.first()) }
+
+    // Filtro reactivo: al cambiar el chip vuelve a calcularse la lista.
+    val productosFiltrados = productos.filter { producto ->
+        categoriaSeleccionada == "Todos" || producto.categoria == categoriaSeleccionada
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -92,15 +107,28 @@ fun PantallaInicio(
             Text(
                 text = "Productos destacados",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                modifier = Modifier.padding(top = 20.dp, bottom = 4.dp)
             )
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                items(listaCategorias) { categoria ->
+                    ChipCategoria(
+                        texto = categoria,
+                        seleccionado = categoria == categoriaSeleccionada,
+                        onClick = { categoriaSeleccionada = categoria }
+                    )
+                }
+            }
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(productos.chunked(2)) { fila ->
+                items(productosFiltrados.chunked(2)) { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         fila.forEach { producto ->
                             ProductoCard(
@@ -118,6 +146,32 @@ fun PantallaInicio(
                 }
             }
         }
+    }
+}
+
+/**
+ * Chip de categoría del LazyRow: se pinta en verde cuando está activo.
+ */
+@Composable
+private fun ChipCategoria(
+    texto: String,
+    seleccionado: Boolean,
+    onClick: () -> Unit
+) {
+    val fondo = if (seleccionado) VerdeBodega else GrisClaro
+    val contenido = if (seleccionado) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Row(
+        modifier = Modifier
+            .background(fondo, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    ) {
+        Text(text = texto, color = contenido, fontWeight = FontWeight.Medium)
     }
 }
 
