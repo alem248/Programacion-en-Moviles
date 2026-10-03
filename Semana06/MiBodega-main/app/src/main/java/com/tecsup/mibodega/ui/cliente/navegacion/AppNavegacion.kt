@@ -19,6 +19,7 @@ import com.tecsup.mibodega.ui.cliente.modelo.ItemCarrito
 import com.tecsup.mibodega.ui.cliente.modelo.Producto
 import com.tecsup.mibodega.ui.cliente.modelo.listaProductosFake
 import com.tecsup.mibodega.ui.cliente.screens.detalle.PantallaDetalleProducto
+import com.tecsup.mibodega.ui.cliente.screens.carrito.PantallaCarrito
 import com.tecsup.mibodega.ui.cliente.screens.inicio.PantallaInicio
 import com.tecsup.mibodega.ui.cliente.screens.login.PantallaLogin
 import com.tecsup.mibodega.ui.cliente.screens.registro.PantallaCrearCuenta
@@ -92,7 +93,30 @@ fun AppNavegacion() {
                 }
             )
         }
-        composable(Rutas.CARRITO) { PantallaPlaceholder("Carrito") }
+        composable(Rutas.CARRITO) {
+            PantallaCarrito(
+                carrito = carrito,
+                onVolver = { navController.popBackStack() },
+                onIncrementar = { producto ->
+                    carrito = carrito.map {
+                        if (it.producto.id == producto.id) it.copy(cantidad = it.cantidad + 1) else it
+                    }
+                },
+                onDecrementar = { producto ->
+                    carrito = carrito.mapNotNull {
+                        when {
+                            it.producto.id != producto.id -> it
+                            it.cantidad > 1 -> it.copy(cantidad = it.cantidad - 1)
+                            else -> null // si llega a 0, se elimina de la lista
+                        }
+                    }
+                },
+                onEliminar = { producto ->
+                    carrito = carrito.filterNot { it.producto.id == producto.id }
+                },
+                onContinuarPedido = { navController.navigate(Rutas.ENTREGA) }
+            )
+        }
         composable(Rutas.ENTREGA) { PantallaPlaceholder("Datos de entrega") }
         composable(
             route = Rutas.CONFIRMACION,
