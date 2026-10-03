@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
@@ -11,6 +15,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.tecsup.mibodega.ui.cliente.modelo.ItemCarrito
+import com.tecsup.mibodega.ui.cliente.modelo.Producto
+import com.tecsup.mibodega.ui.cliente.modelo.listaProductosFake
+import com.tecsup.mibodega.ui.cliente.screens.inicio.PantallaInicio
 import com.tecsup.mibodega.ui.cliente.screens.login.PantallaLogin
 import com.tecsup.mibodega.ui.cliente.screens.registro.PantallaCrearCuenta
 
@@ -22,6 +30,9 @@ import com.tecsup.mibodega.ui.cliente.screens.registro.PantallaCrearCuenta
 @Composable
 fun AppNavegacion() {
     val navController = rememberNavController()
+
+    // El carrito vive aquí arriba (state hoisting), no en ninguna pantalla.
+    var carrito by remember { mutableStateOf<List<ItemCarrito>>(emptyList()) }
 
     NavHost(
         navController = navController,
@@ -50,7 +61,19 @@ fun AppNavegacion() {
                 }
             )
         }
-        composable(Rutas.INICIO) { PantallaPlaceholder("Inicio") }
+        composable(Rutas.INICIO) {
+            PantallaInicio(
+                productos = listaProductosFake,
+                cantidadCarrito = carrito.sumOf { it.cantidad },
+                onVerCarrito = { navController.navigate(Rutas.CARRITO) },
+                onProductoClick = { producto ->
+                    navController.navigate(Rutas.detalle(producto.id))
+                },
+                onAgregarProducto = { producto ->
+                    carrito = agregarOSumarProducto(carrito, producto, cantidad = 1)
+                }
+            )
+        }
         composable(
             route = Rutas.DETALLE,
             arguments = listOf(navArgument("productoId") { type = NavType.IntType })
@@ -74,5 +97,24 @@ private fun PantallaPlaceholder(nombre: String) {
         contentAlignment = Alignment.Center
     ) {
         Text(text = nombre)
+    }
+}
+
+/**
+ * Si el producto ya está en el carrito, le suma la cantidad;
+ * si no, lo agrega como un ItemCarrito nuevo.
+ */
+private fun agregarOSumarProducto(
+    carrito: List<ItemCarrito>,
+    producto: Producto,
+    cantidad: Int
+): List<ItemCarrito> {
+    val itemExistente = carrito.find { it.producto.id == producto.id }
+    return if (itemExistente != null) {
+        carrito.map {
+            if (it.producto.id == producto.id) it.copy(cantidad = it.cantidad + cantidad) else it
+        }
+    } else {
+        carrito + ItemCarrito(producto = producto, cantidad = cantidad)
     }
 }
