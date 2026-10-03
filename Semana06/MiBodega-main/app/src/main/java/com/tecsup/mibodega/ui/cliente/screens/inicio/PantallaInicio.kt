@@ -9,17 +9,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -41,16 +45,20 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tecsup.mibodega.ui.cliente.modelo.Producto
 import com.tecsup.mibodega.ui.cliente.modelo.listaCategorias
 import com.tecsup.mibodega.ui.cliente.modelo.listaProductosFake
+import com.tecsup.mibodega.ui.componentes.BotonSecundario
 import com.tecsup.mibodega.ui.componentes.ProductoCard
 import com.tecsup.mibodega.ui.theme.BodegaTheme
+import com.tecsup.mibodega.ui.theme.GrisBorde
 import com.tecsup.mibodega.ui.theme.GrisClaro
 import com.tecsup.mibodega.ui.theme.VerdeBodega
 
@@ -123,6 +131,16 @@ fun PantallaInicio(
                     .padding(top = 8.dp),
                 placeholder = { Text("Buscar productos...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (textoBusqueda.isNotEmpty()) {
+                        IconButton(onClick = { textoBusqueda = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Limpiar búsqueda"
+                            )
+                        }
+                    }
+                },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -152,24 +170,35 @@ fun PantallaInicio(
                 }
             }
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(productosFiltrados.chunked(2)) { fila ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        fila.forEach { producto ->
-                            ProductoCard(
-                                producto = producto,
-                                onClick = { onProductoClick(producto) },
-                                onAgregar = { onAgregarProducto(producto) },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        if (fila.size == 1) {
-                            // Deja libre la última celda cuando hay número impar.
-                            Spacer(Modifier.weight(1f))
+            if (productosFiltrados.isEmpty()) {
+                SinResultados(
+                    busqueda = textoBusqueda.trim(),
+                    modifier = Modifier.weight(1f),
+                    onLimpiar = {
+                        textoBusqueda = ""
+                        categoriaSeleccionada = listaCategorias.first()
+                    }
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(productosFiltrados.chunked(2)) { fila ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            fila.forEach { producto ->
+                                ProductoCard(
+                                    producto = producto,
+                                    onClick = { onProductoClick(producto) },
+                                    onAgregar = { onAgregarProducto(producto) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (fila.size == 1) {
+                                // Deja libre la última celda cuando hay número impar.
+                                Spacer(Modifier.weight(1f))
+                            }
                         }
                     }
                 }
@@ -201,6 +230,60 @@ private fun ChipCategoria(
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         Text(text = texto, color = contenido, fontWeight = FontWeight.Medium)
+    }
+}
+
+/**
+ * Mensaje cuando el buscador (o la categoría) no devuelve productos,
+ * con un botón para limpiar la búsqueda y volver a la lista completa.
+ */
+@Composable
+private fun SinResultados(
+    busqueda: String,
+    modifier: Modifier = Modifier,
+    onLimpiar: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.SearchOff,
+            contentDescription = null,
+            tint = GrisBorde,
+            modifier = Modifier.size(56.dp)
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            text = if (busqueda.isEmpty()) {
+                "No hay productos en esta categoría"
+            } else {
+                "No encontramos productos para \"$busqueda\""
+            },
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(
+            text = "Prueba con otro nombre o vuelve a ver todos los productos.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        BotonSecundario(
+            texto = "Limpiar búsqueda",
+            onClick = onLimpiar
+        )
     }
 }
 
