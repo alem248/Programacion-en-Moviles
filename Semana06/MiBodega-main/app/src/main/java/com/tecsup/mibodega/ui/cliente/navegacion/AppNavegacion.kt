@@ -11,6 +11,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.tecsup.mibodega.ui.cliente.screens.login.PantallaLogin
+import com.tecsup.mibodega.ui.cliente.screens.registro.PantallaCrearCuenta
 
 /**
  * Estructura de navegación de la app cliente (NavHost + estado del carrito).
@@ -25,8 +27,29 @@ fun AppNavegacion() {
         navController = navController,
         startDestination = Rutas.LOGIN
     ) {
-        composable(Rutas.LOGIN) { PantallaPlaceholder("Login") }
-        composable(Rutas.CREAR_CUENTA) { PantallaPlaceholder("Crear cuenta") }
+        composable(Rutas.LOGIN) {
+            PantallaLogin(
+                onRegistrarse = { navController.navigate(Rutas.CREAR_CUENTA) },
+                onIniciarSesion = {
+                    // Login -> Inicio: se limpia el back stack para no
+                    // volver a la pantalla de acceso con el botón atrás.
+                    navController.navigate(Rutas.INICIO) {
+                        popUpTo(Rutas.LOGIN) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Rutas.CREAR_CUENTA) {
+            PantallaCrearCuenta(
+                onVolver = { navController.popBackStack() },
+                onCrearCuenta = { _, _, _, _ ->
+                    navController.navigate(Rutas.INICIO) {
+                        popUpTo(Rutas.LOGIN) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Rutas.INICIO) { PantallaPlaceholder("Inicio") }
         composable(
             route = Rutas.DETALLE,
