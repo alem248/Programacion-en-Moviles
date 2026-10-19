@@ -29,8 +29,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val sesion: SesionViewModel = viewModel(factory = factory)
             val rol by sesion.rolActivo.collectAsState()
+            val modoOscuro by sesion.modoOscuro.collectAsState()
 
-            CafeTheme(rol = rol) {
+            CafeTheme(rol = rol, darkTheme = modoOscuro) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavCafe(
                         factory = factory,

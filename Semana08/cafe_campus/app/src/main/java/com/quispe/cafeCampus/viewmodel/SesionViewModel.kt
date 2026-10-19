@@ -34,6 +34,9 @@ class SesionViewModel(
     val modoOscuro: StateFlow<Boolean> = prefs.modoOscuro
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val recibirPedidos: StateFlow<Boolean> = prefs.recibirPedidos
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     init {
         viewModelScope.launch {
             val perfil = prefs.perfilActivo.first()
@@ -89,6 +92,20 @@ class SesionViewModel(
     fun cambiarModoOscuro(valor: Boolean) {
         viewModelScope.launch {
             prefs.guardarModoOscuro(valor)
+        }
+    }
+
+    fun cambiarRecibirPedidos(valor: Boolean) {
+        viewModelScope.launch {
+            prefs.guardarRecibirPedidos(valor)
+        }
+    }
+
+    fun cambiarPerfil(rol: Rol) {
+        viewModelScope.launch {
+            prefs.guardarPerfil(rol)
+            _usuarioActual.value = repo.usuarioPorRol(rol)
+            _rolActivo.value = rol
         }
     }
 }
