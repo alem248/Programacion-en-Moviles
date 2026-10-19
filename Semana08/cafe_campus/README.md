@@ -1,4 +1,4 @@
-# CafeCampus ☕
+# CafeCampus 
 
 App de pedidos para la cafetería del campus: un **Estudiante** arma su pedido, lo confirma y sigue su estado en tiempo real; un **Administrador** atiende los pedidos, gestiona el menú y revisa las ventas del día. Arquitectura **MVVM + Room + Jetpack Compose**, con dos perfiles en el mismo dispositivo y sesión recordada con DataStore.
 
