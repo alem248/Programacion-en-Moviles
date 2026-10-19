@@ -8,6 +8,7 @@ import com.quispe.cafeCampus.data.local.entity.Usuario
 import com.quispe.cafeCampus.data.local.relation.PedidoConDetalle
 import com.quispe.cafeCampus.model.EstadoPedido
 import com.quispe.cafeCampus.model.ItemCarrito
+import com.quispe.cafeCampus.model.Rol
 import kotlinx.coroutines.flow.Flow
 
 class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
@@ -18,6 +19,9 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
 
     override suspend fun login(correo: String, clave: String): Usuario? =
         usuarioDao.login(correo, clave)
+
+    override suspend fun usuarioPorRol(rol: Rol): Usuario? =
+        usuarioDao.porRol(rol.name)
 
     override fun observarProductos(): Flow<List<Producto>> = productoDao.observarTodos()
 

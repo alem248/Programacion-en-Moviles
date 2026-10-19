@@ -5,12 +5,14 @@ import com.quispe.cafeCampus.data.local.entity.Usuario
 import com.quispe.cafeCampus.data.local.relation.PedidoConDetalle
 import com.quispe.cafeCampus.model.EstadoPedido
 import com.quispe.cafeCampus.model.ItemCarrito
+import com.quispe.cafeCampus.model.Rol
 import kotlinx.coroutines.flow.Flow
 
 interface CafeRepository {
 
     // Usuarios
     suspend fun login(correo: String, clave: String): Usuario?
+    suspend fun usuarioPorRol(rol: Rol): Usuario?
 
     // Productos (ejemplo resuelto)
     fun observarProductos(): Flow<List<Producto>>
