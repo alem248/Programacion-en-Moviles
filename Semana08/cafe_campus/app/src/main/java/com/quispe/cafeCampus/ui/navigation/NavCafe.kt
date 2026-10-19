@@ -15,6 +15,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.quispe.cafeCampus.model.Rol
+import com.quispe.cafeCampus.ui.admin.PanelScreen
+import com.quispe.cafeCampus.ui.admin.PedidosAdminScreen
 import com.quispe.cafeCampus.ui.cliente.ConfirmarPedidoScreen
 import com.quispe.cafeCampus.ui.cliente.DetalleProductoScreen
 import com.quispe.cafeCampus.ui.cliente.LoginScreen
@@ -23,6 +26,8 @@ import com.quispe.cafeCampus.ui.cliente.MisPedidosScreen
 import com.quispe.cafeCampus.ui.cliente.SeguimientoScreen
 import com.quispe.cafeCampus.ui.cliente.SplashScreen
 import com.quispe.cafeCampus.viewmodel.MenuViewModel
+import com.quispe.cafeCampus.viewmodel.PanelAdminViewModel
+import com.quispe.cafeCampus.viewmodel.PedidosAdminViewModel
 import com.quispe.cafeCampus.viewmodel.PedidosClienteViewModel
 import com.quispe.cafeCampus.viewmodel.SesionViewModel
 
@@ -36,6 +41,17 @@ fun NavCafe(
     // Compartida entre Menú, Detalle y Confirmar para que el carrito se mantenga
     val menuVm: MenuViewModel = viewModel(factory = factory)
     val pedidosVm: PedidosClienteViewModel = viewModel(factory = factory)
+    val panelVm: PanelAdminViewModel = viewModel(factory = factory)
+    val pedidosAdminVm: PedidosAdminViewModel = viewModel(factory = factory)
+
+    fun destinoPrincipal(): String =
+        if (sesion.rolActivo.value == Rol.ADMIN) Rutas.PANEL else Rutas.MENU
+
+    fun irADestinoPrincipal(popUpToRuta: String = Rutas.SPLASH) {
+        navController.navigate(destinoPrincipal()) {
+            popUpTo(popUpToRuta) { inclusive = true }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -50,10 +66,12 @@ fun NavCafe(
 
             LaunchedEffect(tiempoCumplido, lista) {
                 if (tiempoCumplido && lista) {
-                    val destino =
-                        if (sesion.usuarioActual.value != null) Rutas.MENU else Rutas.LOGIN
-                    navController.navigate(destino) {
-                        popUpTo(Rutas.SPLASH) { inclusive = true }
+                    if (sesion.usuarioActual.value != null) {
+                        irADestinoPrincipal()
+                    } else {
+                        navController.navigate(Rutas.LOGIN) {
+                            popUpTo(Rutas.SPLASH) { inclusive = true }
+                        }
                     }
                 }
             }
@@ -62,12 +80,7 @@ fun NavCafe(
         composable(Rutas.LOGIN) {
             LoginScreen(
                 vm = sesion,
-                onIngresar = {
-                    // TODO (commit 10): el administrador debe ir al Panel de control
-                    navController.navigate(Rutas.MENU) {
-                        popUpTo(Rutas.LOGIN) { inclusive = true }
-                    }
-                }
+                onIngresar = { irADestinoPrincipal(Rutas.LOGIN) }
             )
         }
 
@@ -117,7 +130,21 @@ fun NavCafe(
                 onBack = { navController.popBackStack() }
             )
         }
-        // TODO (Pasos 10-12): Panel, pedidos admin, detalle admin, menú admin, ajustes
+        composable(Rutas.PANEL) {
+            PanelScreen(
+                vm = panelVm,
+                onPedidos = { navController.navigate(Rutas.PEDIDOS_ADMIN) }
+            )
+        }
+
+        composable(Rutas.PEDIDOS_ADMIN) {
+            PedidosAdminScreen(
+                vm = pedidosAdminVm,
+                onPedido = { /* TODO (commit 11): detalle del pedido */ },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        // TODO (Pasos 11-12): detalle pedido admin, menú admin, formulario, ajustes
 
         composable(
             route = Rutas.DETALLE,

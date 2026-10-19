@@ -19,7 +19,11 @@ class CafeViewModelFactory(
                 MenuViewModel(repo) as T
             modelClass.isAssignableFrom(PedidosClienteViewModel::class.java) ->
                 PedidosClienteViewModel(repo, prefs) as T
-            // TODO (Pasos 10-11): registrar los ViewModels de administración
+            modelClass.isAssignableFrom(PanelAdminViewModel::class.java) ->
+                PanelAdminViewModel(repo) as T
+            modelClass.isAssignableFrom(PedidosAdminViewModel::class.java) ->
+                PedidosAdminViewModel(repo) as T
+            // TODO (commit 11): registrar MenuAdminViewModel
             else -> throw IllegalArgumentException("ViewModel desconocida: ${modelClass.name}")
         }
     }

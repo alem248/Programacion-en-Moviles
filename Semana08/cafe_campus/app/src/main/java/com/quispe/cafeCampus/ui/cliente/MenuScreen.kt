@@ -21,7 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Badge
@@ -75,7 +75,7 @@ fun MenuScreen(
             actions = {
                 IconButton(onClick = onMisPedidos) {
                     Icon(
-                        imageVector = Icons.Default.ReceiptLong,
+                        imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                         contentDescription = "Mis pedidos",
                         tint = MaterialTheme.colorScheme.primary
                     )
