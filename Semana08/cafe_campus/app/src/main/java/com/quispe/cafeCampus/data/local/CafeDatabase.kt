@@ -4,15 +4,24 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.quispe.cafeCampus.data.local.dao.PedidoDao
 import com.quispe.cafeCampus.data.local.dao.ProductoDao
+import com.quispe.cafeCampus.data.local.dao.UsuarioDao
+import com.quispe.cafeCampus.data.local.entity.DetallePedido
+import com.quispe.cafeCampus.data.local.entity.Pedido
 import com.quispe.cafeCampus.data.local.entity.Producto
+import com.quispe.cafeCampus.data.local.entity.Usuario
 
-@Database(entities = [Producto::class], version = 1, exportSchema = false)
+@Database(
+    entities = [Producto::class, Usuario::class, Pedido::class, DetallePedido::class],
+    version = 2,
+    exportSchema = false
+)
 abstract class CafeDatabase : RoomDatabase() {
 
     abstract fun productoDao(): ProductoDao
-
-    // TODO (Paso 3): registrar Usuario, Pedido, DetallePedido y sus DAOs
+    abstract fun usuarioDao(): UsuarioDao
+    abstract fun pedidoDao(): PedidoDao
 
     companion object {
         @Volatile
@@ -24,7 +33,9 @@ abstract class CafeDatabase : RoomDatabase() {
                     context.applicationContext,
                     CafeDatabase::class.java,
                     "cafe_campus.db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

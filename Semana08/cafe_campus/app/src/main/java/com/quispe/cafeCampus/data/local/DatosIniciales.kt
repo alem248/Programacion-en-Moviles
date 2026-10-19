@@ -1,12 +1,16 @@
 package com.quispe.cafeCampus.data.local
 
 import com.quispe.cafeCampus.data.local.entity.Producto
+import com.quispe.cafeCampus.data.local.entity.Usuario
+import com.quispe.cafeCampus.model.Rol
 
 object DatosIniciales {
 
     suspend fun sembrar(db: CafeDatabase) {
         val productoDao = db.productoDao()
-        if (productoDao.contar() == 0) {
+        val usuarioDao = db.usuarioDao()
+
+        if (usuarioDao.contar() == 0) {
             productoDao.insertar(
                 Producto(
                     nombre = "Café americano",
@@ -61,7 +65,23 @@ object DatosIniciales {
                     icono = "botella"
                 )
             )
+
+            usuarioDao.insertar(
+                Usuario(
+                    nombre = "Juan Pérez",
+                    correo = "juan@campus.test",
+                    clave = "1234",
+                    rol = Rol.CLIENTE.name
+                )
+            )
+            usuarioDao.insertar(
+                Usuario(
+                    nombre = "Ana Torres",
+                    correo = "admin@cafe.test",
+                    clave = "admin",
+                    rol = Rol.ADMIN.name
+                )
+            )
         }
-        // TODO (Paso 3): sembrar usuarios si usuarioDao().contar() == 0
     }
 }
