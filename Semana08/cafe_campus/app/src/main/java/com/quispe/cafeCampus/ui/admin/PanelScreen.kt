@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -39,7 +40,8 @@ import com.quispe.cafeCampus.viewmodel.PanelAdminViewModel
 @Composable
 fun PanelScreen(
     vm: PanelAdminViewModel,
-    onPedidos: () -> Unit
+    onPedidos: () -> Unit,
+    onMenu: () -> Unit = {}
 ) {
     val nuevos by vm.nuevos.collectAsState()
     val preparando by vm.preparando.collectAsState()
@@ -51,6 +53,13 @@ fun PanelScreen(
         AppTopBar(
             titulo = "Panel de control",
             actions = {
+                IconButton(onClick = onMenu) {
+                    Icon(
+                        imageVector = Icons.Default.RestaurantMenu,
+                        contentDescription = "Menú",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
                 IconButton(onClick = onPedidos) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ReceiptLong,

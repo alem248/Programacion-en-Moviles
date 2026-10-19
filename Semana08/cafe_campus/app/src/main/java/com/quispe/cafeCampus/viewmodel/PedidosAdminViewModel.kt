@@ -28,6 +28,20 @@ class PedidosAdminViewModel(private val repo: CafeRepository) : ViewModel() {
         _estadoSeleccionado.value = estado
     }
 
+    private val observadores = mutableMapOf<Int, StateFlow<PedidoConDetalle?>>()
+
+    fun pedido(id: Int): StateFlow<PedidoConDetalle?> =
+        observadores.getOrPut(id) {
+            repo.observarPedido(id)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        }
+
+    fun cambiarEstado(pedidoId: Int, estado: EstadoPedido) {
+        viewModelScope.launch {
+            repo.cambiarEstado(pedidoId, estado)
+        }
+    }
+
     fun avanzar(pedido: PedidoConDetalle) {
         viewModelScope.launch {
             val actual = EstadoPedido.valueOf(pedido.pedido.estado)

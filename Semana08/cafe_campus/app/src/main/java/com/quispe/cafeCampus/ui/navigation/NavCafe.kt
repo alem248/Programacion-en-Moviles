@@ -16,6 +16,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.quispe.cafeCampus.model.Rol
+import com.quispe.cafeCampus.ui.admin.DetallePedidoAdminScreen
+import com.quispe.cafeCampus.ui.admin.FormularioProductoScreen
+import com.quispe.cafeCampus.ui.admin.MenuAdminScreen
 import com.quispe.cafeCampus.ui.admin.PanelScreen
 import com.quispe.cafeCampus.ui.admin.PedidosAdminScreen
 import com.quispe.cafeCampus.ui.cliente.ConfirmarPedidoScreen
@@ -25,6 +28,7 @@ import com.quispe.cafeCampus.ui.cliente.MenuScreen
 import com.quispe.cafeCampus.ui.cliente.MisPedidosScreen
 import com.quispe.cafeCampus.ui.cliente.SeguimientoScreen
 import com.quispe.cafeCampus.ui.cliente.SplashScreen
+import com.quispe.cafeCampus.viewmodel.MenuAdminViewModel
 import com.quispe.cafeCampus.viewmodel.MenuViewModel
 import com.quispe.cafeCampus.viewmodel.PanelAdminViewModel
 import com.quispe.cafeCampus.viewmodel.PedidosAdminViewModel
@@ -43,6 +47,7 @@ fun NavCafe(
     val pedidosVm: PedidosClienteViewModel = viewModel(factory = factory)
     val panelVm: PanelAdminViewModel = viewModel(factory = factory)
     val pedidosAdminVm: PedidosAdminViewModel = viewModel(factory = factory)
+    val menuAdminVm: MenuAdminViewModel = viewModel(factory = factory)
 
     fun destinoPrincipal(): String =
         if (sesion.rolActivo.value == Rol.ADMIN) Rutas.PANEL else Rutas.MENU
@@ -133,18 +138,60 @@ fun NavCafe(
         composable(Rutas.PANEL) {
             PanelScreen(
                 vm = panelVm,
-                onPedidos = { navController.navigate(Rutas.PEDIDOS_ADMIN) }
+                onPedidos = { navController.navigate(Rutas.PEDIDOS_ADMIN) },
+                onMenu = { navController.navigate(Rutas.MENU_ADMIN) }
             )
         }
 
         composable(Rutas.PEDIDOS_ADMIN) {
             PedidosAdminScreen(
                 vm = pedidosAdminVm,
-                onPedido = { /* TODO (commit 11): detalle del pedido */ },
+                onPedido = { pedidoId ->
+                    navController.navigate(Rutas.detallePedidoAdmin(pedidoId))
+                },
                 onBack = { navController.popBackStack() }
             )
         }
-        // TODO (Pasos 11-12): detalle pedido admin, menú admin, formulario, ajustes
+
+        composable(
+            route = Rutas.DETALLE_PEDIDO_ADMIN,
+            arguments = listOf(navArgument("pedidoId") { type = NavType.IntType })
+        ) { entry ->
+            val pedidoId = entry.arguments?.getInt("pedidoId") ?: -1
+            DetallePedidoAdminScreen(
+                vm = pedidosAdminVm,
+                pedidoId = pedidoId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Rutas.MENU_ADMIN) {
+            MenuAdminScreen(
+                vm = menuAdminVm,
+                onAgregar = { navController.navigate(Rutas.formularioProducto()) },
+                onEditar = { productoId ->
+                    navController.navigate(Rutas.formularioProducto(productoId))
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Rutas.FORMULARIO_PRODUCTO,
+            arguments = listOf(navArgument("productoId") {
+                type = NavType.IntType
+                defaultValue = -1
+            })
+        ) { entry ->
+            val productoId = entry.arguments?.getInt("productoId")?.takeIf { it > 0 }
+            FormularioProductoScreen(
+                vm = menuAdminVm,
+                productoId = productoId,
+                onGuardado = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        // TODO (commit 12): ruta de Ajustes y navegación inferior
 
         composable(
             route = Rutas.DETALLE,
