@@ -13,6 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.quispe.cafeCampus.ui.cliente.DetalleProductoScreen
 import com.quispe.cafeCampus.ui.cliente.LoginScreen
 import com.quispe.cafeCampus.ui.cliente.MenuScreen
 import com.quispe.cafeCampus.ui.cliente.SplashScreen
@@ -26,6 +27,8 @@ fun NavCafe(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
+    // Compartida entre Menú, Detalle y Confirmar para que el carrito se mantenga
+    val menuVm: MenuViewModel = viewModel(factory = factory)
 
     NavHost(
         navController = navController,
@@ -62,12 +65,22 @@ fun NavCafe(
         }
 
         composable(Rutas.MENU) {
-            val vm: MenuViewModel = viewModel(factory = factory)
             MenuScreen(
-                vm = vm,
-                onProducto = { /* TODO (commit 8): navegar al detalle */ }
+                vm = menuVm,
+                onProducto = { productoId ->
+                    navController.navigate(Rutas.detalle(productoId))
+                }
             )
         }
-        // TODO (Pasos 8-12): Detalle, Confirmar, Seguimiento, MisPedidos, Panel, etc.
+
+        composable(Rutas.DETALLE) { entry ->
+            val productoId = entry.arguments?.getInt("productoId") ?: -1
+            DetalleProductoScreen(
+                vm = menuVm,
+                productoId = productoId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        // TODO (Pasos 9-12): Confirmar, Seguimiento, MisPedidos, Panel, etc.
     }
 }

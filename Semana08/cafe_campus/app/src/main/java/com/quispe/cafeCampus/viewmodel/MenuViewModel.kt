@@ -51,9 +51,6 @@ class MenuViewModel(private val repo: CafeRepository) : ViewModel() {
 
     fun total(): Double = _carrito.value.sumOf { it.subtotal }
 
-    fun totalCarrito(): StateFlow<Int> =
-        MutableStateFlow(_carrito.value.sumOf { it.cantidad }).asStateFlow()
-
     fun contarCarrito(): Int = _carrito.value.sumOf { it.cantidad }
 
     fun seleccionarCategoria(categoria: String) {
