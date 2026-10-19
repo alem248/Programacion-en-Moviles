@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Badge
@@ -49,7 +50,9 @@ import com.quispe.cafeCampus.viewmodel.MenuViewModel
 @Composable
 fun MenuScreen(
     vm: MenuViewModel,
-    onProducto: (Int) -> Unit
+    onProducto: (Int) -> Unit,
+    onConfirmar: () -> Unit = {},
+    onMisPedidos: () -> Unit = {}
 ) {
     val productos by vm.productos.collectAsState()
     val categoria by vm.categoriaSeleccionada.collectAsState()
@@ -70,11 +73,18 @@ fun MenuScreen(
         AppTopBar(
             titulo = "CafeCampus",
             actions = {
+                IconButton(onClick = onMisPedidos) {
+                    Icon(
+                        imageVector = Icons.Default.ReceiptLong,
+                        contentDescription = "Mis pedidos",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
                 BadgedBox(
                     badge = { if (carrito.isNotEmpty()) Badge { Text("${carrito.sumOf { it.cantidad }}") } },
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
-                    IconButton(onClick = { /* TODO (Paso 7): abrir carrito */ }) {
+                    IconButton(onClick = onConfirmar) {
                         Icon(
                             imageVector = Icons.Default.ShoppingBag,
                             contentDescription = "Bolsa",

@@ -10,14 +10,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.quispe.cafeCampus.ui.cliente.ConfirmarPedidoScreen
 import com.quispe.cafeCampus.ui.cliente.DetalleProductoScreen
 import com.quispe.cafeCampus.ui.cliente.LoginScreen
 import com.quispe.cafeCampus.ui.cliente.MenuScreen
+import com.quispe.cafeCampus.ui.cliente.MisPedidosScreen
+import com.quispe.cafeCampus.ui.cliente.SeguimientoScreen
 import com.quispe.cafeCampus.ui.cliente.SplashScreen
 import com.quispe.cafeCampus.viewmodel.MenuViewModel
+import com.quispe.cafeCampus.viewmodel.PedidosClienteViewModel
 import com.quispe.cafeCampus.viewmodel.SesionViewModel
 
 @Composable
@@ -29,6 +35,7 @@ fun NavCafe(
     val navController = rememberNavController()
     // Compartida entre Menú, Detalle y Confirmar para que el carrito se mantenga
     val menuVm: MenuViewModel = viewModel(factory = factory)
+    val pedidosVm: PedidosClienteViewModel = viewModel(factory = factory)
 
     NavHost(
         navController = navController,
@@ -69,11 +76,53 @@ fun NavCafe(
                 vm = menuVm,
                 onProducto = { productoId ->
                     navController.navigate(Rutas.detalle(productoId))
-                }
+                },
+                onConfirmar = { navController.navigate(Rutas.CONFIRMAR) },
+                onMisPedidos = { navController.navigate(Rutas.MIS_PEDIDOS) }
             )
         }
 
-        composable(Rutas.DETALLE) { entry ->
+        composable(Rutas.CONFIRMAR) {
+            ConfirmarPedidoScreen(
+                menuVm = menuVm,
+                vm = pedidosVm,
+                onConfirmado = { pedidoId ->
+                    navController.navigate(Rutas.seguimiento(pedidoId.toInt())) {
+                        popUpTo(Rutas.CONFIRMAR) { inclusive = true }
+                    }
+                },
+                onSeguirPidiendo = { navController.popBackStack(Rutas.MENU, false) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Rutas.SEGUIMIENTO,
+            arguments = listOf(navArgument("pedidoId") { type = NavType.IntType })
+        ) { entry ->
+            val pedidoId = entry.arguments?.getInt("pedidoId") ?: -1
+            SeguimientoScreen(
+                vm = pedidosVm,
+                pedidoId = pedidoId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Rutas.MIS_PEDIDOS) {
+            MisPedidosScreen(
+                vm = pedidosVm,
+                onPedido = { pedidoId ->
+                    navController.navigate(Rutas.seguimiento(pedidoId))
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        // TODO (Pasos 10-12): Panel, pedidos admin, detalle admin, menú admin, ajustes
+
+        composable(
+            route = Rutas.DETALLE,
+            arguments = listOf(navArgument("productoId") { type = NavType.IntType })
+        ) { entry ->
             val productoId = entry.arguments?.getInt("productoId") ?: -1
             DetalleProductoScreen(
                 vm = menuVm,
@@ -81,6 +130,5 @@ fun NavCafe(
                 onBack = { navController.popBackStack() }
             )
         }
-        // TODO (Pasos 9-12): Confirmar, Seguimiento, MisPedidos, Panel, etc.
     }
 }
