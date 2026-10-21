@@ -41,7 +41,8 @@ import com.quispe.cafeCampus.viewmodel.PanelAdminViewModel
 fun PanelScreen(
     vm: PanelAdminViewModel,
     onPedidos: () -> Unit,
-    onMenu: () -> Unit = {}
+    onMenu: () -> Unit = {},
+    onReporte: () -> Unit = {}
 ) {
     val nuevos by vm.nuevos.collectAsState()
     val preparando by vm.preparando.collectAsState()
@@ -201,6 +202,12 @@ fun PanelScreen(
             CafeButton(
                 texto = "Ver todos los pedidos",
                 onClick = onPedidos,
+                outlined = true
+            )
+            Spacer(Modifier.height(10.dp))
+            CafeButton(
+                texto = "Ver reporte del día",
+                onClick = onReporte,
                 outlined = true
             )
             Spacer(Modifier.height(24.dp))

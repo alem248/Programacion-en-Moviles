@@ -9,6 +9,18 @@ import com.quispe.cafeCampus.data.local.entity.Pedido
 import com.quispe.cafeCampus.data.local.relation.PedidoConDetalle
 import kotlinx.coroutines.flow.Flow
 
+/** Fila del reporte: producto más vendido del día. */
+data class FilaMasVendido(
+    val nombre: String,
+    val cantidadTotal: Int
+)
+
+/** Fila del reporte: total vendido por forma de pago. */
+data class FilaTotalPorPago(
+    val pago: String,
+    val total: Double
+)
+
 @Dao
 interface PedidoDao {
 
@@ -45,4 +57,24 @@ interface PedidoDao {
 
     @Query("SELECT COUNT(*) FROM pedidos WHERE estado = :estado")
     fun cantidadPorEstado(estado: String): Flow<Int>
+
+    @Query(
+        "SELECT dp.nombreProducto AS nombre, SUM(dp.cantidad) AS cantidadTotal " +
+            "FROM detalle_pedido dp " +
+            "JOIN pedidos p ON p.id = dp.pedidoId " +
+            "WHERE p.fecha >= :inicio AND p.estado != 'CANCELADO' " +
+            "GROUP BY dp.nombreProducto " +
+            "ORDER BY cantidadTotal DESC " +
+            "LIMIT 1"
+    )
+    fun masVendido(inicio: Long): Flow<List<FilaMasVendido>>
+
+    @Query(
+        "SELECT pago, SUM(total) AS total " +
+            "FROM pedidos " +
+            "WHERE fecha >= :inicio AND estado != 'CANCELADO' " +
+            "GROUP BY pago " +
+            "ORDER BY total DESC"
+    )
+    fun totalesPorPago(inicio: Long): Flow<List<FilaTotalPorPago>>
 }
