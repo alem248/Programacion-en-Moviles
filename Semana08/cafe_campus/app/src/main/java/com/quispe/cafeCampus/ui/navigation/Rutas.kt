@@ -3,6 +3,7 @@ package com.quispe.cafeCampus.ui.navigation
 object Rutas {
     const val SPLASH = "splash"
     const val LOGIN = "login"
+    const val REGISTRO = "registro"
     const val MENU = "menu"
     const val DETALLE = "detalle/{productoId}"
     const val CONFIRMAR = "confirmar"
@@ -13,6 +14,7 @@ object Rutas {
     const val DETALLE_PEDIDO_ADMIN = "detalle_pedido_admin/{pedidoId}"
     const val MENU_ADMIN = "menu_admin"
     const val FORMULARIO_PRODUCTO = "formulario_producto?productoId={productoId}"
+    const val REPORTE = "reporte"
     const val AJUSTES = "ajustes"
 
     fun detalle(productoId: Int) = "detalle/$productoId"

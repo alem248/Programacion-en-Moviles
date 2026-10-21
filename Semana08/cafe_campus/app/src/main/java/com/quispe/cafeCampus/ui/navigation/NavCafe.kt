@@ -36,11 +36,13 @@ import com.quispe.cafeCampus.ui.admin.FormularioProductoScreen
 import com.quispe.cafeCampus.ui.admin.MenuAdminScreen
 import com.quispe.cafeCampus.ui.admin.PanelScreen
 import com.quispe.cafeCampus.ui.admin.PedidosAdminScreen
+import com.quispe.cafeCampus.ui.admin.ReporteScreen
 import com.quispe.cafeCampus.ui.cliente.ConfirmarPedidoScreen
 import com.quispe.cafeCampus.ui.cliente.DetalleProductoScreen
 import com.quispe.cafeCampus.ui.cliente.LoginScreen
 import com.quispe.cafeCampus.ui.cliente.MenuScreen
 import com.quispe.cafeCampus.ui.cliente.MisPedidosScreen
+import com.quispe.cafeCampus.ui.cliente.RegistroScreen
 import com.quispe.cafeCampus.ui.cliente.SeguimientoScreen
 import com.quispe.cafeCampus.ui.cliente.SplashScreen
 import com.quispe.cafeCampus.viewmodel.MenuAdminViewModel
@@ -48,6 +50,8 @@ import com.quispe.cafeCampus.viewmodel.MenuViewModel
 import com.quispe.cafeCampus.viewmodel.PanelAdminViewModel
 import com.quispe.cafeCampus.viewmodel.PedidosAdminViewModel
 import com.quispe.cafeCampus.viewmodel.PedidosClienteViewModel
+import com.quispe.cafeCampus.viewmodel.RegistroViewModel
+import com.quispe.cafeCampus.viewmodel.ReporteViewModel
 import com.quispe.cafeCampus.viewmodel.SesionViewModel
 
 private data class Pestania(val ruta: String, val titulo: String, val icono: ImageVector)
@@ -65,6 +69,8 @@ fun NavCafe(
     val panelVm: PanelAdminViewModel = viewModel(factory = factory)
     val pedidosAdminVm: PedidosAdminViewModel = viewModel(factory = factory)
     val menuAdminVm: MenuAdminViewModel = viewModel(factory = factory)
+    val registroVm: RegistroViewModel = viewModel(factory = factory)
+    val reporteVm: ReporteViewModel = viewModel(factory = factory)
 
     val rol by sesion.rolActivo.collectAsState()
 
@@ -158,7 +164,16 @@ fun NavCafe(
             composable(Rutas.LOGIN) {
                 LoginScreen(
                     vm = sesion,
-                    onIngresar = { irADestinoPrincipal() }
+                    onIngresar = { irADestinoPrincipal() },
+                    onRegistro = { navController.navigate(Rutas.REGISTRO) }
+                )
+            }
+
+            composable(Rutas.REGISTRO) {
+                RegistroScreen(
+                    vm = registroVm,
+                    onRegistrado = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
                 )
             }
 
@@ -206,6 +221,7 @@ fun NavCafe(
                     onPedido = { pedidoId ->
                         navController.navigate(Rutas.seguimiento(pedidoId))
                     },
+                    onRepetir = { navController.popBackStack(Rutas.MENU, false) },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -214,7 +230,15 @@ fun NavCafe(
                 PanelScreen(
                     vm = panelVm,
                     onPedidos = { navController.navigate(Rutas.PEDIDOS_ADMIN) },
-                    onMenu = { navController.navigate(Rutas.MENU_ADMIN) }
+                    onMenu = { navController.navigate(Rutas.MENU_ADMIN) },
+                    onReporte = { navController.navigate(Rutas.REPORTE) }
+                )
+            }
+
+            composable(Rutas.REPORTE) {
+                ReporteScreen(
+                    vm = reporteVm,
+                    onBack = { navController.popBackStack() }
                 )
             }
 
