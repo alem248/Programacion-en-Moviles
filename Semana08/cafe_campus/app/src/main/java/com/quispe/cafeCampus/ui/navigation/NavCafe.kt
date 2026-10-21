@@ -163,8 +163,10 @@ fun NavCafe(
             }
 
             composable(Rutas.MENU) {
+                val usuario by sesion.usuarioActual.collectAsState()
                 MenuScreen(
                     vm = menuVm,
+                    nombreUsuario = usuario?.nombre?.split(" ")?.firstOrNull() ?: "estudiante",
                     onProducto = { productoId ->
                         navController.navigate(Rutas.detalle(productoId))
                     },
