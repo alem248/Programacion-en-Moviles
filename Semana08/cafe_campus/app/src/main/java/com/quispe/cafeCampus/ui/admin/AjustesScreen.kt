@@ -33,14 +33,12 @@ import com.quispe.cafeCampus.viewmodel.SesionViewModel
 @Composable
 fun AjustesScreen(
     vm: SesionViewModel,
-    onCambiarPerfil: (Rol) -> Unit,
     onCerrarSesion: () -> Unit
 ) {
     val modoOscuro by vm.modoOscuro.collectAsState()
     val recibirPedidos by vm.recibirPedidos.collectAsState()
     val usuario by vm.usuarioActual.collectAsState()
     val rol by vm.rolActivo.collectAsState()
-    val otroRol = if (rol == Rol.CLIENTE) Rol.ADMIN else Rol.CLIENTE
 
     Column(Modifier.fillMaxSize()) {
         AppTopBar(titulo = "Perfil y ajustes")
@@ -103,20 +101,11 @@ fun AjustesScreen(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
             Spacer(Modifier.height(20.dp))
 
-            Text("Modo práctica", fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(4.dp))
             Text(
-                text = "Cambia entre los dos perfiles sin volver a iniciar sesión",
+                text = "Tu rol lo defines al iniciar sesión. Para cambiar de rol, cierra sesión y vuelve a entrar con otra cuenta.",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.height(12.dp))
-            CafeButton(
-                texto = "Cambiar a ${otroRol.titulo}",
-                onClick = { onCambiarPerfil(otroRol) },
-                outlined = true
-            )
-
             Spacer(Modifier.height(16.dp))
             CafeButton(
                 texto = "Cerrar sesión",

@@ -294,10 +294,6 @@ fun NavCafe(
             composable(Rutas.AJUSTES) {
                 AjustesScreen(
                     vm = sesion,
-                    onCambiarPerfil = { nuevoRol ->
-                        sesion.cambiarPerfil(nuevoRol)
-                        irADestinoPrincipal()
-                    },
                     onCerrarSesion = {
                         sesion.cerrarSesion()
                         irALogin()
