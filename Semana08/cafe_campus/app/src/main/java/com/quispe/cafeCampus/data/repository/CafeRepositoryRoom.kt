@@ -8,8 +8,12 @@ import com.quispe.cafeCampus.data.local.entity.Usuario
 import com.quispe.cafeCampus.data.local.relation.PedidoConDetalle
 import com.quispe.cafeCampus.model.EstadoPedido
 import com.quispe.cafeCampus.model.ItemCarrito
+import com.quispe.cafeCampus.model.ProductoVendido
+import com.quispe.cafeCampus.model.ResultadoRegistro
 import com.quispe.cafeCampus.model.Rol
+import com.quispe.cafeCampus.model.TotalPorPago
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
 
@@ -22,6 +26,38 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
 
     override suspend fun usuarioPorRol(rol: Rol): Usuario? =
         usuarioDao.porRol(rol.name)
+
+    override suspend fun registrar(
+        nombre: String,
+        correo: String,
+        clave: String
+    ): ResultadoRegistro {
+        val nombreLimpio = nombre.trim()
+        val correoLimpio = correo.trim().lowercase()
+
+        if (nombreLimpio.isEmpty() || correoLimpio.isEmpty() || clave.isEmpty()) {
+            return ResultadoRegistro.Error("Completa todos los campos")
+        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(correoLimpio).matches()) {
+            return ResultadoRegistro.Error("El correo no tiene un formato válido")
+        }
+        if (clave.length < 4) {
+            return ResultadoRegistro.Error("La clave debe tener al menos 4 caracteres")
+        }
+        if (usuarioDao.existeCorreo(correoLimpio) > 0) {
+            return ResultadoRegistro.Error("Este correo ya está registrado")
+        }
+
+        usuarioDao.insertarNuevo(
+            Usuario(
+                nombre = nombreLimpio,
+                correo = correoLimpio,
+                clave = clave,
+                rol = Rol.CLIENTE.name
+            )
+        )
+        return ResultadoRegistro.Exito
+    }
 
     override fun observarProductos(): Flow<List<Producto>> = productoDao.observarTodos()
 
@@ -83,4 +119,14 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
 
     override fun observarCantidadPorEstado(estado: EstadoPedido): Flow<Int> =
         pedidoDao.cantidadPorEstado(estado.name)
+
+    override fun observarMasVendido(inicioDia: Long): Flow<ProductoVendido?> =
+        pedidoDao.masVendido(inicioDia).map { filas ->
+            filas.firstOrNull()?.let { ProductoVendido(it.nombre, it.cantidadTotal) }
+        }
+
+    override fun observarTotalesPorPago(inicioDia: Long): Flow<List<TotalPorPago>> =
+        pedidoDao.totalesPorPago(inicioDia).map { filas ->
+            filas.map { TotalPorPago(it.pago, it.total) }
+        }
 }

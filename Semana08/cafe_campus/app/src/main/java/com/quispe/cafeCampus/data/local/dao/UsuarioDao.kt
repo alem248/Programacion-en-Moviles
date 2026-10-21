@@ -18,6 +18,12 @@ interface UsuarioDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(u: Usuario)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertarNuevo(u: Usuario): Long
+
+    @Query("SELECT COUNT(*) FROM usuarios WHERE correo = :correo")
+    suspend fun existeCorreo(correo: String): Int
+
     @Query("SELECT COUNT(*) FROM usuarios")
     suspend fun contar(): Int
 }
