@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val app = application as CafeApp
-        val factory = CafeViewModelFactory(app.repository, PreferenciasStore(app))
+        val factory = CafeViewModelFactory(app.repository, PreferenciasStore(app), app.carritoHolder)
 
         setContent {
             val sesion: SesionViewModel = viewModel(factory = factory)

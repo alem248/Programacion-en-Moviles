@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.quispe.cafeCampus.data.prefs.PreferenciasStore
 import com.quispe.cafeCampus.data.repository.CafeRepository
+import com.quispe.cafeCampus.data.repository.CarritoHolder
 
 class CafeViewModelFactory(
     private val repo: CafeRepository,
-    private val prefs: PreferenciasStore
+    private val prefs: PreferenciasStore,
+    private val carritoHolder: CarritoHolder
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -16,16 +18,19 @@ class CafeViewModelFactory(
             modelClass.isAssignableFrom(SesionViewModel::class.java) ->
                 SesionViewModel(repo, prefs) as T
             modelClass.isAssignableFrom(MenuViewModel::class.java) ->
-                MenuViewModel(repo) as T
+                MenuViewModel(repo, carritoHolder) as T
+            modelClass.isAssignableFrom(RegistroViewModel::class.java) ->
+                RegistroViewModel(repo) as T
             modelClass.isAssignableFrom(PedidosClienteViewModel::class.java) ->
-                PedidosClienteViewModel(repo, prefs) as T
+                PedidosClienteViewModel(repo, prefs, carritoHolder) as T
             modelClass.isAssignableFrom(PanelAdminViewModel::class.java) ->
                 PanelAdminViewModel(repo) as T
             modelClass.isAssignableFrom(PedidosAdminViewModel::class.java) ->
                 PedidosAdminViewModel(repo) as T
             modelClass.isAssignableFrom(MenuAdminViewModel::class.java) ->
                 MenuAdminViewModel(repo) as T
-            // TODO (commit 12): registrar los ViewModels restantes si los hay
+            modelClass.isAssignableFrom(ReporteViewModel::class.java) ->
+                ReporteViewModel(repo) as T
             else -> throw IllegalArgumentException("ViewModel desconocida: ${modelClass.name}")
         }
     }

@@ -4,21 +4,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quispe.cafeCampus.data.local.entity.Producto
 import com.quispe.cafeCampus.data.repository.CafeRepository
+import com.quispe.cafeCampus.data.repository.CarritoHolder
 import com.quispe.cafeCampus.model.ItemCarrito
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 
-class MenuViewModel(private val repo: CafeRepository) : ViewModel() {
+class MenuViewModel(
+    private val repo: CafeRepository,
+    private val carritoHolder: CarritoHolder
+) : ViewModel() {
 
     val productos: StateFlow<List<Producto>> = repo.observarProductos()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _carrito = MutableStateFlow<List<ItemCarrito>>(emptyList())
-    val carrito: StateFlow<List<ItemCarrito>> = _carrito.asStateFlow()
+    // El carrito vive en un holder compartido para que otros ViewModels
+    // (p. ej. PedidosClienteViewModel al repetir un pedido) puedan llenarlo
+    // sin acoplar esta ViewModel con ellas.
+    val carrito: StateFlow<List<ItemCarrito>> = carritoHolder.items
 
     private val _categoriaSeleccionada = MutableStateFlow("Todo")
     val categoriaSeleccionada: StateFlow<String> = _categoriaSeleccionada.asStateFlow()
@@ -27,31 +32,20 @@ class MenuViewModel(private val repo: CafeRepository) : ViewModel() {
     val busqueda: StateFlow<String> = _busqueda.asStateFlow()
 
     fun agregar(producto: Producto, cantidad: Int, nota: String) {
-        _carrito.update { actual ->
-            val existente = actual.find { it.producto.id == producto.id }
-            if (existente != null) {
-                actual.map {
-                    if (it.producto.id == producto.id) {
-                        it.copy(cantidad = it.cantidad + cantidad, nota = nota.ifBlank { it.nota })
-                    } else it
-                }
-            } else {
-                actual + ItemCarrito(producto, cantidad, nota)
-            }
-        }
+        carritoHolder.agregar(ItemCarrito(producto, cantidad, nota))
     }
 
     fun quitar(productoId: Int) {
-        _carrito.update { actual -> actual.filterNot { it.producto.id == productoId } }
+        carritoHolder.quitar(productoId)
     }
 
     fun vaciar() {
-        _carrito.value = emptyList()
+        carritoHolder.vaciar()
     }
 
-    fun total(): Double = _carrito.value.sumOf { it.subtotal }
+    fun total(): Double = carritoHolder.items.value.sumOf { it.subtotal }
 
-    fun contarCarrito(): Int = _carrito.value.sumOf { it.cantidad }
+    fun contarCarrito(): Int = carritoHolder.items.value.sumOf { it.cantidad }
 
     fun seleccionarCategoria(categoria: String) {
         _categoriaSeleccionada.value = categoria

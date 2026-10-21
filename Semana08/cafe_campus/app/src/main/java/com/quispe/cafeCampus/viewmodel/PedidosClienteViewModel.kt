@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.quispe.cafeCampus.data.local.relation.PedidoConDetalle
 import com.quispe.cafeCampus.data.prefs.PreferenciasStore
 import com.quispe.cafeCampus.data.repository.CafeRepository
+import com.quispe.cafeCampus.data.repository.CarritoHolder
 import com.quispe.cafeCampus.model.ItemCarrito
 import com.quispe.cafeCampus.model.Rol
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,7 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -23,7 +23,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class PedidosClienteViewModel(
     private val repo: CafeRepository,
-    private val prefs: PreferenciasStore
+    private val prefs: PreferenciasStore,
+    private val carritoHolder: CarritoHolder
 ) : ViewModel() {
 
     private val _error = MutableStateFlow<String?>(null)
@@ -31,6 +32,9 @@ class PedidosClienteViewModel(
 
     private val _pedidoCreado = MutableStateFlow<Long?>(null)
     val pedidoCreado: StateFlow<Long?> = _pedidoCreado.asStateFlow()
+
+    private val _aviso = MutableStateFlow<String?>(null)
+    val aviso: StateFlow<String?> = _aviso.asStateFlow()
 
     private val clienteId: Flow<Int> = prefs.perfilActivo.map { nombre ->
         val rol = Rol.entries.find { it.name == nombre }
@@ -40,6 +44,12 @@ class PedidosClienteViewModel(
     val misPedidos: StateFlow<List<PedidoConDetalle>> = clienteId
         .flatMapLatest { id -> repo.observarPedidosCliente(id) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Productos vigentes, para reconstruir un pedido anterior con precios actuales. */
+    private val productosActuales: StateFlow<Map<Int, com.quispe.cafeCampus.data.local.entity.Producto>> =
+        repo.observarProductos()
+            .map { lista -> lista.associateBy { it.id } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     private val observadores = mutableMapOf<Int, StateFlow<PedidoConDetalle?>>()
 
@@ -82,5 +92,35 @@ class PedidosClienteViewModel(
 
     fun limpiarError() {
         _error.value = null
+    }
+
+    fun limpiarAviso() {
+        _aviso.value = null
+    }
+
+    /**
+     * Vuelve a cargar al carrito los productos de un pedido anterior.
+     * Reconstruye cada línea con el producto VIGENTE (precio y disponibilidad
+     * actuales); si un producto ya no existe en el menú, se omite.
+     */
+    fun repetirPedido(pedido: PedidoConDetalle) {
+        val actuales = productosActuales.value
+        val items = pedido.detalles.mapNotNull { detalle ->
+            actuales[detalle.productoId]?.let { producto ->
+                ItemCarrito(producto = producto, cantidad = detalle.cantidad, nota = "")
+            }
+        }
+        if (items.isEmpty()) {
+            _aviso.value = "Los productos de este pedido ya no están disponibles"
+            return
+        }
+        val omitidos = pedido.detalles.size - items.size
+        carritoHolder.vaciar()
+        items.forEach { carritoHolder.agregar(it) }
+        _aviso.value = if (omitidos > 0) {
+            "Pedido cargado al carrito ($omitidos producto(s) ya no disponibles)"
+        } else {
+            "Pedido cargado al carrito"
+        }
     }
 }
