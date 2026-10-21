@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material3.Badge
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AppDrawer(
     rutaActual: String,
+    cantidadFavoritos: Int = 0,
     navegarA: (String) -> Unit,
     cerrarDrawer: () -> Unit
 ) {
@@ -74,6 +76,15 @@ fun AppDrawer(
 
         val opciones = listOf("Inicio", "Mis pedidos", "Favoritos", "Perfil", "Cerrar sesion")
 
+        val badgeFavoritos: (@Composable () -> Unit)? = {
+            Badge(
+                containerColor = moradoTecsup,
+                contentColor = Color.White
+            ) {
+                Text(text = cantidadFavoritos.toString())
+            }
+        }
+
         opciones.forEach { opcion ->
             val estaActivo = rutaActual == opcion
 
@@ -91,6 +102,7 @@ fun AppDrawer(
                         tint = if (estaActivo) moradoTecsup else Color.Gray
                     )
                 },
+                badge = if (opcion == "Favoritos") badgeFavoritos else null,
                 selected = estaActivo,
                 colors = NavigationDrawerItemDefaults.colors(
                     selectedContainerColor = moradoClaro,

@@ -18,14 +18,23 @@ val listaProductosEjemplo = listOf(
 
 @Composable
 fun PantallaInicio(
+    favoritos: List<Producto>,
+    onToggleFavorito: (Producto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        items(listaProductosEjemplo) { producto ->
-            TarjetaProducto(producto = producto)
+        items(
+            items = listaProductosEjemplo,
+            key = { it.id }
+        ) { producto ->
+            TarjetaProducto(
+                producto = producto,
+                esFavorito = favoritos.any { it.id == producto.id },
+                onToggleFavorito = onToggleFavorito
+            )
         }
     }
 }

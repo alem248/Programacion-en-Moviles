@@ -1,7 +1,11 @@
 package com.quispe.tecsupfit.ui.screens
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,24 +32,22 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quispe.tecsupfit.modelos.clasePorId
-import com.quispe.tecsupfit.ui.theme.TextoPrincipal
-import com.quispe.tecsupfit.ui.theme.TextoSecundario
-import com.quispe.tecsupfit.ui.theme.VerdeClaro
-import com.quispe.tecsupfit.ui.theme.VerdeOscuro
+import com.quispe.tecsupfit.ui.components.FilaInfoClase
 
 @Composable
 fun DetalleClaseScreen(
@@ -55,6 +57,16 @@ fun DetalleClaseScreen(
     modifier: Modifier = Modifier
 ) {
     val clase = clasePorId(claseId)
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Animacion de escala para el boton de reserva al ser presionado
+    val buttonScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1.0f,
+        animationSpec = tween(durationMillis = 100),
+        label = "BotonReservaEscala"
+    )
 
     Column(modifier = modifier.fillMaxSize()) {
         Row(
@@ -67,14 +79,15 @@ fun DetalleClaseScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver"
+                    contentDescription = "Volver",
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
             Text(
                 text = "Detalle de clase",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextoPrincipal,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(start = 4.dp)
             )
         }
@@ -89,7 +102,10 @@ fun DetalleClaseScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp)
-                    .background(VerdeClaro, RoundedCornerShape(20.dp))
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(20.dp)
+                    )
                     .padding(vertical = 32.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -97,7 +113,7 @@ fun DetalleClaseScreen(
                     imageVector = Icons.Filled.FitnessCenter,
                     contentDescription = null,
                     modifier = Modifier.size(72.dp),
-                    tint = VerdeOscuro
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
@@ -105,62 +121,69 @@ fun DetalleClaseScreen(
                 text = clase.nombre,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = TextoPrincipal,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(top = 20.dp)
             )
 
-            FilaInformacion(icono = Icons.Outlined.EventAvailable, texto = "${clase.dia} - ${clase.horario}")
-            FilaInformacion(icono = Icons.Outlined.MeetingRoom, texto = clase.sala)
-            FilaInformacion(icono = Icons.Outlined.AccessTime, texto = "Duracion ${clase.duracion}")
-            FilaInformacion(icono = Icons.Outlined.Group, texto = "${clase.cupos} cupos disponibles")
+            FilaInfoClase(icono = Icons.Outlined.EventAvailable, texto = "${clase.dia} - ${clase.horario}")
+            FilaInfoClase(icono = Icons.Outlined.MeetingRoom, texto = clase.sala)
+            FilaInfoClase(icono = Icons.Outlined.AccessTime, texto = "Duracion ${clase.duracion}")
+            FilaInfoClase(icono = Icons.Outlined.Group, texto = "${clase.cupos} cupos disponibles")
 
             Text(
                 text = "Descripcion",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextoPrincipal,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(top = 16.dp)
             )
             Text(
                 text = clase.descripcion,
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextoSecundario,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 6.dp, bottom = 20.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .animateContentSize(animationSpec = tween(300)),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
                         Text(
                             text = "Cupos restantes",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextoSecundario
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "${clase.cupos} de 20",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = VerdeOscuro
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .background(VerdeClaro, CircleShape),
+                            .background(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = CircleShape
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = clase.dia.take(3),
-                            color = VerdeOscuro,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -171,17 +194,23 @@ fun DetalleClaseScreen(
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp
+            shadowElevation = 8.dp,
+            color = MaterialTheme.colorScheme.surface
         ) {
             Button(
                 onClick = onReservar,
+                interactionSource = interactionSource,
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .height(52.dp),
+                    .height(52.dp)
+                    .scale(buttonScale),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = VerdeOscuro)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Text(
                     text = "Reservar cupo",
@@ -190,29 +219,5 @@ fun DetalleClaseScreen(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun FilaInformacion(
-    icono: androidx.compose.ui.graphics.vector.ImageVector,
-    texto: String
-) {
-    Row(
-        modifier = Modifier.padding(top = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
-    ) {
-        Icon(
-            imageVector = icono,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = VerdeOscuro
-        )
-        Text(
-            text = texto,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(start = 8.dp)
-        )
     }
 }

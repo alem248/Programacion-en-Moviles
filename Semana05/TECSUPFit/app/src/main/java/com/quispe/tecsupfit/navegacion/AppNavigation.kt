@@ -1,8 +1,12 @@
 package com.quispe.tecsupfit.navegacion
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -41,10 +45,35 @@ fun AppNavigation(
     reservas: SnapshotStateList<Reserva>,
     modifier: Modifier = Modifier
 ) {
+    // NavHost configurado con transiciones suaves de deslizamiento horizontal y difuminado
     NavHost(
         navController = navController,
         startDestination = Rutas.INICIO,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeIn(animationSpec = tween(durationMillis = 300))
+        },
+        exitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { -it / 3 },
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+        },
+        popEnterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { -it / 3 },
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeIn(animationSpec = tween(durationMillis = 300))
+        },
+        popExitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+        }
     ) {
         composable(Rutas.INICIO) {
             InicioScreen(

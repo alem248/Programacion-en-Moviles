@@ -20,6 +20,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quispe.TecsupStore.componentes.AppDrawer
+import com.quispe.TecsupStore.componentes.Producto
+import com.quispe.TecsupStore.pantallas.PantallaFavoritos
 import com.quispe.TecsupStore.pantallas.PantallaInicio
 import kotlinx.coroutines.launch
 
@@ -41,6 +44,19 @@ fun AppNavegacion() {
     val scope = rememberCoroutineScope()
     var rutaActual by remember { mutableStateOf("Inicio") }
 
+    // Estado global de favoritos elevado a este contenedor (state hoisting)
+    val favoritos = remember { mutableStateListOf<Producto>() }
+
+    // Agrega o elimina el producto controlando que no se duplique en la lista
+    val onToggleFavorito: (Producto) -> Unit = { producto ->
+        val indice = favoritos.indexOfFirst { it.id == producto.id }
+        if (indice >= 0) {
+            favoritos.removeAt(indice)
+        } else {
+            favoritos.add(producto)
+        }
+    }
+
     val moradoTecsup = Color(0xFF4A148C)
 
     ModalNavigationDrawer(
@@ -48,6 +64,7 @@ fun AppNavegacion() {
         drawerContent = {
             AppDrawer(
                 rutaActual = rutaActual,
+                cantidadFavoritos = favoritos.size,
                 navegarA = { nuevaRuta -> rutaActual = nuevaRuta },
                 cerrarDrawer = { scope.launch { drawerState.close() } }
             )
@@ -84,7 +101,13 @@ fun AppNavegacion() {
                         )
                     )
                     Text(
-                        text = "Mas vendidos",
+                        text = when (rutaActual) {
+                            "Inicio" -> "Mas vendidos"
+                            "Favoritos" -> "Tus productos guardados"
+                            "Mis pedidos" -> "Historial de compras"
+                            "Perfil" -> "Datos de la cuenta"
+                            else -> "Mas vendidos"
+                        },
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 14.sp,
                         modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
@@ -99,11 +122,20 @@ fun AppNavegacion() {
                 contentAlignment = Alignment.TopCenter
             ) {
                 when (rutaActual) {
-                    "Inicio" -> PantallaInicio()
+                    "Inicio" -> PantallaInicio(
+                        favoritos = favoritos,
+                        onToggleFavorito = onToggleFavorito
+                    )
                     "Mis pedidos" -> Text("Pantalla de Mis Pedidos", modifier = Modifier.padding(16.dp))
-                    "Favoritos" -> Text("Pantalla de Favoritos", modifier = Modifier.padding(16.dp))
+                    "Favoritos" -> PantallaFavoritos(
+                        listaFavoritos = favoritos,
+                        onToggleFavorito = onToggleFavorito
+                    )
                     "Perfil" -> Text("Pantalla de Perfil", modifier = Modifier.padding(16.dp))
-                    else -> PantallaInicio()
+                    else -> PantallaInicio(
+                        favoritos = favoritos,
+                        onToggleFavorito = onToggleFavorito
+                    )
                 }
             }
         }
