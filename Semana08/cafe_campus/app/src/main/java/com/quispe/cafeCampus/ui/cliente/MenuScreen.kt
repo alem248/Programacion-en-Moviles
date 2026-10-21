@@ -49,6 +49,7 @@ import com.quispe.cafeCampus.viewmodel.MenuViewModel
 @Composable
 fun MenuScreen(
     vm: MenuViewModel,
+    nombreUsuario: String = "estudiante",
     onProducto: (Int) -> Unit,
     onConfirmar: () -> Unit = {}
 ) {
@@ -92,7 +93,7 @@ fun MenuScreen(
                 .padding(horizontal = 16.dp)
         ) {
             Text(
-                text = "¡Hola, Juan!",
+                text = "¡Hola, $nombreUsuario!",
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(Modifier.height(2.dp))
