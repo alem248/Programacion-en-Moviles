@@ -117,6 +117,20 @@ class QrEmvCoTest {
     }
 
     @Test
+    fun `acepta la estructura del qr personal de yape con token en el tag 39`() {
+        // Misma forma que un Yape personal: estático, token de 32 hex en el tag 39, sin GUI.
+        // El token es ficticio.
+        val personal = ("000201" + "010211" + "3932" + "0123456789abcdef0123456789abcdef" +
+                "52045611" + "5303604" + "5802PE" + "5906YAPERO" + "6004Lima" + "6304").let {
+            it + String.format("%04X", QrEmvCo.crc16Ccitt(it))
+        }
+        assertNotNull(QrEmvCo.validarBase(personal))
+        val payload = QrEmvCo.construir(personal, 4.5)!!
+        assertTrue(payload.contains("39320123456789abcdef0123456789abcdef"))  // token intacto
+        assertTrue(payload.contains("54044.50"))
+    }
+
+    @Test
     fun `agrega la referencia del pedido sin perder los datos del tag 62`() {
         val payload = QrEmvCo.construir(baseReal, 7.0, referencia = "PED42")!!
         // 62 = subtag 07 (terminal) del comercio + subtag 05 (referencia) del pedido

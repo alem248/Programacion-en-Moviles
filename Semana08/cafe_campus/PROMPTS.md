@@ -104,6 +104,15 @@ UTF-8. `PagoQrScreen` distingue "QR no configurado" de "monto inválido", indica
 escribir el monto a mano si la billetera no lo muestra y genera el bitmap en una
 sola pasada. Pruebas: de 7 a 13.
 
+**Vinculación del QR personal de Yape (tercer prompt):** al decodificar el QR
+personal de la dueña con zxing resultó ser EMVCo (estático `01=11`, token de la
+cuenta en el tag 39, `59=YAPERO`, CRC válido), así que `QrEmvCo` lo acepta sin
+cambios. Para no subir la cuenta a Git, el payload se lee de `local.properties`
+(`pago.qr.payload`) y llega a la app como `BuildConfig.QR_PAGO_DEFECTO`, usado
+por `PreferenciasStore` mientras el admin no guarde otro. Como Yape no garantiza
+respetar el monto en un QR personal, `PagoQrScreen` tiene el botón "Usar QR sin
+monto", que muestra el QR original y pide escribir el monto. Pruebas: 14.
+
 ---
 
 ## 3. Decisiones técnicas
@@ -163,5 +172,5 @@ Además, el `fix(ui): saludo del menu muestra el nombre real del usuario…` se 
 integró a `mejora-ia`.
 
 **Verificación:** `gradlew :app:assembleDebug` compila sin errores (KSP/Room OK) y
-`gradlew :app:testDebugUnitTest` pasa las 13 pruebas de `QrEmvCoTest` (CRC validado
+`gradlew :app:testDebugUnitTest` pasa las 14 pruebas de `QrEmvCoTest` (CRC validado
 contra el valor oficial del estándar EMVCo, 0x29B1).

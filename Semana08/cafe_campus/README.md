@@ -32,6 +32,18 @@ com.quispe.cafeCampus
 ├── CafeApp.kt · MainActivity.kt
 ```
 
+## Configurar el QR de pago (Yape/Plin)
+
+El QR de cobro **no está en el repositorio**. Para precargarlo, agrega a `local.properties`
+(ignorado por Git) el texto de tu QR, obtenido al escanearlo con cualquier lector:
+
+```properties
+pago.qr.payload=000201010211...6304XXXX
+```
+
+También se puede pegar o cambiar desde la app: **Perfil → Ajustes → Pagos con QR** (administrador).
+Si la billetera no respeta el monto automático, la pantalla de pago tiene "Usar QR sin monto".
+
 ## Diagrama MVVM
 
 ```mermaid

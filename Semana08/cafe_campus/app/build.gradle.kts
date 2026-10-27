@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,6 +21,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // QR de Yape/Plin por defecto: se lee de local.properties (no se sube a Git)
+        val localProps = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }
+                ?.inputStream()?.use { load(it) }
+        }
+        val qrPago = localProps.getProperty("pago.qr.payload", "").trim()
+        buildConfigField("String", "QR_PAGO_DEFECTO", "\"$qrPago\"")
     }
 
     buildTypes {
@@ -39,6 +49,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

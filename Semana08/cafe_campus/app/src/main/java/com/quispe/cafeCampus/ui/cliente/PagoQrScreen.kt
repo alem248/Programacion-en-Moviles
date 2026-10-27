@@ -16,10 +16,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -49,8 +53,15 @@ fun PagoQrScreen(
     onBack: () -> Unit
 ) {
     val payloadBase by vm.payloadBase.collectAsState()
-    val payload = remember(payloadBase, monto) {
-        if (payloadBase.isBlank()) null else QrEmvCo.construir(payloadBase, monto)
+    // Respaldo: si la billetera rechaza el QR con monto (p. ej. un Yape personal),
+    // se muestra el QR original tal cual y el cliente escribe el monto.
+    var conMonto by rememberSaveable { mutableStateOf(true) }
+    val payload = remember(payloadBase, monto, conMonto) {
+        when {
+            payloadBase.isBlank() -> null
+            conMonto -> QrEmvCo.construir(payloadBase, monto)
+            else -> payloadBase.trim()
+        }
     }
     val nombreComercio = remember(payloadBase) { QrEmvCo.nombreComercio(payloadBase) }
     val clipboard = LocalClipboardManager.current
@@ -131,19 +142,33 @@ fun PagoQrScreen(
 
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "1. Abre Yape o Plin\n2. Escanea este código\n3. El monto aparece solo: solo confirma",
+                text = if (conMonto) {
+                    "1. Abre Yape o Plin\n2. Escanea este código\n3. El monto aparece solo: solo confirma"
+                } else {
+                    "1. Abre Yape o Plin\n2. Escanea este código\n3. Escribe S/ ${"%.2f".format(monto)} y confirma"
+                },
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 lineHeight = 22.sp
             )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = "Si tu app no muestra el monto, escribe S/ ${"%.2f".format(monto)} a mano",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+            if (conMonto) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "Si tu app no muestra el monto, escribe S/ ${"%.2f".format(monto)} a mano",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = { conMonto = !conMonto }) {
+                Text(
+                    text = if (conMonto) "¿Yape no acepta el código? Usar QR sin monto"
+                    else "Volver al QR con monto automático",
+                    fontSize = 13.sp
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
             CafeButton(

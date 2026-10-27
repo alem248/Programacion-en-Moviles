@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.quispe.cafeCampus.BuildConfig
 import com.quispe.cafeCampus.model.Rol
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -32,8 +33,13 @@ class PreferenciasStore(private val context: Context) {
 
     val recibirPedidos: Flow<Boolean> = context.dataStore.data.map { it[Llaves.RECIBIR_PEDIDOS] ?: true }
 
-    /** Payload base del QR de pago (cuenta destino Yape/Plin) configurado por el admin. */
-    val payloadQr: Flow<String> = context.dataStore.data.map { it[Llaves.PAGO_QR] ?: "" }
+    /**
+     * Payload base del QR de pago (cuenta destino Yape/Plin) configurado por el admin.
+     * Mientras el admin no guarde uno, se usa el de local.properties (fuera de Git);
+     * si lo desactiva se guarda "" y ya no vuelve el de por defecto.
+     */
+    val payloadQr: Flow<String> =
+        context.dataStore.data.map { it[Llaves.PAGO_QR] ?: BuildConfig.QR_PAGO_DEFECTO }
 
     suspend fun guardarPerfil(rol: Rol, correo: String) {
         context.dataStore.edit {
