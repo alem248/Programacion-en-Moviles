@@ -16,6 +16,7 @@ interface CafeRepository {
     // Usuarios
     suspend fun login(correo: String, clave: String): Usuario?
     suspend fun usuarioPorRol(rol: Rol): Usuario?
+    suspend fun usuarioPorCorreo(correo: String): Usuario?
     suspend fun registrar(nombre: String, correo: String, clave: String): ResultadoRegistro
 
     // Productos (ejemplo resuelto)

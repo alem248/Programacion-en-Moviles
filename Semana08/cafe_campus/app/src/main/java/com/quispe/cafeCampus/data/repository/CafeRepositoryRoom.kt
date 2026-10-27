@@ -27,6 +27,9 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
     override suspend fun usuarioPorRol(rol: Rol): Usuario? =
         usuarioDao.porRol(rol.name)
 
+    override suspend fun usuarioPorCorreo(correo: String): Usuario? =
+        usuarioDao.porCorreo(correo)
+
     override suspend fun registrar(
         nombre: String,
         correo: String,

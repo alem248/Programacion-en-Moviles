@@ -7,7 +7,6 @@ import com.quispe.cafeCampus.data.prefs.PreferenciasStore
 import com.quispe.cafeCampus.data.repository.CafeRepository
 import com.quispe.cafeCampus.data.repository.CarritoHolder
 import com.quispe.cafeCampus.model.ItemCarrito
-import com.quispe.cafeCampus.model.Rol
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -36,10 +36,10 @@ class PedidosClienteViewModel(
     private val _aviso = MutableStateFlow<String?>(null)
     val aviso: StateFlow<String?> = _aviso.asStateFlow()
 
-    private val clienteId: Flow<Int> = prefs.perfilActivo.map { nombre ->
-        val rol = Rol.entries.find { it.name == nombre }
-        if (rol == null) -1 else repo.usuarioPorRol(rol)?.id ?: -1
-    }
+    private val clienteId: Flow<Int> = prefs.correoActivo
+        .mapLatest { correo ->
+            if (correo.isBlank()) -1 else repo.usuarioPorCorreo(correo)?.id ?: -1
+        }
 
     val misPedidos: StateFlow<List<PedidoConDetalle>> = clienteId
         .flatMapLatest { id -> repo.observarPedidosCliente(id) }
@@ -75,8 +75,8 @@ class PedidosClienteViewModel(
                 _error.value = "La cafetería está cerrada por ahora"
                 return@launch
             }
-            val rol = Rol.entries.find { it.name == prefs.perfilActivo.first() }
-            val usuario = rol?.let { repo.usuarioPorRol(it) }
+            val correo = prefs.correoActivo.first()
+            val usuario = if (correo.isNotBlank()) repo.usuarioPorCorreo(correo) else null
             if (usuario == null) {
                 _error.value = "Debes iniciar sesión para confirmar"
                 return@launch
