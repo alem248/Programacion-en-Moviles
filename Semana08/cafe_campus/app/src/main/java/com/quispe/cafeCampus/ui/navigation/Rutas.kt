@@ -16,10 +16,12 @@ object Rutas {
     const val FORMULARIO_PRODUCTO = "formulario_producto?productoId={productoId}"
     const val REPORTE = "reporte"
     const val AJUSTES = "ajustes"
+    const val PAGO_QR = "pago_qr/{monto}"
 
     fun detalle(productoId: Int) = "detalle/$productoId"
     fun seguimiento(pedidoId: Int) = "seguimiento/$pedidoId"
     fun detallePedidoAdmin(pedidoId: Int) = "detalle_pedido_admin/$pedidoId"
+    fun pagoQr(monto: Double) = "pago_qr/$monto"
     fun formularioProducto(productoId: Int? = null) =
         if (productoId != null) "formulario_producto?productoId=$productoId" else "formulario_producto"
 }

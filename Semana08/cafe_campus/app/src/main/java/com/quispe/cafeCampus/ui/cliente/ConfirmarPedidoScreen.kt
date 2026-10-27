@@ -47,6 +47,7 @@ fun ConfirmarPedidoScreen(
     menuVm: MenuViewModel,
     vm: PedidosClienteViewModel,
     onConfirmado: (Long) -> Unit,
+    onPagarQr: (Double) -> Unit,
     onSeguirPidiendo: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -180,6 +181,21 @@ fun ConfirmarPedidoScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            if (pago == "YAPE") {
+                Spacer(Modifier.height(14.dp))
+                CafeButton(
+                    texto = "Ver QR para pagar S/ ${"%.2f".format(carrito.sumOf { it.subtotal })}",
+                    onClick = { onPagarQr(carrito.sumOf { it.subtotal }) },
+                    outlined = true
+                )
+                Text(
+                    text = "Monto automático en Yape o Plin: solo escanea y confirma",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp)
                 )
             }
 

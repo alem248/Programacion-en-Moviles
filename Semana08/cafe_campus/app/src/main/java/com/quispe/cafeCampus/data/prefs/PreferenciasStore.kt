@@ -20,6 +20,7 @@ class PreferenciasStore(private val context: Context) {
         val CORREO_ACTIVO = stringPreferencesKey("correoActivo")
         val MODO_OSCURO = booleanPreferencesKey("modoOscuro")
         val RECIBIR_PEDIDOS = booleanPreferencesKey("recibirPedidos")
+        val PAGO_QR = stringPreferencesKey("pagoQrPayload")
     }
 
     val perfilActivo: Flow<String> = context.dataStore.data.map { it[Llaves.PERFIL_ACTIVO] ?: "" }
@@ -30,6 +31,9 @@ class PreferenciasStore(private val context: Context) {
     val modoOscuro: Flow<Boolean> = context.dataStore.data.map { it[Llaves.MODO_OSCURO] ?: false }
 
     val recibirPedidos: Flow<Boolean> = context.dataStore.data.map { it[Llaves.RECIBIR_PEDIDOS] ?: true }
+
+    /** Payload base del QR de pago (cuenta destino Yape/Plin) configurado por el admin. */
+    val payloadQr: Flow<String> = context.dataStore.data.map { it[Llaves.PAGO_QR] ?: "" }
 
     suspend fun guardarPerfil(rol: Rol, correo: String) {
         context.dataStore.edit {
@@ -44,6 +48,10 @@ class PreferenciasStore(private val context: Context) {
 
     suspend fun guardarRecibirPedidos(valor: Boolean) {
         context.dataStore.edit { it[Llaves.RECIBIR_PEDIDOS] = valor }
+    }
+
+    suspend fun guardarPayloadQr(payload: String) {
+        context.dataStore.edit { it[Llaves.PAGO_QR] = payload }
     }
 
     suspend fun cerrarSesion() {

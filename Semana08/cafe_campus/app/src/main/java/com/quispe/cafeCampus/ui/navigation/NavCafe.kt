@@ -42,11 +42,13 @@ import com.quispe.cafeCampus.ui.cliente.DetalleProductoScreen
 import com.quispe.cafeCampus.ui.cliente.LoginScreen
 import com.quispe.cafeCampus.ui.cliente.MenuScreen
 import com.quispe.cafeCampus.ui.cliente.MisPedidosScreen
+import com.quispe.cafeCampus.ui.cliente.PagoQrScreen
 import com.quispe.cafeCampus.ui.cliente.RegistroScreen
 import com.quispe.cafeCampus.ui.cliente.SeguimientoScreen
 import com.quispe.cafeCampus.ui.cliente.SplashScreen
 import com.quispe.cafeCampus.viewmodel.MenuAdminViewModel
 import com.quispe.cafeCampus.viewmodel.MenuViewModel
+import com.quispe.cafeCampus.viewmodel.PagoViewModel
 import com.quispe.cafeCampus.viewmodel.PanelAdminViewModel
 import com.quispe.cafeCampus.viewmodel.PedidosAdminViewModel
 import com.quispe.cafeCampus.viewmodel.PedidosClienteViewModel
@@ -71,6 +73,7 @@ fun NavCafe(
     val menuAdminVm: MenuAdminViewModel = viewModel(factory = factory)
     val registroVm: RegistroViewModel = viewModel(factory = factory)
     val reporteVm: ReporteViewModel = viewModel(factory = factory)
+    val pagoVm: PagoViewModel = viewModel(factory = factory)
 
     val rol by sesion.rolActivo.collectAsState()
 
@@ -198,7 +201,22 @@ fun NavCafe(
                             popUpTo(Rutas.CONFIRMAR) { inclusive = true }
                         }
                     },
+                    onPagarQr = { monto -> navController.navigate(Rutas.pagoQr(monto)) },
                     onSeguirPidiendo = { navController.popBackStack(Rutas.MENU, false) },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Rutas.PAGO_QR,
+                arguments = listOf(navArgument("monto") { type = NavType.StringType })
+            ) { entry ->
+                // Se recibe como texto para evitar problemas de formato numérico
+                val monto = entry.arguments?.getString("monto")
+                    ?.replace(',', '.')?.toDoubleOrNull() ?: 0.0
+                PagoQrScreen(
+                    vm = pagoVm,
+                    monto = monto,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -294,6 +312,7 @@ fun NavCafe(
             composable(Rutas.AJUSTES) {
                 AjustesScreen(
                     vm = sesion,
+                    vmPago = pagoVm,
                     onCerrarSesion = {
                         sesion.cerrarSesion()
                         irALogin()
