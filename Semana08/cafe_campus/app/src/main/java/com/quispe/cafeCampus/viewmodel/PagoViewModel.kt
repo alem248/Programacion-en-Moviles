@@ -39,9 +39,10 @@ class PagoViewModel(private val prefs: PreferenciasStore) : ViewModel() {
                     _payloadBase.value = ""
                     _mensaje.value = "QR de pagos desactivado"
                 }
-                QrEmvCo.construir(limpio, 1.0) == null -> {
+                QrEmvCo.validarBase(limpio) == null -> {
                     _mensaje.value =
-                        "Código no válido: pega el texto completo de tu QR de Yape/Plin (debe empezar con 000201)"
+                        "Código no válido: pega el texto completo de tu QR de negocio de " +
+                                "Yape/Plin (empieza con 000201 y termina con el CRC del tag 63)"
                 }
                 else -> {
                     prefs.guardarPayloadQr(limpio)

@@ -72,4 +72,54 @@ class QrEmvCoTest {
     fun `extrae el nombre del comercio`() {
         assertEquals("CAFETERIA CAMPUS", QrEmvCo.nombreComercio(base))
     }
+
+    /** QR "real": la base con su propio CRC, datos adicionales (62) y plantilla del emisor (80). */
+    private val baseReal: String = (base + "62070703A01" + "8008" + "0004ABCD" + "6304").let {
+        it + String.format("%04X", QrEmvCo.crc16Ccitt(it))
+    }
+
+    @Test
+    fun `acepta un qr real con crc valido y conserva sus campos extra`() {
+        assertNotNull(QrEmvCo.validarBase(baseReal))
+        val payload = QrEmvCo.construir(baseReal, 8.5)!!
+        assertTrue(payload.contains("62070703A01"))   // datos adicionales del comercio
+        assertTrue(payload.contains("80080004ABCD"))  // plantilla propia del emisor
+        assertEquals(1, Regex("6304").findAll(payload).count())  // un solo CRC, al final
+        assertTrue(payload.dropLast(4).endsWith("6304"))
+    }
+
+    @Test
+    fun `rechaza un qr copiado incompleto o con crc alterado`() {
+        assertNull(QrEmvCo.validarBase(baseReal.dropLast(3)))
+        val crcMalo = baseReal.dropLast(4) + "0000"
+        assertNull(QrEmvCo.validarBase(crcMalo))
+    }
+
+    @Test
+    fun `marca el qr como dinamico al llevar monto`() {
+        val payload = QrEmvCo.construir(baseReal, 5.0)!!
+        assertTrue(payload.startsWith("000201010212"))
+    }
+
+    @Test
+    fun `reemplaza el monto si la base ya traia uno`() {
+        val conMonto = base.replace("5303604", "5303604540510.00")
+        val payload = QrEmvCo.construir(conMonto, 3.2)!!
+        assertTrue(payload.contains("54043.20"))
+        assertTrue(!payload.contains("10.00"))
+    }
+
+    @Test
+    fun `rechaza montos invalidos`() {
+        assertNull(QrEmvCo.construir(base, 0.0))
+        assertNull(QrEmvCo.construir(base, -4.0))
+        assertNull(QrEmvCo.construir(base, 1e15))  // excede los 13 caracteres del tag 54
+    }
+
+    @Test
+    fun `agrega la referencia del pedido sin perder los datos del tag 62`() {
+        val payload = QrEmvCo.construir(baseReal, 7.0, referencia = "PED42")!!
+        // 62 = subtag 07 (terminal) del comercio + subtag 05 (referencia) del pedido
+        assertTrue(payload.contains("62160703A010505PED42"))
+    }
 }

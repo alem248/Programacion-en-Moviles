@@ -5,7 +5,7 @@
 | **Proyecto** | CafeCampus — `Semana08/cafe_campus` (Semana 08) |
 | **Rama** | `mejora-ia` (Fase 2) |
 | **Fase 1** | MVVM + Room completo → rama `main`, **sin IA** (13 commits) |
-| **Fase 2** | 4 mejoras → rama `mejora-ia`, **con IA** (commits con prefijo `ia:`) |
+| **Fase 2** | 5 mejoras + pagos QR → rama `mejora-ia`, **con IA** (commits con prefijo `ia:`) |
 
 > Nota: el `PROMPTS.md` de la raíz documenta la Fase 2 de **Semana 06 (MiBodega)**.
 > Éste documenta la de Semana 08.
@@ -28,7 +28,7 @@
 
 ---
 
-## 2. Mejoras implementadas (4) y sus prompts
+## 2. Mejoras implementadas (5) y sus prompts
 
 ### M1 · Registro de estudiante — `ia: agrega registro de estudiante…`
 
@@ -70,6 +70,40 @@
 > conector cambian con `animateColorAsState` (tween 350 ms). Solo presentación, sin
 > tocar la lógica de estados.
 
+### M5 · Pago con QR de Yape/Plin con monto automático — `ia: agrega pago con QR…`
+
+> Agrega el plus del sistema: al pagar con Yape/Plin, mostrar un QR con el monto
+> automático. Crea `data/pago/QrEmvCo.kt` que construya payloads **EMVCo Merchant
+> Presented Mode** (TLV de 2 dígitos + CRC-16/CCITT-FALSE en el tag 63) tomando
+> como base el payload del QR REAL del comercio: conserva la cuenta destino
+> (tags 26–51) intacta e inyecta el monto del pedido en el tag 54 (moneda 604 =
+> PEN). Crea `PagoViewModel` que valide y guarde el payload en DataStore (clave
+> `pagoQrPayload`) y `PagoQrScreen` que renderice el código con zxing, muestre el
+> monto, instrucciones, botón de copiar y estado vacío si no hay QR configurado.
+> En `ConfirmarPedidoScreen` agrega un botón "Ver QR para pagar" cuando la forma
+> de pago sea Yape-Plin, y en `AjustesScreen` una sección admin "Pagos con QR"
+> para pegar el payload. Ruta `pago_qr/{monto}` en `Rutas`/`NavCafe`. Agrega 7
+> pruebas unitarias que validan el CRC contra el valor oficial del estándar.
+
+**Refinamiento (segundo prompt):**
+
+> Actúa como un desarrollador móvil experto. Necesito que al pagar con Yape se
+> muestre un QR generado dinámicamente con el precio total de los productos
+> seleccionados, para que al escanearlo el monto ya aparezca y el cliente no lo
+> digite. Explica cómo se estructura un QR EMVCo compatible con Yape/Plin, dame
+> el código en Kotlin para transformar `montoTotal` y la cuenta del comercio en el
+> payload, las librerías recomendadas y, si el monto fijo exige la API oficial
+> (Culqi, Niubiz, Izipay…), los pasos generales para integrarla.
+
+Con ese prompt se endureció `QrEmvCo`: conserva **todos** los campos del QR
+original (tag 62, plantillas 64/80–99 del emisor), marca el código como dinámico
+(tag 01 = `12`), valida el CRC del QR pegado por el admin (detecta copias
+incompletas), rechaza montos ≤ 0 o de más de 13 caracteres, agrega la referencia
+como subtag 05 del tag 62 sin pisar sus datos y calcula el CRC sobre los bytes
+UTF-8. `PagoQrScreen` distingue "QR no configurado" de "monto inválido", indica
+escribir el monto a mano si la billetera no lo muestra y genera el bitmap en una
+sola pasada. Pruebas: de 7 a 13.
+
 ---
 
 ## 3. Decisiones técnicas
@@ -91,10 +125,26 @@
 4. **Excluir cancelados.** `masVendido` y `totalesPorPago` filtran
    `estado != 'CANCELADO'`, igual que `ventasDesde`, para que el reporte sea
    consistente con las ventas del panel.
+5. **QR dinámico sobre el QR estático del comercio.** Yape y Plin usan el
+   mismo estándar EMVCo (QR interoperable en el Perú desde septiembre de 2023),
+   así que un solo código se lee en ambas billeteras. En vez de exigir una
+   cuenta de comerciante propia, la app parte del payload REAL que pega el
+   admin (su QR estático) y solo le inyecta el monto y recalcula el CRC: la
+   cuenta destino viaja intacta y el pago cae en la cuenta correcta.
+   **Límite conocido:** solo funciona con el QR de *negocio* (EMVCo); el QR
+   personal de Yape no usa este formato. Y como el código no lo emite un
+   adquirente (Niubiz, Izipay, Culqi…), cada billetera decide si respeta el
+   tag 54: por eso la pantalla muestra el monto y permite copiarlo. Para un
+   monto garantizado y la confirmación automática del pago hace falta la API de
+   QR dinámico de un adquirente, que genera el código desde un backend.
+6. **La identidad manda sobre el rol.** Tras detectar que los pedidos salían
+   a nombre de "Juan Pérez", la sesión pasó a guardar el **correo** del usuario
+   en DataStore y resolver la identidad exacta por correo (con fallback al rol
+   para sesiones antiguas), en vez de tomar el primer usuario del rol.
 
 ---
 
-## 4. Resultado (commits en `mejora-ia`, prefijo `ia:`)
+## 4. Resultado (commits en `mejora-ia`)
 
 | Commit | Descripción |
 |---|---|
@@ -103,9 +153,15 @@
 | `c8d4f45` | `ia: agrega reporte del dia con producto mas vendido y total por pago` |
 | `ae023fc` | `ia: agrega animacion al stepper de seguimiento` |
 | `2ab90e8` | `ia: conecta registro, reporte y repetir pedido en la navegacion` |
+| `748118e` | `ia: quita el cambio de perfil de Ajustes; el rol se define al iniciar sesion` |
+| `e0e6ac1` | `fix(sesion): el pedido y el perfil usan el usuario logueado y no el primero del rol` |
+| `05ee9de` | `ia: mejora la armonia de colores del modo oscuro del administrador` |
+| `14d7d34` | `ia: agrega pago con QR de Yape/Plin con monto automatico` |
 
 Además, el `fix(ui): saludo del menu muestra el nombre real del usuario…` se hizo en
 `main` (saludo "¡Hola, Juan!" hardcodeado → nombre real del usuario en sesión) y se
 integró a `mejora-ia`.
 
-**Verificación:** `gradlew :app:assembleDebug` compila sin errores (KSP/Room OK).
+**Verificación:** `gradlew :app:assembleDebug` compila sin errores (KSP/Room OK) y
+`gradlew :app:testDebugUnitTest` pasa las 13 pruebas de `QrEmvCoTest` (CRC validado
+contra el valor oficial del estándar EMVCo, 0x29B1).

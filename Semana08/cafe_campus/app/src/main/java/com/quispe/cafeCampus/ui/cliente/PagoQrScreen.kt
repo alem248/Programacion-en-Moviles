@@ -66,17 +66,23 @@ fun PagoQrScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (payload == null) {
+                val sinConfigurar = payloadBase.isBlank()
                 Spacer(Modifier.height(40.dp))
                 Text(
-                    text = "Pagos con QR no disponibles",
+                    text = if (sinConfigurar) "Pagos con QR no disponibles" else "No se pudo generar el QR",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "El administrador aún no configura su QR de Yape/Plin. " +
-                            "Para activarlo debe pegar el código de su QR en " +
-                            "Perfil → Pagos QR.",
+                    text = if (sinConfigurar) {
+                        "El administrador aún no configura su QR de Yape/Plin. " +
+                                "Para activarlo debe pegar el código de su QR en " +
+                                "Perfil → Pagos QR."
+                    } else {
+                        "El monto del pedido (S/ ${"%.2f".format(monto)}) no es válido " +
+                                "para un QR de pago. Revisa tu carrito."
+                    },
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -131,6 +137,13 @@ fun PagoQrScreen(
                 textAlign = TextAlign.Center,
                 lineHeight = 22.sp
             )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "Si tu app no muestra el monto, escribe S/ ${"%.2f".format(monto)} a mano",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
 
             Spacer(Modifier.height(16.dp))
             CafeButton(
@@ -156,17 +169,14 @@ private fun QrImagen(payload: String, modifier: Modifier = Modifier) {
                 EncodeHintType.MARGIN to 1
             )
             val matriz = QRCodeWriter().encode(payload, BarcodeFormat.QR_CODE, 512, 512, hints)
-            Bitmap.createBitmap(matriz.width, matriz.height, Bitmap.Config.ARGB_8888).also { bmp ->
-                for (x in 0 until matriz.width) {
-                    for (y in 0 until matriz.height) {
-                        bmp.setPixel(
-                            x, y,
-                            if (matriz[x, y]) android.graphics.Color.BLACK
-                            else android.graphics.Color.WHITE
-                        )
-                    }
-                }
+            val ancho = matriz.width
+            val alto = matriz.height
+            // Se llenan todos los píxeles en un arreglo y se copian de una sola vez
+            val pixeles = IntArray(ancho * alto) { i ->
+                if (matriz[i % ancho, i / ancho]) android.graphics.Color.BLACK
+                else android.graphics.Color.WHITE
             }
+            Bitmap.createBitmap(pixeles, ancho, alto, Bitmap.Config.ARGB_8888)
         } catch (e: Exception) {
             null
         }
