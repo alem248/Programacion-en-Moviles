@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -144,16 +145,21 @@ fun DetallePedidoAdminScreen(
 
             if (dato.pedido.nota.isNotBlank()) {
                 Spacer(Modifier.height(12.dp))
+                // El ámbar con texto oscuro solo funciona en tema claro;
+                // en oscuro se aclara el texto para mantener el contraste.
+                val esOscuro = MaterialTheme.colorScheme.background.luminance() < 0.5f
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF59E0B).copy(alpha = 0.15f))
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFF59E0B).copy(alpha = if (esOscuro) 0.18f else 0.15f)
+                    )
                 ) {
                     Column(Modifier.padding(14.dp)) {
                         Text(
                             text = "Nota del cliente",
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFB45309),
+                            color = if (esOscuro) Color(0xFFFBBF24) else Color(0xFFB45309),
                             fontSize = 13.sp
                         )
                         Spacer(Modifier.height(4.dp))
