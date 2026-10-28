@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.quispe.cafeCampus.ui.components.AppTopBar
 import com.quispe.cafeCampus.ui.components.CafeButton
 import com.quispe.cafeCampus.ui.components.EstadoChip
+import com.quispe.cafeCampus.ui.components.GraficoVentasCard
 import com.quispe.cafeCampus.viewmodel.PanelAdminViewModel
 
 @Composable
@@ -48,6 +49,7 @@ fun PanelScreen(
     val preparando by vm.preparando.collectAsState()
     val listos by vm.listos.collectAsState()
     val ventas by vm.ventasHoy.collectAsState()
+    val ventasSemana by vm.ventasPorDiaState.collectAsState()
     val pedidosNuevos by vm.pedidosNuevos.collectAsState()
 
     Column(Modifier.fillMaxSize()) {
@@ -121,6 +123,9 @@ fun PanelScreen(
                     )
                 }
             }
+
+            Spacer(Modifier.height(14.dp))
+            GraficoVentasCard(state = ventasSemana)
 
             Spacer(Modifier.height(20.dp))
             Text("Nuevos pedidos", style = MaterialTheme.typography.titleLarge)

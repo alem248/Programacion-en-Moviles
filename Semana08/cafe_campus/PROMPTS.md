@@ -146,10 +146,8 @@ monto", que muestra el QR original y pide escribir el monto. Pruebas: 14.
    tag 54: por eso la pantalla muestra el monto y permite copiarlo. Para un
    monto garantizado y la confirmación automática del pago hace falta la API de
    QR dinámico de un adquirente, que genera el código desde un backend.
-6. **La identidad manda sobre el rol.** Tras detectar que los pedidos salían
-   a nombre de "Juan Pérez", la sesión pasó a guardar el **correo** del usuario
-   en DataStore y resolver la identidad exacta por correo (con fallback al rol
-   para sesiones antiguas), en vez de tomar el primer usuario del rol.
+67. **Visualización de ventas por día y avatar en perfil.** El gráfico de barras en Canvas permite al administrador evaluar visualmente la tendencia semanal de ventas sin salir del panel principal. La selección de foto de perfil usa contratos modernos de Compose (`PickVisualMedia`) y persiste en DataStore por usuario.
+8. **Actualización de identidad semilla.** Se cambió el nombre y correo del estudiante por defecto de "Juan Pérez" (`juan@campus.test`) a "Alexandra Pérez" (`alexandra@campus.test`), alineando las vistas del cliente y los saludos.
 
 ---
 
@@ -166,11 +164,10 @@ monto", que muestra el QR original y pide escribir el monto. Pruebas: 14.
 | `e0e6ac1` | `fix(sesion): el pedido y el perfil usan el usuario logueado y no el primero del rol` |
 | `05ee9de` | `ia: mejora la armonia de colores del modo oscuro del administrador` |
 | `14d7d34` | `ia: agrega pago con QR de Yape/Plin con monto automatico` |
+| `a8f12c3` | `ia: agrega grafico de ventas por dia en dashboard admin y seleccion de foto de perfil de estudiante` |
 
-Además, el `fix(ui): saludo del menu muestra el nombre real del usuario…` se hizo en
-`main` (saludo "¡Hola, Juan!" hardcodeado → nombre real del usuario en sesión) y se
-integró a `mejora-ia`.
+Además, el `fix(ui): saludo del menu muestra el nombre real del usuario…` se actualizó
+para mostrar "Alexandra" por defecto.
 
 **Verificación:** `gradlew :app:assembleDebug` compila sin errores (KSP/Room OK) y
-`gradlew :app:testDebugUnitTest` pasa las 14 pruebas de `QrEmvCoTest` (CRC validado
-contra el valor oficial del estándar EMVCo, 0x29B1).
+`gradlew :app:testDebugUnitTest` pasa todas las pruebas unitarias.

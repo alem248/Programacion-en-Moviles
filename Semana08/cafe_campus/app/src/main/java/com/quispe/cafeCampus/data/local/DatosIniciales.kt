@@ -68,8 +68,8 @@ object DatosIniciales {
 
             usuarioDao.insertar(
                 Usuario(
-                    nombre = "Juan Pérez",
-                    correo = "juan@campus.test",
+                    nombre = "Alexandra Pérez",
+                    correo = "alexandra@campus.test",
                     clave = "1234",
                     rol = Rol.CLIENTE.name
                 )

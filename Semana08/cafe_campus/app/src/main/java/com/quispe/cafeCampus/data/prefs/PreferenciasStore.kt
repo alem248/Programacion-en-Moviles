@@ -41,6 +41,12 @@ class PreferenciasStore(private val context: Context) {
     val payloadQr: Flow<String> =
         context.dataStore.data.map { it[Llaves.PAGO_QR] ?: BuildConfig.QR_PAGO_DEFECTO }
 
+    val fotoPerfilUri: Flow<String> = context.dataStore.data.map { prefs ->
+        val correo = prefs[Llaves.CORREO_ACTIVO] ?: ""
+        val key = stringPreferencesKey("foto_perfil_" + correo)
+        prefs[key] ?: ""
+    }
+
     suspend fun guardarPerfil(rol: Rol, correo: String) {
         context.dataStore.edit {
             it[Llaves.PERFIL_ACTIVO] = rol.name
@@ -58,6 +64,14 @@ class PreferenciasStore(private val context: Context) {
 
     suspend fun guardarPayloadQr(payload: String) {
         context.dataStore.edit { it[Llaves.PAGO_QR] = payload }
+    }
+
+    suspend fun guardarFotoPerfil(uri: String) {
+        context.dataStore.edit { prefs ->
+            val correo = prefs[Llaves.CORREO_ACTIVO] ?: ""
+            val key = stringPreferencesKey("foto_perfil_" + correo)
+            prefs[key] = uri
+        }
     }
 
     suspend fun cerrarSesion() {

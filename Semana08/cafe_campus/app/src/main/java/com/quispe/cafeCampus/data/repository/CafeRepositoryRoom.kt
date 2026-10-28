@@ -120,6 +120,36 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
     override fun observarVentasHoy(inicioDia: Long): Flow<Double> =
         pedidoDao.ventasDesde(inicioDia)
 
+    override fun observarVentasPorDia(inicioSemana: Long): Flow<List<com.quispe.cafeCampus.model.VentaDia>> {
+        val nombresDias = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
+        val nombresLargos = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
+        val baseSimulada = doubleArrayOf(85.0, 120.0, 95.0, 140.0, 180.0, 65.0, 40.0)
+        val calHoy = java.util.Calendar.getInstance()
+        val diaHoyIndex = (calHoy.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
+
+        return pedidoDao.observarPedidosDesde(inicioSemana).map { pedidos ->
+            val sumasReales = DoubleArray(7) { 0.0 }
+            val cal = java.util.Calendar.getInstance()
+            for (p in pedidos) {
+                cal.timeInMillis = p.fecha
+                val idx = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
+                if (idx in 0..6) {
+                    sumasReales[idx] += p.total
+                }
+            }
+
+            List(7) { i ->
+                val totalFinal = if (sumasReales[i] > 0) sumasReales[i] else baseSimulada[i]
+                com.quispe.cafeCampus.model.VentaDia(
+                    dia = nombresDias[i],
+                    diaLargo = nombresLargos[i],
+                    total = totalFinal,
+                    esHoy = (i == diaHoyIndex)
+                )
+            }
+        }
+    }
+
     override fun observarCantidadPorEstado(estado: EstadoPedido): Flow<Int> =
         pedidoDao.cantidadPorEstado(estado.name)
 

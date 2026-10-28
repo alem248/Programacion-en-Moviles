@@ -49,7 +49,7 @@ import com.quispe.cafeCampus.viewmodel.MenuViewModel
 @Composable
 fun MenuScreen(
     vm: MenuViewModel,
-    nombreUsuario: String = "estudiante",
+    nombreUsuario: String = "Alexandra",
     onProducto: (Int) -> Unit,
     onConfirmar: () -> Unit = {}
 ) {

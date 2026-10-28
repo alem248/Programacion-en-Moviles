@@ -41,6 +41,7 @@ interface CafeRepository {
 
     // Panel
     fun observarVentasHoy(inicioDia: Long): Flow<Double>
+    fun observarVentasPorDia(inicioSemana: Long): Flow<List<com.quispe.cafeCampus.model.VentaDia>>
     fun observarCantidadPorEstado(estado: EstadoPedido): Flow<Int>
 
     // Reporte del día

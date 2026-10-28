@@ -37,6 +37,9 @@ class SesionViewModel(
     val recibirPedidos: StateFlow<Boolean> = prefs.recibirPedidos
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+    val fotoPerfilUri: StateFlow<String> = prefs.fotoPerfilUri
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     init {
         viewModelScope.launch {
             val perfil = prefs.perfilActivo.first()
@@ -102,6 +105,12 @@ class SesionViewModel(
     fun cambiarRecibirPedidos(valor: Boolean) {
         viewModelScope.launch {
             prefs.guardarRecibirPedidos(valor)
+        }
+    }
+
+    fun actualizarFotoPerfil(uri: String) {
+        viewModelScope.launch {
+            prefs.guardarFotoPerfil(uri)
         }
     }
 }

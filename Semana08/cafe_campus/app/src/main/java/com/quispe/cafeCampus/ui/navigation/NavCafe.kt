@@ -184,7 +184,7 @@ fun NavCafe(
                 val usuario by sesion.usuarioActual.collectAsState()
                 MenuScreen(
                     vm = menuVm,
-                    nombreUsuario = usuario?.nombre?.split(" ")?.firstOrNull() ?: "estudiante",
+                    nombreUsuario = usuario?.nombre?.split(" ")?.firstOrNull() ?: "Alexandra",
                     onProducto = { productoId ->
                         navController.navigate(Rutas.detalle(productoId))
                     },
