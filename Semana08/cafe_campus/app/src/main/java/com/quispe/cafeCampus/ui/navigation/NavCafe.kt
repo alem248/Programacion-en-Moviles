@@ -77,21 +77,17 @@ fun NavCafe(
 
     val rol by sesion.rolActivo.collectAsState()
 
-    fun limpiarPila() {
-        while (navController.popBackStack()) {
-            // vacía toda la pila de navegación
+    fun irADestinoPrincipal() {
+        val destino = if (sesion.rolActivo.value == Rol.ADMIN) Rutas.PANEL else Rutas.MENU
+        navController.navigate(destino) {
+            popUpTo(0) { inclusive = true }
         }
     }
 
-    fun irADestinoPrincipal() {
-        val destino = if (sesion.rolActivo.value == Rol.ADMIN) Rutas.PANEL else Rutas.MENU
-        limpiarPila()
-        navController.navigate(destino)
-    }
-
     fun irALogin() {
-        limpiarPila()
-        navController.navigate(Rutas.LOGIN)
+        navController.navigate(Rutas.LOGIN) {
+            popUpTo(0) { inclusive = true }
+        }
     }
 
     val pestanias = when (rol) {
@@ -314,6 +310,7 @@ fun NavCafe(
                     vm = sesion,
                     vmPago = pagoVm,
                     onCerrarSesion = {
+                        menuVm.vaciar()
                         sesion.cerrarSesion()
                         irALogin()
                     }

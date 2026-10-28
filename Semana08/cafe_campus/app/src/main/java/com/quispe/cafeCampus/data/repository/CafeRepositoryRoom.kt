@@ -123,7 +123,6 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
     override fun observarVentasPorDia(inicioSemana: Long): Flow<List<com.quispe.cafeCampus.model.VentaDia>> {
         val nombresDias = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
         val nombresLargos = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
-        val baseSimulada = doubleArrayOf(85.0, 120.0, 95.0, 140.0, 180.0, 65.0, 40.0)
         val calHoy = java.util.Calendar.getInstance()
         val diaHoyIndex = (calHoy.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
 
@@ -139,11 +138,10 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
             }
 
             List(7) { i ->
-                val totalFinal = if (sumasReales[i] > 0) sumasReales[i] else baseSimulada[i]
                 com.quispe.cafeCampus.model.VentaDia(
                     dia = nombresDias[i],
                     diaLargo = nombresLargos[i],
-                    total = totalFinal,
+                    total = sumasReales[i],
                     esHoy = (i == diaHoyIndex)
                 )
             }

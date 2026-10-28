@@ -148,6 +148,7 @@ monto", que muestra el QR original y pide escribir el monto. Pruebas: 14.
    QR dinámico de un adquirente, que genera el código desde un backend.
 67. **Visualización de ventas por día y avatar en perfil.** El gráfico de barras en Canvas permite al administrador evaluar visualmente la tendencia semanal de ventas sin salir del panel principal. La selección de foto de perfil usa contratos modernos de Compose (`PickVisualMedia`) y persiste en DataStore por usuario.
 8. **Actualización de identidad semilla.** Se cambió el nombre y correo del estudiante por defecto de "Juan Pérez" (`juan@campus.test`) a "Alexandra Pérez" (`alexandra@campus.test`), alineando las vistas del cliente y los saludos.
+9. **Datos reales en gráfico y cierre de sesión explícito.** Se eliminaron los valores simulados del gráfico de barras para reflejar únicamente las compras reales en Room que crecen dinámicamente según la interacción del usuario. El cierre de sesión se conectó directamente a la pantalla de Login limpiando la pila completa de navegación con `popUpTo(0) { inclusive = true }`.
 
 ---
 
@@ -165,6 +166,7 @@ monto", que muestra el QR original y pide escribir el monto. Pruebas: 14.
 | `05ee9de` | `ia: mejora la armonia de colores del modo oscuro del administrador` |
 | `14d7d34` | `ia: agrega pago con QR de Yape/Plin con monto automatico` |
 | `a8f12c3` | `ia: agrega grafico de ventas por dia en dashboard admin y seleccion de foto de perfil de estudiante` |
+| `3f91d84` | `ia: usa ventas 100% reales en el grafico de barras y redirige a login al cerrar sesion` |
 
 Además, el `fix(ui): saludo del menu muestra el nombre real del usuario…` se actualizó
 para mostrar "Alexandra" por defecto.

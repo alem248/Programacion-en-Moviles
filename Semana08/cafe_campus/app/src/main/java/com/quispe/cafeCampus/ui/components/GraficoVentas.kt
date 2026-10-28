@@ -140,7 +140,8 @@ fun GraficoBarrasCanvas(
     val colorTexto = MaterialTheme.colorScheme.onSurface
     val colorTextoVariante = MaterialTheme.colorScheme.onSurfaceVariant
 
-    val maxMonto = (ventas.maxOfOrNull { it.total } ?: 100.0).coerceAtLeast(100.0)
+    val maxCalculado = ventas.maxOfOrNull { it.total } ?: 0.0
+    val maxMonto = if (maxCalculado > 0) maxCalculado * 1.15 else 50.0
 
     Column(modifier = modifier) {
         itemSeleccionado?.let { item ->
