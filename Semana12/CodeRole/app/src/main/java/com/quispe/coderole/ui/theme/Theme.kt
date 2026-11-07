@@ -18,9 +18,11 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = androidx.compose.ui.graphics.Color(0xFFEE5268),
+    secondary = androidx.compose.ui.graphics.Color(0xFF9D5369),
+    tertiary = androidx.compose.ui.graphics.Color(0xFFFFA6B2),
+    background = androidx.compose.ui.graphics.Color(0xFFFFF2F1),
+    surface = androidx.compose.ui.graphics.Color(0xFFFFFBFA),
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -37,7 +39,7 @@ private val LightColorScheme = lightColorScheme(
 fun CodeRoleTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
