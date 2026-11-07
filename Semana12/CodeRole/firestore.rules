@@ -5,9 +5,17 @@ service cloud.firestore {
       allow get: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['rol'])
-        && request.resource.data.rol == 'usuario';
+        && request.resource.data.keys().hasOnly(['rol', 'correo'])
+        && request.resource.data.keys().hasAll(['rol', 'correo'])
+        && request.resource.data.rol == 'usuario'
+        && request.resource.data.correo == request.auth.token.email;
       allow list, update, delete: if false;
+
+      match /conversaciones/{conversationId}/mensajes/{mensajeId} {
+        allow get, list: if request.auth != null && request.auth.uid == uid;
+        // Solo el backend autenticado guarda mensajes y respuestas de la mentora.
+        allow create, update, delete: if false;
+      }
     }
   }
 }

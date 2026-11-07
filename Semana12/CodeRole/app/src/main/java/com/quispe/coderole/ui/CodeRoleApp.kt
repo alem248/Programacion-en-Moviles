@@ -1,6 +1,7 @@
 package com.quispe.coderole.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,7 +55,10 @@ fun CodeRoleApp(container: AppContainer) {
         }
 
         val lista: ListaViewModel = viewModel(key = "lista-${sesion.uid}", factory = ListaViewModel.Factory(container.personajes))
-        val detalle: DetalleViewModel = viewModel(key = "detalle-${sesion.uid}", factory = DetalleViewModel.Factory(container.personajes))
+        val detalle: DetalleViewModel = viewModel(
+            key = "detalle-${sesion.uid}",
+            factory = DetalleViewModel.Factory(container.personajes, container.chat),
+        )
         val listaState by lista.uiState.collectAsStateWithLifecycle()
         val favorites by lista.favoritos.collectAsStateWithLifecycle()
         var section by remember(sesion.uid) { mutableStateOf(Seccion.CHAT) }
@@ -66,7 +70,7 @@ fun CodeRoleApp(container: AppContainer) {
                         lista.sincronizar()
                         detalle.reintentarDetalle()
                     }
-                    Seccion.FAVORITOS -> FavoritesScreen(favorites)
+                    Seccion.FAVORITOS -> FavoritesScreen(favorites) { section = Seccion.CHAT }
                     Seccion.PERFIL -> ProfileScreen(sesion, login::cerrarSesion) {
                         if (sesion.rol == Rol.ADMIN) section = Seccion.ADMIN
                     }
@@ -84,34 +88,34 @@ fun CodeRoleApp(container: AppContainer) {
 @Composable
 private fun BottomMenu(esAdmin: Boolean, actual: Seccion, onSelect: (Seccion) -> Unit) {
     Surface(color = Color.White, shadowElevation = 8.dp) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 3.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            MenuOpcion("⌂", "Inicio", actual == Seccion.CHAT) { onSelect(Seccion.CHAT) }
-            MenuOpcion("♡", "Favoritos", actual == Seccion.FAVORITOS) { onSelect(Seccion.FAVORITOS) }
-            MenuOpcion("◌", "Chat", actual == Seccion.CHAT) { onSelect(Seccion.CHAT) }
-            MenuOpcion("♙", "Perfil", actual == Seccion.PERFIL) { onSelect(Seccion.PERFIL) }
-            if (esAdmin) MenuOpcion("✚", "Admin", actual == Seccion.ADMIN) { onSelect(Seccion.ADMIN) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            OpcionNavegacion("♥", "Mentora", actual == Seccion.CHAT, Modifier.weight(1f)) { onSelect(Seccion.CHAT) }
+            OpcionNavegacion("☆", "Favoritos", actual == Seccion.FAVORITOS, Modifier.weight(1f)) { onSelect(Seccion.FAVORITOS) }
+            OpcionNavegacion("♙", "Perfil", actual == Seccion.PERFIL, Modifier.weight(1f)) { onSelect(Seccion.PERFIL) }
+            if (esAdmin) OpcionNavegacion("⚙", "Admin", actual == Seccion.ADMIN, Modifier.weight(1f)) { onSelect(Seccion.ADMIN) }
         }
     }
 }
 
 @Composable
-private fun MenuOpcion(icono: String, titulo: String, seleccionado: Boolean, onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(icono, color = if (seleccionado) Color(0xFFEE5268) else Color(0xFF633A50), style = MaterialTheme.typography.titleMedium)
-            Text(titulo, color = if (seleccionado) Color(0xFFEE5268) else Color(0xFF633A50), style = MaterialTheme.typography.labelSmall)
-        }
+private fun OpcionNavegacion(icono: String, titulo: String, seleccionada: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Column(
+        modifier = modifier.clickable(onClick = onClick).padding(vertical = 9.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(icono, color = if (seleccionada) Color(0xFFEE5268) else Color(0xFF633A50), style = MaterialTheme.typography.titleMedium)
+        Text(titulo, color = if (seleccionada) Color(0xFFEE5268) else Color(0xFF633A50), style = MaterialTheme.typography.labelSmall)
     }
 }
 
 @Composable
-private fun FavoritesScreen(personajes: List<com.quispe.coderole.domain.model.Personaje>) {
+private fun FavoritesScreen(personajes: List<com.quispe.coderole.domain.model.Personaje>, abrirMentora: () -> Unit) {
     Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).padding(20.dp)) {
         Text("♥  Favoritos", color = Color(0xFF351F35), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         if (personajes.isEmpty()) {
             Text("Aún no tienes favoritos. Guarda a tu mentora para acceder más rápido.", color = Color(0xFF633A50), modifier = Modifier.padding(top = 20.dp))
         } else {
-            Surface(Modifier.fillMaxWidth().padding(top = 16.dp), color = Color.White, shape = RoundedCornerShape(24.dp)) {
+            Surface(Modifier.fillMaxWidth().padding(top = 16.dp).clickable(onClick = abrirMentora), color = Color.White, shape = RoundedCornerShape(24.dp)) {
                 Column(Modifier.padding(18.dp)) {
                     Text("Tu mentora de programación", color = Color(0xFF351F35), fontWeight = FontWeight.Bold)
                     Text("Siempre contigo · aprende a tu ritmo", color = Color(0xFF633A50))

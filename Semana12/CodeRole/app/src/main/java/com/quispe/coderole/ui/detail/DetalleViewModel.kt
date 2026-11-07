@@ -4,34 +4,34 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.quispe.coderole.domain.model.CharacterEmotion
+import com.quispe.coderole.domain.model.MensajeConversacion
 import com.quispe.coderole.domain.model.Personaje
+import com.quispe.coderole.domain.repository.ChatRepository
 import com.quispe.coderole.domain.repository.ItemRepository
 import com.quispe.coderole.ui.UiState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class MensajeChat(val id: Long, val texto: String, val esUsuario: Boolean)
-
 data class DetalleUiState(
     val personaje: Personaje? = null,
-    val conversacion: List<MensajeChat> = listOf(
-        MensajeChat(0, "¡Hola! Soy tu mentora de programación. ¿Qué te gustaría aprender hoy?", false),
-    ),
+    val conversacion: List<MensajeConversacion> = emptyList(),
     val textoMensaje: String = "",
     val emocion: CharacterEmotion = CharacterEmotion.NEUTRAL,
     val estado: UiState<Unit> = UiState.Cargando,
     val sinConexion: Boolean = false,
     val enviando: Boolean = false,
+    val errorConversacion: String? = null,
 )
 
-class DetalleViewModel(private val repositorio: ItemRepository) : ViewModel() {
+class DetalleViewModel(
+    private val repositorio: ItemRepository,
+    private val chatRepository: ChatRepository,
+) : ViewModel() {
     private val _uiState = MutableStateFlow(DetalleUiState())
     val uiState: StateFlow<DetalleUiState> = _uiState.asStateFlow()
 
@@ -47,7 +47,16 @@ class DetalleViewModel(private val repositorio: ItemRepository) : ViewModel() {
                 }
             }
         }
-        // Consulta el endpoint de detalle; la pantalla sigue leyendo exclusivamente de Room.
+        viewModelScope.launch {
+            chatRepository.observarConversacion()
+                .catch { error ->
+                    _uiState.update { it.copy(errorConversacion = error.message ?: "No se pudo cargar el historial.") }
+                }
+                .collect { mensajes ->
+                    _uiState.update { it.copy(conversacion = mensajes, errorConversacion = null) }
+                }
+        }
+        // Se refresca el detalle remoto, pero la pantalla sigue leyendo el personaje exclusivamente desde Room.
         reintentarDetalle()
     }
 
@@ -64,26 +73,23 @@ class DetalleViewModel(private val repositorio: ItemRepository) : ViewModel() {
     fun enviarMensaje() {
         val texto = _uiState.value.textoMensaje.trim()
         if (texto.isBlank() || _uiState.value.enviando) return
-        _uiState.update { actual ->
-            actual.copy(
-                textoMensaje = "",
-                emocion = CharacterEmotion.THINKING,
-                enviando = true,
-                conversacion = actual.conversacion + MensajeChat(System.nanoTime(), texto, true),
-            )
+        _uiState.update {
+            it.copy(textoMensaje = "", emocion = CharacterEmotion.THINKING, enviando = true, errorConversacion = null)
         }
         viewModelScope.launch {
-            delay(850)
-            val sorprendido = texto.contains("?", ignoreCase = true) &&
-                listOf("error", "no funciona", "crash", "falla").any { texto.contains(it, true) }
-            val respuesta = responderEnFaseInicial(texto)
-            _uiState.update { actual ->
-                actual.copy(
-                    conversacion = actual.conversacion + MensajeChat(System.nanoTime(), respuesta, false),
-                    emocion = if (sorprendido) CharacterEmotion.SURPRISED else CharacterEmotion.HAPPY,
-                    enviando = false,
-                )
-            }
+            chatRepository.enviarMensaje(texto)
+                .onSuccess {
+                    _uiState.update { it.copy(emocion = CharacterEmotion.HAPPY, enviando = false) }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            emocion = CharacterEmotion.SURPRISED,
+                            enviando = false,
+                            errorConversacion = error.message ?: "No se pudo enviar el mensaje. Comprueba tu conexión.",
+                        )
+                    }
+                }
         }
     }
 
@@ -92,20 +98,12 @@ class DetalleViewModel(private val repositorio: ItemRepository) : ViewModel() {
         viewModelScope.launch { repositorio.alternarFavorito(id) }
     }
 
-    private fun responderEnFaseInicial(texto: String): String {
-        val tema = when {
-            texto.contains("variable", true) -> "Una variable guarda un valor que puedes consultar o cambiar. En Kotlin puedes declarar una mutable con var y una inmutable con val."
-            texto.contains("compose", true) || texto.contains("interfaz", true) -> "En Compose describes la interfaz con funciones @Composable. La pantalla se vuelve a dibujar cuando cambia el estado que observa."
-            texto.contains("viewmodel", true) || texto.contains("mvvm", true) -> "En MVVM, la pantalla observa el UiState y envía eventos al ViewModel. El Repository reúne las fuentes de datos y Room mantiene la lectura local."
-            texto.contains("retrofit", true) || texto.contains("api", true) -> "Retrofit convierte una interfaz Kotlin en llamadas HTTP. El Repository puede guardar su respuesta en Room para que la app siga mostrando datos sin conexión."
-            texto.contains("error", true) || texto.contains("no funciona", true) -> "Vamos paso a paso: revisa el mensaje de error completo, la línea indicada y qué valor tiene el estado justo antes de fallar."
-            else -> "¡Buena pregunta! Cuéntame qué parte de programación estás practicando y lo revisamos paso a paso."
-        }
-        return "$tema\n\nEsta respuesta es una demostración local de la Fase 1."
-    }
-
-    class Factory(private val repositorio: ItemRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repositorio: ItemRepository,
+        private val chatRepository: ChatRepository,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = DetalleViewModel(repositorio) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            DetalleViewModel(repositorio, chatRepository) as T
     }
 }

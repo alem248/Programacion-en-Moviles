@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.quispe.coderole.domain.model.CharacterEmotion
+import com.quispe.coderole.domain.model.MensajeConversacion
 import com.quispe.coderole.ui.UiState
 import com.quispe.coderole.ui.components.ModularCharacterView
 
@@ -53,10 +54,9 @@ fun DetalleScreen(
             Modifier.fillMaxWidth().background(Color.White.copy(alpha = .88f)).padding(horizontal = 18.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("‹", style = MaterialTheme.typography.headlineMedium, color = Rosa)
             Column(Modifier.weight(1f).padding(start = 10.dp)) {
-                Text("CodeRole", style = MaterialTheme.typography.titleLarge, color = Tinta, fontWeight = FontWeight.Bold)
-                Text("●  Tu mentora está contigo", style = MaterialTheme.typography.labelMedium, color = Color(0xFF4B9C77))
+                Text("Tu mentora", style = MaterialTheme.typography.titleLarge, color = Tinta, fontWeight = FontWeight.Bold)
+                Text("●  Siempre contigo · programación", style = MaterialTheme.typography.labelMedium, color = Color(0xFF4B9C77))
             }
             TextButton(onClick = viewModel::alternarFavorito) {
                 Text(if (state.personaje?.esFavorito == true) "♥" else "♡", color = Rosa, style = MaterialTheme.typography.headlineMedium)
@@ -106,13 +106,23 @@ fun DetalleScreen(
                         }
                     }
                     item { Text("Conversación", color = Tinta, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
-                    items(state.conversacion, key = { it.id }) { mensaje ->
+                    val mensajesVisibles = state.conversacion.ifEmpty {
+                        listOf(MensajeConversacion("bienvenida", "¡Hola! Soy tu mentora de programación. ¿Qué te gustaría aprender hoy?", false, 0L))
+                    }
+                    items(mensajesVisibles, key = { it.id }) { mensaje ->
                         MensajeBubble(mensaje.texto, mensaje.esUsuario)
                     }
                     if (state.enviando) item {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             CircularProgressIndicator(Modifier.size(16.dp), color = Rosa, strokeWidth = 2.dp)
                             Text("Tu mentora está pensando…", color = Tinta, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    state.errorConversacion?.let { error ->
+                        item {
+                            Surface(color = Color(0xFFFFE0E3), shape = RoundedCornerShape(16.dp)) {
+                                Text(error, Modifier.fillMaxWidth().padding(12.dp), color = Color(0xFF9B2440), style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }

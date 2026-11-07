@@ -33,7 +33,7 @@ class FirebaseAuthRepository(
             ?: error("Firebase no devolvió la cuenta creada.")
         try {
             firestore.collection("usuarios").document(usuario.uid)
-                .set(mapOf("rol" to "usuario"))
+                .set(mapOf("rol" to "usuario", "correo" to (usuario.email ?: correo.trim())))
                 .await()
         } catch (error: Exception) {
             runCatching { usuario.delete().await() }
