@@ -26,6 +26,23 @@ class FirebaseAuthRepository(
         Sesion(usuario.uid, usuario.email ?: correo.trim(), rol)
     }.onFailure { auth.signOut() }
 
+    override suspend fun registrar(correo: String, clave: String): Result<Unit> = runCatching {
+        require(correo.isNotBlank()) { "Ingresa tu correo electrónico." }
+        require(clave.length >= 6) { "La contraseña debe tener al menos 6 caracteres." }
+        val usuario = auth.createUserWithEmailAndPassword(correo.trim(), clave).await().user
+            ?: error("Firebase no devolvió la cuenta creada.")
+        try {
+            firestore.collection("usuarios").document(usuario.uid)
+                .set(mapOf("rol" to "usuario"))
+                .await()
+        } catch (error: Exception) {
+            runCatching { usuario.delete().await() }
+            throw error
+        }
+        // Firebase inicia sesión al crear la cuenta; se cierra para volver al formulario de acceso.
+        auth.signOut()
+    }.onFailure { auth.signOut() }
+
     override suspend fun sesionActual(): Sesion? {
         val usuario = auth.currentUser ?: return null
         return runCatching {

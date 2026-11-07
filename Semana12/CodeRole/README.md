@@ -21,11 +21,11 @@ La lista y el detalle observan Room mediante `Flow`; Retrofit solo actualiza la 
 
 El archivo `app/google-services.json` está ignorado por Git y debe conservarse localmente. El paquete registrado debe ser `com.quispe.coderole`. En Firebase Console:
 
-1. Habilita Email/Password en Authentication y crea manualmente las cuentas de prueba.
-2. Crea Firestore y un documento `usuarios/{uid}` por cuenta, con el campo `rol` igual a `admin` o `usuario`.
-3. Publica las reglas del archivo `firestore.rules`, que permiten al usuario autenticado leer solo su propio documento de perfil.
+1. Habilita Email/Password en Authentication.
+2. Publica las reglas del archivo `firestore.rules`. El registro desde la app crea `usuarios/{uid}` con el rol fijo `usuario`; las reglas no permiten que la app cambie o eleve ese rol.
+3. Crea la cuenta administradora desde Firebase Console y asigna manualmente `rol: "admin"` en `usuarios/{uid}`.
 
-El rol nunca se infiere del correo ni se elige en la pantalla. Si falta el documento o el rol no coincide con esos valores, el ingreso se rechaza.
+El rol nunca se infiere del correo ni se elige en la pantalla. Si falla la creación del perfil en Firestore, la app elimina la cuenta recién creada cuando Firebase lo permite y vuelve al formulario con el error.
 
 ## Personaje modular
 
