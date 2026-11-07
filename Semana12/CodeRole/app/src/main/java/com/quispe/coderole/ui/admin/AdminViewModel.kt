@@ -31,10 +31,10 @@ class AdminViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(procesando = true, mensaje = null, error = null) }
             repositorio.refrescar()
-                .onSuccess { total ->
+                .onSuccess { _ ->
                     actualizarTotales()
-                    _uiState.update { it.copy(procesando = false, mensaje = "Se guardaron $total elementos.") }
-                    notificador.mostrar("CodeRole", "Se guardó $total mentor en el dispositivo.")
+                    _uiState.update { it.copy(procesando = false, mensaje = "Se sincronizó el perfil de tu mentora.") }
+                    notificador.mostrar("CodeRole", "Se guardó el perfil de tu mentora en el dispositivo.")
                 }
                 .onFailure { e -> _uiState.update { it.copy(procesando = false, error = e.message ?: "No se pudo sincronizar.") } }
         }

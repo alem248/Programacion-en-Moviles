@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -51,7 +52,7 @@ class ListaViewModel(private val repositorio: ItemRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(mensaje = null) }
             repositorio.refrescar()
-                .onSuccess { total -> _uiState.update { it.copy(sinConexion = false, mensaje = "Se guardó $total mentor en el dispositivo.") } }
+                .onSuccess { _ -> _uiState.update { it.copy(sinConexion = false, mensaje = "Se guardó el perfil de tu mentora en el dispositivo.") } }
                 .onFailure { error ->
                     _uiState.update {
                         it.copy(
