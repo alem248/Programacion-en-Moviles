@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="400" viewBox="0 0 320 400">
+ <defs>
+  <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9c4c49"/><stop offset=".52" stop-color="#63303c"/><stop offset="1" stop-color="#351f35"/></linearGradient>
+  <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffabb7"/><stop offset="1" stop-color="#ed657a"/></linearGradient>
+  <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff1e8"/><stop offset="1" stop-color="#f5c2bf"/></linearGradient>
+ </defs>
+ <!-- Cabello posterior, orejas y mechones -->
+ <path d="M70 125 45 30q-3-12 8-5l71 45 37-6 42-32q13-10 13 6l-3 45q43 31 42 91l-12 93H72l-22-83q-8-39 20-59Z" fill="url(#hair)" stroke="#351f35" stroke-width="7" stroke-linejoin="round"/>
+ <path d="m57 36 49 29-29 22Z" fill="#e99891"/><path d="m244 57-37 22 31 8Z" fill="#e99891"/>
+ <!-- cuerpo y cuello alto -->
+ <path d="M65 382q3-95 44-131l51-22 55 23q39 31 42 130Z" fill="#222538" stroke="#351f35" stroke-width="7"/>
+ <path d="M96 257q-35-6-55 27l-25 78q-5 20 15 27l35 11 35-74 37-38Z" fill="url(#pink)" stroke="#9f4057" stroke-width="7" stroke-linejoin="round"/>
+ <path d="M224 257q35-6 55 27l25 78q5 20-15 27l-35 11-35-74-37-38Z" fill="url(#pink)" stroke="#9f4057" stroke-width="7" stroke-linejoin="round"/>
+ <path d="m37 340 35 12-10 25-35-12Zm246 0-35 12 10 25 35-12Z" fill="#fff2ee" stroke="#9f4057" stroke-width="5"/>
+ <!-- falda plisada para la ilustración de cuerpo completo -->
+ <path d="M105 333q55 15 110 0l24 63H81Z" fill="#563047" stroke="#351f35" stroke-width="6" stroke-linejoin="round"/>
+ <path d="m112 341-8 48m31-44-2 47m31-46 1 46m31-48 6 48" fill="none" stroke="#9e5b73" stroke-width="5" stroke-linecap="round"/>
+ <path d="M28 366q8 16 25 8m239-8q-8 16-25 8" fill="url(#skin)" stroke="#9f4057" stroke-width="4"/>
+ <path d="M126 232q5 31 34 43 28-10 35-43l-8-25h-55Z" fill="url(#skin)"/>
+ <path d="M112 259q47 28 96 0l-18 34q-29 18-59 0Z" fill="#293044" stroke="#171d30" stroke-width="5"/>
+ <path d="M160 293q-16 19-4 34l8-3 9-12-7-20Z" fill="#e25d73"/>
+ <!-- rostro -->
+ <path d="M84 120q2-66 76-68 77 0 78 70l-8 68q-7 54-70 67-63-13-70-67Z" fill="url(#skin)" stroke="#6e3542" stroke-width="6"/>
+ <!-- flequillo y mechones frontales -->
+ <path d="M77 131Q51 67 100 44q44-25 80 4 42-35 69 7 24 37-2 90l-14 18-8-57q-22 27-43 30l8-39q-31 31-65 34l12-40q-25 37-58 44Z" fill="url(#hair)" stroke="#351f35" stroke-width="6" stroke-linejoin="round"/>
+ <path d="M67 130q-14 51 8 96l23 18-12-79Zm179-3q15 49-8 96l-22 20 11-84Z" fill="url(#hair)" stroke="#351f35" stroke-width="6"/>
+ <path d="M98 79q18-25 42-25m39 2q25-12 42 8" fill="none" stroke="#d98178" stroke-width="6" stroke-linecap="round" opacity=".75"/>
+ <!-- pines y detalles -->
+ <path d="M83 111q-14-5-19 8m176-10q15-5 20 8" fill="none" stroke="#f6c06f" stroke-width="5" stroke-linecap="round"/>
+</svg>
