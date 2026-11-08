@@ -10,7 +10,7 @@ const maxCharacters = 5_000;
 const contextMessageCount = 20;
 
 const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/";
-const models = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-flash-lite-latest"];
+const models = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
 const instructions =
   "Eres la mentora de programación de CodeRole, una compañera amable con personalidad cálida y " +
   "expresiva. Respondes en español, explicas conceptos con claridad y ejemplos pequeños, guías " +
@@ -57,6 +57,7 @@ export const responderMentor = onCall(
       const documentoRespuesta = await mensajes.add({
         texto: respuesta,
         rol: "mentora",
+        favorita: false,
         creadoEn: FieldValue.serverTimestamp(),
       });
       return { respuesta, mensajeId: documentoRespuesta.id };

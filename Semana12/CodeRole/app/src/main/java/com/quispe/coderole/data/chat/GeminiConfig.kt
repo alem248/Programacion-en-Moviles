@@ -1,14 +1,16 @@
 package com.quispe.coderole.data.chat
 
+import com.quispe.coderole.BuildConfig
+
 /**
  * Configuración del cliente de Google Gemini para el chat de la mentora.
  *
- * La clave se envía desde la app porque la conversación se genera en el cliente
- * y se guarda en Firestore. Es una clave de uso académico: si se filtra, se
- * restringe o se rota desde Google AI Studio sin tocar el resto de la app.
+ * La clave se carga desde local.properties para no dejarla escrita en el código.
+ * La API todavía se invoca desde el cliente; para producción debe trasladarse a
+ * una función de servidor, porque una clave incluida en el APK puede extraerse.
  */
 object GeminiConfig {
-    const val API_KEY = "CLAVE-ROTADA"
+    const val API_KEY = BuildConfig.GEMINI_API_KEY
 
     /** Endpoint base de la Google Generative Language API (REST v1beta). */
     const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -18,10 +20,9 @@ object GeminiConfig {
      * siguiente, así el chat sigue respondiendo cuando hay alta demanda.
      */
     val MODELOS = listOf(
-        "gemini-3.5-flash",
-        "gemini-flash-latest",
-        "gemini-flash-lite-latest",
-        "gemini-3.1-flash-lite",
+        "gemini-3.8-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash-lite",
     )
 
     /** Máximo de mensajes del historial que se envían como contexto. */

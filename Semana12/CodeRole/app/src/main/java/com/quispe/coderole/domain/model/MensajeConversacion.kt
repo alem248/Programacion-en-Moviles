@@ -5,4 +5,5 @@ data class MensajeConversacion(
     val texto: String,
     val esUsuario: Boolean,
     val creadoEn: Long,
+    val favorita: Boolean = false,
 )

@@ -38,6 +38,9 @@ class GeminiChatService(
      */
     suspend fun responder(historial: List<TurnoChat>, mensaje: String): String =
         withContext(Dispatchers.IO) {
+            if (apiKey.isBlank()) {
+                throw IllegalStateException("Falta GEMINI_API_KEY en local.properties. Sin esa clave no se puede contactar con Gemini.")
+            }
             val cuerpo = construirCuerpo(normalizar(historial + TurnoChat(esUsuario = true, texto = mensaje)))
             var ultimoError: Exception? = null
 
@@ -138,10 +141,11 @@ class GeminiChatService(
     }
 
     private fun exceptionPara(codigo: Int, cuerpo: String): Exception = when (codigo) {
-        400 -> IllegalStateException("Revisa el mensaje: la API de Gemini rechazó la solicitud.")
+        400 -> IllegalStateException("Gemini rechazó la solicitud. Revisa la respuesta de error del registro GeminiChat.")
         401, 403 -> IllegalStateException("La clave de Gemini no tiene permisos. Contacta con el docente.")
         429 -> IllegalStateException("Se agotó la cuota de Gemini. Espera unos minutos y vuelve a intentar.")
         503, 500 -> IllegalStateException("Gemini está con alta demanda ahora. Inténtalo de nuevo en un momento.")
+        404 -> IllegalStateException("El modelo de Gemini no está disponible para esta clave o región.")
         else -> IOException("No se pudo conectar con Gemini (código $codigo). Comprueba tu conexión.")
     }
 

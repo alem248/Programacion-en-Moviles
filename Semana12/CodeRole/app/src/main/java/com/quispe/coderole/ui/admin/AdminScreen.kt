@@ -43,7 +43,7 @@ fun AdminScreen(viewModel: AdminViewModel) {
         Spacer(Modifier.height(20.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             AdminDato("Mentor guardado", state.totalPersonajes.toString(), Modifier.weight(1f))
-            AdminDato("Favoritos", state.totalFavoritos.toString(), Modifier.weight(1f))
+            AdminDato("Mentora favorita", state.totalFavoritos.toString(), Modifier.weight(1f))
         }
         Spacer(Modifier.height(20.dp))
         Button(

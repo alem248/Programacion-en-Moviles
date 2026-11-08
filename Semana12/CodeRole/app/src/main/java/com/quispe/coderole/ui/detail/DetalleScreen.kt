@@ -75,10 +75,10 @@ fun DetalleScreen(
             }
         }
 
-        if (sinConexion || state.sinConexion) {
+        if (sinConexion) {
             Surface(color = Color(0xFFFFE0E3), modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Sin conexión · usando tu mentor guardado", Modifier.weight(1f), color = Tinta, style = MaterialTheme.typography.labelMedium)
+                    Text("No se sincronizó el perfil de referencia · se conserva la copia local", Modifier.weight(1f), color = Tinta, style = MaterialTheme.typography.labelMedium)
                     TextButton(onClick = onVolverAIntentar) { Text("Reintentar", color = Rosa) }
                 }
             }
@@ -123,7 +123,7 @@ fun DetalleScreen(
                         listOf(MensajeConversacion("bienvenida", "¡Hola! Soy tu mentora de programación. ¿Qué te gustaría aprender hoy?", false, 0L))
                     }
                     items(mensajesVisibles, key = { it.id }) { mensaje ->
-                        MensajeBubble(mensaje.texto, mensaje.esUsuario)
+                        MensajeBubble(mensaje) { viewModel.alternarRespuestaFavorita(mensaje) }
                     }
                     if (state.enviando) item {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -176,15 +176,25 @@ fun DetalleScreen(
 }
 
 @Composable
-private fun MensajeBubble(texto: String, esUsuario: Boolean) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (esUsuario) Arrangement.End else Arrangement.Start) {
-        Surface(
-            color = if (esUsuario) Color(0xFFFFC3CC) else Color.White,
-            shape = RoundedCornerShape(if (esUsuario) 22.dp else 6.dp, 22.dp, 22.dp, 22.dp),
-            shadowElevation = 1.dp,
-            modifier = Modifier.fillMaxWidth(.86f),
-        ) {
-            Text(texto, Modifier.padding(horizontal = 15.dp, vertical = 12.dp), color = Tinta, style = MaterialTheme.typography.bodyMedium)
+private fun MensajeBubble(mensaje: MensajeConversacion, onToggleFavorite: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mensaje.esUsuario) Arrangement.End else Arrangement.Start) {
+        Column(Modifier.fillMaxWidth(.9f), horizontalAlignment = if (mensaje.esUsuario) Alignment.End else Alignment.Start) {
+            Surface(
+                color = if (mensaje.esUsuario) Color(0xFFFFC3CC) else Color.White,
+                shape = RoundedCornerShape(if (mensaje.esUsuario) 22.dp else 6.dp, 22.dp, 22.dp, 22.dp),
+                shadowElevation = 1.dp,
+            ) {
+                Text(mensaje.texto, Modifier.padding(horizontal = 15.dp, vertical = 12.dp), color = Tinta, style = MaterialTheme.typography.bodyMedium)
+            }
+            if (!mensaje.esUsuario && mensaje.id != "bienvenida") {
+                TextButton(onClick = onToggleFavorite) {
+                    Text(
+                        if (mensaje.favorita) "★ Respuesta guardada" else "☆ Guardar respuesta",
+                        color = if (mensaje.favorita) Rosa else TintaSecundaria,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
         }
     }
 }

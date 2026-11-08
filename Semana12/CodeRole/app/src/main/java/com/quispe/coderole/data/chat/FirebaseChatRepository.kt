@@ -49,6 +49,7 @@ class FirebaseChatRepository(
                             texto = texto,
                             esUsuario = document.getString("rol") == "usuario",
                             creadoEn = document.getTimestamp("creadoEn")?.toDate()?.time ?: 0L,
+                            favorita = document.getBoolean("favorita") ?: false,
                         )
                     }
                     trySend(mensajes)
@@ -90,6 +91,18 @@ class FirebaseChatRepository(
         }
     }
 
+    override suspend fun cambiarRespuestaFavorita(id: String, favorita: Boolean): Result<Unit> {
+        return try {
+            val referencia = mensajesDelUsuario().document(id)
+            val mensaje = referencia.get().await()
+            check(mensaje.getString("rol") == "mentora") { "Solo puedes guardar respuestas de tu mentora." }
+            referencia.update("favorita", favorita).await()
+            Result.success(Unit)
+        } catch (error: Exception) {
+            Result.failure(error)
+        }
+    }
+
     /**
      * Firestore deja la escritura en cola cuando no hay red y la tarea nunca se
      * completa; con este tope la pantalla muestra el error en lugar de quedar
@@ -106,6 +119,7 @@ class FirebaseChatRepository(
                     mapOf(
                         "texto" to texto,
                         "rol" to rol,
+                        "favorita" to false,
                         "creadoEn" to FieldValue.serverTimestamp(),
                     ),
                 ).await()

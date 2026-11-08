@@ -47,13 +47,13 @@ El rol nunca se infiere del correo ni se elige en la pantalla. Si falla la creac
 
 ## Chat con Gemini
 
-`data/chat/GeminiConfig.kt` concentra la configuración: la clave de Google AI Studio, la lista de modelos de reserva (`MODELOS`), el límite de 5 000 caracteres, los 20 mensajes de contexto y la instrucción de sistema que define la personalidad de la mentora.
+`data/chat/GeminiConfig.kt` concentra la lista de modelos de reserva (`MODELOS`), el límite de 5 000 caracteres, los 20 mensajes de contexto y la instrucción de sistema. La clave local se lee de `GEMINI_API_KEY` en `local.properties`, archivo ignorado por Git.
 
 `GeminiChatService.kt` hace la llamada REST a `generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent` con OkHttp y Gson, sin dependencias adicionales. Si un modelo responde 404, 429 o 503, se prueba el siguiente de la lista; los errores 401/403 y 400 se traducen a mensajes claros en la pantalla del chat.
 
 Al enviar un mensaje, `FirebaseChatRepository` guarda el texto del usuario en Firestore, envía el historial normalizado (la conversación empieza en el usuario y los turnos consecutivos se fusionan, como exige Gemini) y guarda la respuesta con rol `mentora`.
 
-> La clave vive en el repositorio y viaja dentro del APK porque es una clave de uso académico. Para un proyecto real, genera la respuesta en la Cloud Function con `GEMINI_API_KEY` como secreto y rota la clave desde [Google AI Studio](https://aistudio.google.com/apikey).
+> La llamada actual se hace desde Android, por lo que la clave se incorpora al APK y puede extraerse. `local.properties` evita dejarla en el código fuente, pero no protege la clave del APK. Rota la clave que estuvo escrita en el código y, para distribuir la app, usa la Cloud Function con `GEMINI_API_KEY` como secreto. Administra las claves desde [Google AI Studio](https://aistudio.google.com/apikey).
 
 
 

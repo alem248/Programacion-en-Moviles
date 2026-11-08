@@ -23,7 +23,6 @@ data class DetalleUiState(
     val textoMensaje: String = "",
     val emocion: CharacterEmotion = CharacterEmotion.NEUTRAL,
     val estado: UiState<Unit> = UiState.Cargando,
-    val sinConexion: Boolean = false,
     val enviando: Boolean = false,
     val errorConversacion: String? = null,
 )
@@ -56,19 +55,9 @@ class DetalleViewModel(
                     _uiState.update { it.copy(conversacion = mensajes, errorConversacion = null) }
                 }
         }
-        // Se refresca el detalle remoto, pero la pantalla sigue leyendo el personaje exclusivamente desde Room.
-        reintentarDetalle()
     }
 
     fun cambiarTexto(texto: String) = _uiState.update { it.copy(textoMensaje = texto) }
-
-    fun reintentarDetalle() {
-        viewModelScope.launch {
-            repositorio.obtenerDetalle(1)
-                .onSuccess { _uiState.update { it.copy(sinConexion = false) } }
-                .onFailure { _uiState.update { it.copy(sinConexion = true) } }
-        }
-    }
 
     fun enviarMensaje() {
         val texto = _uiState.value.textoMensaje.trim()
@@ -96,6 +85,18 @@ class DetalleViewModel(
     fun alternarFavorito() {
         val id = _uiState.value.personaje?.id ?: return
         viewModelScope.launch { repositorio.alternarFavorito(id) }
+    }
+
+    fun alternarRespuestaFavorita(mensaje: MensajeConversacion) {
+        if (mensaje.esUsuario) return
+        viewModelScope.launch {
+            chatRepository.cambiarRespuestaFavorita(mensaje.id, !mensaje.favorita)
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(errorConversacion = error.message ?: "No se pudo actualizar la respuesta guardada.")
+                    }
+                }
+        }
     }
 
     class Factory(

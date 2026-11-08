@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quispe.coderole.di.AppContainer
 import com.quispe.coderole.domain.model.Rol
+import com.quispe.coderole.domain.model.MensajeConversacion
 import com.quispe.coderole.domain.model.Sesion
 import com.quispe.coderole.ui.admin.AdminScreen
 import com.quispe.coderole.ui.admin.AdminViewModel
@@ -63,6 +66,7 @@ fun CodeRoleApp(container: AppContainer) {
         )
         val listaState by lista.uiState.collectAsStateWithLifecycle()
         val favorites by lista.favoritos.collectAsStateWithLifecycle()
+        val detalleState by detalle.uiState.collectAsStateWithLifecycle()
         var section by remember(sesion.uid) { mutableStateOf(Seccion.CHAT) }
 
         Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).imePadding()) {
@@ -70,9 +74,13 @@ fun CodeRoleApp(container: AppContainer) {
                 when (section) {
                     Seccion.CHAT -> DetalleScreen(detalle, listaState.sinConexion) {
                         lista.sincronizar()
-                        detalle.reintentarDetalle()
                     }
-                    Seccion.FAVORITOS -> FavoritesScreen(favorites) { section = Seccion.CHAT }
+                    Seccion.FAVORITOS -> FavoritesScreen(
+                        respuestas = detalleState.conversacion.filter { it.favorita && !it.esUsuario },
+                        mentoraGuardada = favorites.isNotEmpty(),
+                        error = detalleState.errorConversacion,
+                        quitarRespuesta = detalle::alternarRespuestaFavorita,
+                    ) { section = Seccion.CHAT }
                     Seccion.PERFIL -> ProfileScreen(sesion, login::cerrarSesion) {
                         if (sesion.rol == Rol.ADMIN) section = Seccion.ADMIN
                     }
@@ -96,7 +104,7 @@ private fun BottomMenu(esAdmin: Boolean, actual: Seccion, onSelect: (Seccion) ->
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             OpcionNavegacion("♥", "Mentora", actual == Seccion.CHAT, Modifier.weight(1f)) { onSelect(Seccion.CHAT) }
-            OpcionNavegacion("☆", "Favoritos", actual == Seccion.FAVORITOS, Modifier.weight(1f)) { onSelect(Seccion.FAVORITOS) }
+            OpcionNavegacion("★", "Respuestas", actual == Seccion.FAVORITOS, Modifier.weight(1f)) { onSelect(Seccion.FAVORITOS) }
             OpcionNavegacion("♙", "Perfil", actual == Seccion.PERFIL, Modifier.weight(1f)) { onSelect(Seccion.PERFIL) }
             if (esAdmin) OpcionNavegacion("⚙", "Admin", actual == Seccion.ADMIN, Modifier.weight(1f)) { onSelect(Seccion.ADMIN) }
         }
@@ -115,16 +123,51 @@ private fun OpcionNavegacion(icono: String, titulo: String, seleccionada: Boolea
 }
 
 @Composable
-private fun FavoritesScreen(personajes: List<com.quispe.coderole.domain.model.Personaje>, abrirMentora: () -> Unit) {
-    Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).padding(20.dp)) {
-        Text("♥  Favoritos", color = Color(0xFF351F35), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        if (personajes.isEmpty()) {
-            Text("Aún no tienes favoritos. Guarda a tu mentora para acceder más rápido.", color = Color(0xFF633A50), modifier = Modifier.padding(top = 20.dp))
+private fun FavoritesScreen(
+    respuestas: List<MensajeConversacion>,
+    mentoraGuardada: Boolean,
+    error: String?,
+    quitarRespuesta: (MensajeConversacion) -> Unit,
+    abrirChat: () -> Unit,
+) {
+    Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).padding(horizontal = 20.dp, vertical = 16.dp)) {
+        Text("Respuestas guardadas", color = Color(0xFF351F35), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("Tus explicaciones favoritas de la mentora", color = Color(0xFF514151), modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
+        error?.let { Text(it, color = Color(0xFF9B314B), modifier = Modifier.padding(bottom = 10.dp)) }
+        if (respuestas.isEmpty() && !mentoraGuardada) {
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                Text("☆", color = Color(0xFFEE5268), style = MaterialTheme.typography.displayMedium)
+                Text("Aún no guardaste respuestas", color = Color(0xFF281A29), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
+                Text("En el chat, toca «Guardar respuesta» debajo de una explicación para tenerla a mano.", color = Color(0xFF514151), modifier = Modifier.padding(top = 6.dp))
+                TextButton(onClick = abrirChat, modifier = Modifier.padding(top = 10.dp)) { Text("Ir a la conversación", color = Color(0xFFB23D57)) }
+            }
         } else {
-            Surface(Modifier.fillMaxWidth().padding(top = 16.dp).clickable(onClick = abrirMentora), color = Color.White, shape = RoundedCornerShape(24.dp)) {
-                Column(Modifier.padding(18.dp)) {
-                    Text("Tu mentora de programación", color = Color(0xFF351F35), fontWeight = FontWeight.Bold)
-                    Text("Siempre contigo · aprende a tu ritmo", color = Color(0xFF633A50))
+            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (respuestas.isEmpty()) {
+                    item {
+                        Text(
+                            "Aún no guardaste explicaciones. En el chat puedes guardar cualquier respuesta de la mentora.",
+                            color = Color(0xFF514151),
+                            modifier = Modifier.padding(vertical = 8.dp),
+                        )
+                    }
+                }
+                items(respuestas, key = { it.id }) { respuesta ->
+                    Surface(color = Color.White, shape = RoundedCornerShape(20.dp), shadowElevation = 1.dp) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                            Text(respuesta.texto, color = Color(0xFF281A29), style = MaterialTheme.typography.bodyMedium)
+                            TextButton(onClick = { quitarRespuesta(respuesta) }, modifier = Modifier.align(Alignment.End)) {
+                                Text("★ Quitar de guardadas", color = Color(0xFF9B314B))
+                            }
+                        }
+                    }
+                }
+                if (mentoraGuardada) {
+                    item {
+                        Surface(color = Color(0xFFFFE5E8), shape = RoundedCornerShape(18.dp)) {
+                            Text("♥  También tienes a tu mentora marcada como favorita.", Modifier.fillMaxWidth().padding(14.dp), color = Color(0xFF351F35))
+                        }
+                    }
                 }
             }
         }

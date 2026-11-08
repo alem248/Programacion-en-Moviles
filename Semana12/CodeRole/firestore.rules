@@ -18,13 +18,19 @@ service cloud.firestore {
         allow create: if request.auth != null
           && request.auth.uid == uid
           && conversationId == 'mentor'
-          && request.resource.data.keys().hasOnly(['texto', 'rol', 'creadoEn'])
+          && request.resource.data.keys().hasOnly(['texto', 'rol', 'favorita', 'creadoEn'])
           && request.resource.data.texto is string
           && request.resource.data.texto.size() > 0
           && request.resource.data.texto.size() <= 5000
           && request.resource.data.rol in ['usuario', 'mentora']
+          && request.resource.data.favorita == false
           && request.resource.data.creadoEn == request.time;
-        allow update, delete: if false;
+        allow update: if request.auth != null
+          && request.auth.uid == uid
+          && resource.data.rol == 'mentora'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['favorita'])
+          && request.resource.data.favorita is bool;
+        allow delete: if false;
       }
     }
   }
