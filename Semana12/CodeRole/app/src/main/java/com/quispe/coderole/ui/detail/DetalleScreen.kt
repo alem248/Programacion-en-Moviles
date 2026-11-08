@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,7 +35,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -152,53 +152,27 @@ fun DetalleScreen(
                 Button(onClick = onVolverAIntentar, colors = ButtonDefaults.buttonColors(containerColor = Rosa)) { Text("Reintentar") }
             }
             is UiState.Exito -> {
-                // 2. Contenedor Fijo / Sticky del Personaje (Mentora)
+                // 2. Contenedor Fijo / Sticky del Personaje (Mentora) - ÚNICAMENTE LA MENTORA (SIN TEXTOS)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(22.dp),
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 ) {
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .height(180.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.BottomCenter,
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = state.personaje?.nombre ?: "Mentora CodeRole",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Tinta,
-                            )
-                            Text(
-                                text = when {
-                                    state.enviando -> "Pensando respuesta…"
-                                    state.textoMensaje.isNotBlank() -> "Escuchándote…"
-                                    else -> "En línea para resolver tus dudas"
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (state.enviando) Rosa else colorExito(),
-                                modifier = Modifier.padding(top = 2.dp),
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(width = 110.dp, height = 138.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.BottomCenter,
-                        ) {
-                            ModularCharacterView(
-                                emotion = state.emocion,
-                                modifier = Modifier.size(width = 100.dp, height = 128.dp),
-                                isSpeaking = state.estaHablando,
-                            )
-                        }
+                        ModularCharacterView(
+                            emotion = state.emocion,
+                            modifier = Modifier.size(width = 145.dp, height = 182.dp),
+                            isSpeaking = state.estaHablando,
+                        )
                     }
                 }
 
