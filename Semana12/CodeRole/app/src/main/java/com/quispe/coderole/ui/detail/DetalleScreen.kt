@@ -40,17 +40,23 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.quispe.coderole.domain.model.CharacterEmotion
 import com.quispe.coderole.domain.model.MensajeConversacion
+import com.quispe.coderole.domain.model.PerfilUsuario
 import com.quispe.coderole.ui.UiState
+import com.quispe.coderole.ui.components.FotoPerfil
 import com.quispe.coderole.ui.components.ModularCharacterView
+import com.quispe.coderole.ui.theme.colorExito
 
-private val FondoRosado = Color(0xFFFFF2F1)
-private val Rosa = Color(0xFFEE5268)
-private val Tinta = Color(0xFF351F35)
-private val TintaSecundaria = Color(0xFF514151)
+// Tokens de la paleta: se leen del tema actual para que el chat cambie entre
+// el modo claro y el oscuro sin repetir colores fijos por pantalla.
+private val FondoRosado: Color @Composable get() = MaterialTheme.colorScheme.background
+private val Rosa: Color @Composable get() = MaterialTheme.colorScheme.primary
+private val Tinta: Color @Composable get() = MaterialTheme.colorScheme.onBackground
+private val TintaSecundaria: Color @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 @Composable
 fun DetalleScreen(
     viewModel: DetalleViewModel,
+    perfil: PerfilUsuario?,
     sinConexion: Boolean,
     onVolverAIntentar: () -> Unit,
 ) {
@@ -63,12 +69,29 @@ fun DetalleScreen(
     }
     Column(Modifier.fillMaxSize().background(FondoRosado)) {
         Row(
-            Modifier.fillMaxWidth().background(Color.White.copy(alpha = .88f)).padding(horizontal = 18.dp, vertical = 12.dp),
+            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface.copy(alpha = .92f)).padding(horizontal = 18.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f).padding(start = 10.dp)) {
                 Text("Tu mentora", style = MaterialTheme.typography.titleLarge, color = Tinta, fontWeight = FontWeight.Bold)
-                Text("●  Siempre contigo · programación", style = MaterialTheme.typography.labelMedium, color = Color(0xFF4B9C77))
+                Text("●  Siempre contigo · programación", style = MaterialTheme.typography.labelMedium, color = colorExito())
+            }
+            // Foto y nombre del usuario: se actualizan solos con el snapshot
+            // de Firestore, igual que en la pantalla de perfil.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val nombre = perfil?.nombreVisible
+                if (!nombre.isNullOrBlank()) {
+                    Text(
+                        nombre,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TintaSecundaria,
+                        maxLines = 1,
+                    )
+                }
+                FotoPerfil(perfil, 34.dp)
             }
             TextButton(onClick = viewModel::alternarFavorito) {
                 Text(if (state.personaje?.esFavorito == true) "♥" else "♡", color = Rosa, style = MaterialTheme.typography.headlineMedium)
@@ -76,7 +99,7 @@ fun DetalleScreen(
         }
 
         if (sinConexion) {
-            Surface(color = Color(0xFFFFE0E3), modifier = Modifier.fillMaxWidth()) {
+            Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("No se sincronizó el perfil de referencia · se conserva la copia local", Modifier.weight(1f), color = Tinta, style = MaterialTheme.typography.labelMedium)
                     TextButton(onClick = onVolverAIntentar) { Text("Reintentar", color = Rosa) }
@@ -101,11 +124,11 @@ fun DetalleScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(28.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Box(Modifier.fillMaxWidth().height(214.dp).background(Color(0xFFFFD9DD)), contentAlignment = Alignment.BottomCenter) {
+                                Box(Modifier.fillMaxWidth().height(214.dp).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.BottomCenter) {
                                     ModularCharacterView(state.emocion, Modifier.size(width = 190.dp, height = 238.dp))
                                 }
                                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
@@ -138,14 +161,14 @@ fun DetalleScreen(
                     }
                     state.errorConversacion?.let { error ->
                         item {
-                            Surface(color = Color(0xFFFFE0E3), shape = RoundedCornerShape(16.dp)) {
-                                Text(error, Modifier.fillMaxWidth().padding(12.dp), color = Color(0xFF9B2440), style = MaterialTheme.typography.bodySmall)
+                            Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(16.dp)) {
+                                Text(error, Modifier.fillMaxWidth().padding(12.dp), color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
                 }
                 Row(
-                    Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 12.dp, vertical = 10.dp),
+                    Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -173,7 +196,7 @@ fun DetalleScreen(
                         enabled = state.textoMensaje.isNotBlank() && !state.enviando,
                         shape = CircleShape,
                         colors = ButtonDefaults.buttonColors(containerColor = Rosa),
-                    ) { Text("➤", color = Color.White) }
+                    ) { Text("➤", color = MaterialTheme.colorScheme.onPrimary) }
                 }
             }
         }
@@ -185,7 +208,7 @@ private fun MensajeBubble(mensaje: MensajeConversacion, onToggleFavorite: () -> 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mensaje.esUsuario) Arrangement.End else Arrangement.Start) {
         Column(Modifier.fillMaxWidth(.9f), horizontalAlignment = if (mensaje.esUsuario) Alignment.End else Alignment.Start) {
             Surface(
-                color = if (mensaje.esUsuario) Color(0xFFFFC3CC) else Color.White,
+                color = if (mensaje.esUsuario) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(if (mensaje.esUsuario) 22.dp else 6.dp, 22.dp, 22.dp, 22.dp),
                 shadowElevation = 1.dp,
             ) {

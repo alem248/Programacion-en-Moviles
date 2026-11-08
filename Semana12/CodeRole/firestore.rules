@@ -20,7 +20,21 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['rol', 'correo'])
         && request.resource.data.rol == 'usuario'
         && request.resource.data.correo == request.auth.token.email;
-      allow list, update, delete: if false;
+      allow list, delete: if false;
+      // El dueño solo puede cambiar su nombre y su foto de perfil; el rol y el
+      // correo quedan fuera para que nadie se autoasigne administración.
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'fotoBase64'])
+        && (!('nombre' in request.resource.data)
+            || request.resource.data.nombre == null
+            || (request.resource.data.nombre is string
+                && request.resource.data.nombre.size() >= 2
+                && request.resource.data.nombre.size() <= 60))
+        && (!('fotoBase64' in request.resource.data)
+            || request.resource.data.fotoBase64 == null
+            || (request.resource.data.fotoBase64 is string
+                && request.resource.data.fotoBase64.size() <= 700000));
 
       match /conversaciones/{conversationId}/mensajes/{mensajeId} {
         allow get, list: if request.auth != null && request.auth.uid == uid;

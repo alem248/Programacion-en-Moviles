@@ -2,6 +2,7 @@ package com.quispe.coderole.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,7 +36,6 @@ import com.quispe.coderole.di.AppContainer
 import com.quispe.coderole.domain.model.Rol
 import com.quispe.coderole.domain.model.CapasPersonaje
 import com.quispe.coderole.domain.model.MensajeConversacion
-import com.quispe.coderole.domain.model.Sesion
 import com.quispe.coderole.ui.admin.AdminScreen
 import com.quispe.coderole.ui.admin.AdminViewModel
 import com.quispe.coderole.ui.components.ConCapasPersonaje
@@ -45,6 +44,8 @@ import com.quispe.coderole.ui.detail.DetalleViewModel
 import com.quispe.coderole.ui.lista.ListaViewModel
 import com.quispe.coderole.ui.login.LoginScreen
 import com.quispe.coderole.ui.login.LoginViewModel
+import com.quispe.coderole.ui.perfil.PerfilScreen
+import com.quispe.coderole.ui.perfil.PerfilViewModel
 import com.quispe.coderole.ui.theme.CodeRoleTheme
 import kotlinx.coroutines.flow.catch
 
@@ -54,11 +55,14 @@ private enum class Seccion { CHAT, FAVORITOS, PERFIL, ADMIN }
 fun CodeRoleApp(container: AppContainer) {
     val login: LoginViewModel = viewModel(factory = LoginViewModel.Factory(container.auth, container.actividad))
     val loginState by login.uiState.collectAsStateWithLifecycle()
-    CodeRoleTheme {
+    // Preferencia del modo oscuro: `null` = aún no eligió, así que se respeta
+    // el tema del sistema hasta que el usuario la cambia desde el perfil.
+    val temaElegido = container.tema.oscuro.collectAsStateWithLifecycle().value
+    CodeRoleTheme(darkTheme = temaElegido ?: isSystemInDarkTheme()) {
         val sesion = loginState.sesion
         if (sesion == null) {
-            if (loginState.cargando) Box(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color(0xFFEE5268))
+            if (loginState.cargando) Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             } else LoginScreen(login)
             return@CodeRoleTheme
         }
@@ -68,9 +72,16 @@ fun CodeRoleApp(container: AppContainer) {
             key = "detalle-${sesion.uid}",
             factory = DetalleViewModel.Factory(container.personajes, container.chat, container.actividad),
         )
+        // Foto y nombre en Firestore: el snapshot listener refleja cualquier
+        // cambio en el chat, el perfil y el resto de pantallas al instante.
+        val perfil: PerfilViewModel = viewModel(
+            key = "perfil-${sesion.uid}",
+            factory = PerfilViewModel.Factory(sesion.uid, sesion.correo, container.perfil, container.tema),
+        )
         val listaState by lista.uiState.collectAsStateWithLifecycle()
         val favorites by lista.favoritos.collectAsStateWithLifecycle()
         val detalleState by detalle.uiState.collectAsStateWithLifecycle()
+        val perfilState by perfil.uiState.collectAsStateWithLifecycle()
         var section by remember(sesion.uid) { mutableStateOf(Seccion.CHAT) }
 
         // Capas PNG del personaje: se escuchan una vez por sesión para que el
@@ -81,21 +92,29 @@ fun CodeRoleApp(container: AppContainer) {
         }
 
         ConCapasPersonaje(capas) {
-            Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).imePadding()) {
+            Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
                 Box(Modifier.weight(1f)) {
                     when (section) {
-                        Seccion.CHAT -> DetalleScreen(detalle, listaState.sinConexion) {
-                            lista.sincronizar()
-                        }
+                        Seccion.CHAT -> DetalleScreen(
+                            viewModel = detalle,
+                            perfil = perfilState.perfil,
+                            sinConexion = listaState.sinConexion,
+                            onVolverAIntentar = { lista.sincronizar() },
+                        )
                         Seccion.FAVORITOS -> FavoritesScreen(
                             respuestas = detalleState.conversacion.filter { it.favorita && !it.esUsuario },
                             mentoraGuardada = favorites.isNotEmpty(),
                             error = detalleState.errorConversacion,
                             quitarRespuesta = detalle::alternarRespuestaFavorita,
                         ) { section = Seccion.CHAT }
-                        Seccion.PERFIL -> ProfileScreen(sesion, login::cerrarSesion) {
-                            if (sesion.rol == Rol.ADMIN) section = Seccion.ADMIN
-                        }
+                        Seccion.PERFIL -> PerfilScreen(
+                            viewModel = perfil,
+                            sesion = sesion,
+                            cerrarSesion = login::cerrarSesion,
+                            abrirAdmin = {
+                                if (sesion.rol == Rol.ADMIN) section = Seccion.ADMIN
+                            },
+                        )
                         Seccion.ADMIN -> {
                             val admin: AdminViewModel = viewModel(
                                 key = "admin-${sesion.uid}",
@@ -120,7 +139,7 @@ fun CodeRoleApp(container: AppContainer) {
 private fun BottomMenu(esAdmin: Boolean, actual: Seccion, onSelect: (Seccion) -> Unit) {
     Surface(
         modifier = Modifier.navigationBarsPadding(),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp,
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
@@ -138,8 +157,8 @@ private fun OpcionNavegacion(icono: String, titulo: String, seleccionada: Boolea
         modifier = modifier.clickable(onClick = onClick).padding(vertical = 9.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(icono, color = if (seleccionada) Color(0xFFEE5268) else Color(0xFF633A50), style = MaterialTheme.typography.titleMedium)
-        Text(titulo, color = if (seleccionada) Color(0xFFEE5268) else Color(0xFF633A50), style = MaterialTheme.typography.labelSmall)
+        Text(icono, color = if (seleccionada) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium)
+        Text(titulo, color = if (seleccionada) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -151,16 +170,16 @@ private fun FavoritesScreen(
     quitarRespuesta: (MensajeConversacion) -> Unit,
     abrirChat: () -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).padding(horizontal = 20.dp, vertical = 16.dp)) {
-        Text("Respuestas guardadas", color = Color(0xFF351F35), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Text("Tus explicaciones favoritas de la mentora", color = Color(0xFF514151), modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
-        error?.let { Text(it, color = Color(0xFF9B314B), modifier = Modifier.padding(bottom = 10.dp)) }
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 20.dp, vertical = 16.dp)) {
+        Text("Respuestas guardadas", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("Tus explicaciones favoritas de la mentora", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 10.dp)) }
         if (respuestas.isEmpty() && !mentoraGuardada) {
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Text("☆", color = Color(0xFFEE5268), style = MaterialTheme.typography.displayMedium)
-                Text("Aún no guardaste respuestas", color = Color(0xFF281A29), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
-                Text("En el chat, toca «Guardar respuesta» debajo de una explicación para tenerla a mano.", color = Color(0xFF514151), modifier = Modifier.padding(top = 6.dp))
-                TextButton(onClick = abrirChat, modifier = Modifier.padding(top = 10.dp)) { Text("Ir a la conversación", color = Color(0xFFB23D57)) }
+                Text("☆", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displayMedium)
+                Text("Aún no guardaste respuestas", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
+                Text("En el chat, toca «Guardar respuesta» debajo de una explicación para tenerla a mano.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+                TextButton(onClick = abrirChat, modifier = Modifier.padding(top = 10.dp)) { Text("Ir a la conversación", color = MaterialTheme.colorScheme.primary) }
             }
         } else {
             LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -168,25 +187,25 @@ private fun FavoritesScreen(
                     item {
                         Text(
                             "Aún no guardaste explicaciones. En el chat puedes guardar cualquier respuesta de la mentora.",
-                            color = Color(0xFF514151),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 8.dp),
                         )
                     }
                 }
                 items(respuestas, key = { it.id }) { respuesta ->
-                    Surface(color = Color.White, shape = RoundedCornerShape(20.dp), shadowElevation = 1.dp) {
+                    Surface(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(20.dp), shadowElevation = 1.dp) {
                         Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                            Text(respuesta.texto, color = Color(0xFF281A29), style = MaterialTheme.typography.bodyMedium)
+                            Text(respuesta.texto, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium)
                             TextButton(onClick = { quitarRespuesta(respuesta) }, modifier = Modifier.align(Alignment.End)) {
-                                Text("★ Quitar de guardadas", color = Color(0xFF9B314B))
+                                Text("★ Quitar de guardadas", color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
                 }
                 if (mentoraGuardada) {
                     item {
-                        Surface(color = Color(0xFFFFE5E8), shape = RoundedCornerShape(18.dp)) {
-                            Text("♥  También tienes a tu mentora marcada como favorita.", Modifier.fillMaxWidth().padding(14.dp), color = Color(0xFF351F35))
+                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(18.dp)) {
+                            Text("♥  También tienes a tu mentora marcada como favorita.", Modifier.fillMaxWidth().padding(14.dp), color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                     }
                 }
@@ -195,18 +214,3 @@ private fun FavoritesScreen(
     }
 }
 
-@Composable
-private fun ProfileScreen(sesion: Sesion, cerrarSesion: () -> Unit, abrirAdmin: () -> Unit) {
-    Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).padding(20.dp)) {
-        Text("Mi perfil", color = Color(0xFF351F35), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Surface(Modifier.fillMaxWidth().padding(top = 18.dp), color = Color.White, shape = RoundedCornerShape(24.dp)) {
-            Column(Modifier.padding(20.dp)) {
-                Text("CodeRole 🐾", color = Color(0xFFEE5268), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(sesion.correo, color = Color(0xFF351F35), modifier = Modifier.padding(top = 12.dp))
-                Text("Rol: ${sesion.rol.name.lowercase().replaceFirstChar { it.uppercase() }}", color = Color(0xFF633A50), modifier = Modifier.padding(top = 4.dp))
-            }
-        }
-        if (sesion.rol == Rol.ADMIN) TextButton(onClick = abrirAdmin, modifier = Modifier.padding(top = 10.dp)) { Text("Abrir panel Admin", color = Color(0xFFEE5268)) }
-        TextButton(onClick = cerrarSesion, modifier = Modifier.padding(top = 10.dp)) { Text("⇥  Cerrar sesión", color = Color(0xFFB42342)) }
-    }
-}

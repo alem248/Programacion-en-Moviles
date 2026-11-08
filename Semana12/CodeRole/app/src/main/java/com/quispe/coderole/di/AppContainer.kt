@@ -11,14 +11,17 @@ import com.quispe.coderole.data.auth.FirebaseAuthRepository
 import com.quispe.coderole.data.local.AppDatabase
 import com.quispe.coderole.data.notification.Notificador
 import com.quispe.coderole.data.notification.NotificadorAndroid
+import com.quispe.coderole.data.prefs.PreferenciasTema
 import com.quispe.coderole.data.remote.RetrofitClient
 import com.quispe.coderole.data.repository.FirestoreActividadRepository
 import com.quispe.coderole.data.repository.FirestoreCapasRepository
+import com.quispe.coderole.data.repository.FirestorePerfilRepository
 import com.quispe.coderole.data.repository.PersonajeRepositoryImpl
 import com.quispe.coderole.domain.repository.ItemRepository
 import com.quispe.coderole.domain.repository.ActividadRepository
 import com.quispe.coderole.domain.repository.CapasRepository
 import com.quispe.coderole.domain.repository.ChatRepository
+import com.quispe.coderole.domain.repository.PerfilRepository
 
 class AppContainer(contexto: Context) {
     private val firestore = FirebaseFirestore.getInstance()
@@ -39,6 +42,12 @@ class AppContainer(contexto: Context) {
     val actividad: ActividadRepository = FirestoreActividadRepository(authFirebase, firestore)
 
     val capas: CapasRepository = FirestoreCapasRepository(firestore)
+
+    /** Foto y nombre de usuario en tiempo real (Firestore `usuarios/{uid}`). */
+    val perfil: PerfilRepository = FirestorePerfilRepository(authFirebase, firestore)
+
+    /** Preferencia del modo oscuro elegida en el perfil. */
+    val tema: PreferenciasTema = PreferenciasTema(contexto)
 
     val chat: ChatRepository = FirebaseChatRepository(
         auth = authFirebase,

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Variante oscura del tema del sistema: evita el flash blanco al
+         arrancar mientras Compose aplica la paleta en modo oscuro. -->
+    <style name="Theme.CodeRole" parent="android:Theme.Material.NoActionBar" />
+</resources>

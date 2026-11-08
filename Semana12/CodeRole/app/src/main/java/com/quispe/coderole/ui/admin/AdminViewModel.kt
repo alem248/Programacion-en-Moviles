@@ -6,7 +6,7 @@ import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.quispe.coderole.data.media.ImagenesPng
+import com.quispe.coderole.data.media.Imagenes
 import com.quispe.coderole.data.notification.Notificador
 import com.quispe.coderole.domain.model.ActividadDiaria
 import com.quispe.coderole.domain.model.CapaPersonaje
@@ -101,7 +101,7 @@ class AdminViewModel(
     fun guardarCapa(capa: CapaPersonaje, uri: Uri, contexto: Context) {
         viewModelScope.launch {
             _uiState.update { it.copy(procesandoCapa = capa, mensaje = null, error = null) }
-            ImagenesPng.desdeUri(contexto, uri).fold(
+            Imagenes.pngParaCapa(contexto, uri).fold(
                 onSuccess = { bytes ->
                     val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
                     capas.guardar(capa, base64)
