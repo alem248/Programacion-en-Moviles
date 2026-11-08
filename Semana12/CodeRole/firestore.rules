@@ -13,8 +13,18 @@ service cloud.firestore {
 
       match /conversaciones/{conversationId}/mensajes/{mensajeId} {
         allow get, list: if request.auth != null && request.auth.uid == uid;
-        // Solo el backend autenticado guarda mensajes y respuestas de la mentora.
-        allow create, update, delete: if false;
+        // La app guarda el mensaje del usuario y la respuesta que genera Gemini;
+        // solo se aceptan campos válidos y nunca se permite editar ni borrar.
+        allow create: if request.auth != null
+          && request.auth.uid == uid
+          && conversationId == 'mentor'
+          && request.resource.data.keys().hasOnly(['texto', 'rol', 'creadoEn'])
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() > 0
+          && request.resource.data.texto.size() <= 5000
+          && request.resource.data.rol in ['usuario', 'mentora']
+          && request.resource.data.creadoEn == request.time;
+        allow update, delete: if false;
       }
     }
   }

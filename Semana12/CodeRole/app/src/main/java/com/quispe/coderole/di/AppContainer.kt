@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.functions.FirebaseFunctions
 import com.quispe.coderole.data.chat.FirebaseChatRepository
+import com.quispe.coderole.data.chat.GeminiChatService
 import com.quispe.coderole.data.auth.AuthRepository
 import com.quispe.coderole.data.auth.FirebaseAuthRepository
 import com.quispe.coderole.data.local.AppDatabase
@@ -31,7 +31,7 @@ class AppContainer(contexto: Context) {
     val chat: ChatRepository = FirebaseChatRepository(
         auth = FirebaseAuth.getInstance(),
         firestore = FirebaseFirestore.getInstance(),
-        functions = FirebaseFunctions.getInstance("us-central1"),
+        gemini = GeminiChatService(),
     )
     val notificador: Notificador = NotificadorAndroid(contexto)
 }
