@@ -18,17 +18,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +46,8 @@ import com.quispe.coderole.ui.components.ModularCharacterView
 
 /**
  * Sección del panel de administración para gestionar las capas modulares del
- * personaje (base, ojos y boca) asociando o reemplazando archivos PNG.
+ * personaje (base, cabello/orejas, ojos por emoción, boca por emoción y accesorios)
+ * asociando o reemplazando archivos PNG en tiempo real.
  */
 @Composable
 fun CapasPanel(
@@ -53,6 +57,7 @@ fun CapasPanel(
 ) {
     val contexto = LocalContext.current
     val capas = LocalCapasPersonaje.current
+    var emocionPrueba by remember { mutableStateOf(CharacterEmotion.NEUTRAL) }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text(
@@ -62,7 +67,8 @@ fun CapasPanel(
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            "Asocia archivos PNG (con fondo transparente) para personalizar al mentora. " +
+            "Asocia archivos PNG (con fondo transparente) para personalizar las capas del personaje " +
+                "(cuerpo, cabello/orejas, ojos, boca y accesorios). " +
                 "El cambio se aplica en tiempo real a todos los dispositivos.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -70,14 +76,28 @@ fun CapasPanel(
         )
 
         TarjetaAdmin {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .padding(vertical = 18.dp),
-                contentAlignment = Alignment.Center,
+            Column(
+                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                ModularCharacterView(CharacterEmotion.NEUTRAL, Modifier.size(width = 150.dp, height = 188.dp))
+                Box(
+                    Modifier.padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    ModularCharacterView(emocionPrueba, Modifier.size(width = 160.dp, height = 200.dp))
+                }
+                Row(
+                    Modifier.padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    CharacterEmotion.entries.forEach { emocion ->
+                        FilterChip(
+                            selected = emocionPrueba == emocion,
+                            onClick = { emocionPrueba = emocion },
+                            label = { Text(emocion.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                        )
+                    }
+                }
             }
             Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
                 Text(
@@ -86,24 +106,36 @@ fun CapasPanel(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    "${CapaPersonaje.entries.count { capas.tienePng(it) }} de 3 capas con PNG propio",
+                    "${CapaPersonaje.entries.count { capas.tienePng(it) }} de ${CapaPersonaje.entries.size} capas con PNG propio",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(16.dp))
 
-        CapaPersonaje.entries.forEach { capa ->
-            CapaCard(
-                capa = capa,
-                pngBase64 = capas.pngDe(capa),
-                procesando = state.procesandoCapa == capa,
-                onElegir = { uri -> onGuardar(capa, uri, contexto) },
-                onQuitar = { onQuitar(capa) },
+        val categorias = CapaPersonaje.entries.groupBy { it.categoria }
+
+        categorias.forEach { (cat, listaCapas) ->
+            Text(
+                cat,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 6.dp),
             )
-            Spacer(Modifier.height(10.dp))
+            listaCapas.forEach { capa ->
+                CapaCard(
+                    capa = capa,
+                    pngBase64 = capas.pngDe(capa),
+                    procesando = state.procesandoCapa == capa,
+                    onElegir = { uri -> onGuardar(capa, uri, contexto) },
+                    onQuitar = { onQuitar(capa) },
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -131,7 +163,7 @@ private fun CapaCard(
             Column(Modifier.weight(1f)) {
                 Text(capa.titulo, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Text(
-                    if (tienePng) "PNG personalizado" else "SVG incluido en la app",
+                    if (tienePng) "PNG personalizado" else "Capa por defecto",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -186,7 +218,7 @@ private fun MiniaturaCapa(pngBase64: String?, modifier: Modifier) {
         if (bitmap != null) {
             Image(bitmap = bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize())
         } else {
-            Text("SVG", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("DEF", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

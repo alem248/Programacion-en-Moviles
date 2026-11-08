@@ -11,32 +11,61 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 /**
- * Capas del personaje guardadas en `configuraciones/personaje` como PNG en
- * Base64. El listener mantiene el estado en tiempo real: cuando el mentor
- * actualiza una capa desde la administración, todos los dispositivos la ven.
+ * Capas del personaje guardadas en `configuraciones/personaje` y su subcolección
+ * `capas/{clave}` como PNG en Base64. El listener mantiene el estado en tiempo real.
  */
 class FirestoreCapasRepository(
     private val firestore: FirebaseFirestore,
 ) : CapasRepository {
     private fun configuracion() = firestore.collection(COLECCION).document(DOCUMENTO)
+    private fun subcoleccionCapas() = configuracion().collection("capas")
 
     override fun observar(): Flow<CapasPersonaje> = callbackFlow {
-        val registration = configuracion().addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                close(error)
-                return@addSnapshotListener
-            }
-            if (snapshot == null || !snapshot.exists()) {
-                trySend(CapasPersonaje())
-                return@addSnapshotListener
-            }
-            val personalizadas = mutableMapOf<CapaPersonaje, String>()
-            CapaPersonaje.entries.forEach { capa ->
-                snapshot.getString(capa.campo)?.takeIf { it.isNotBlank() }?.let { personalizadas[capa] = it }
-            }
-            trySend(CapasPersonaje(personalizadas))
+        val mapaCapas = mutableMapOf<CapaPersonaje, String>()
+
+        fun emitir() {
+            trySend(CapasPersonaje(mapaCapas.toMap()))
         }
-        awaitClose { registration.remove() }
+
+        val registrationDoc = configuracion().addSnapshotListener { snapshot, error ->
+            if (error != null) return@addSnapshotListener
+            if (snapshot != null && snapshot.exists()) {
+                CapaPersonaje.entries.forEach { capa ->
+                    val valor = snapshot.getString(capa.campo)
+                    if (!valor.isNullOrBlank()) {
+                        mapaCapas[capa] = valor
+                    } else if (capa == CapaPersonaje.OJOS_NEUTRAL) {
+                        snapshot.getString("ojos")?.takeIf { it.isNotBlank() }?.let { mapaCapas[capa] = it }
+                    } else if (capa == CapaPersonaje.BOCA_NEUTRAL) {
+                        snapshot.getString("boca")?.takeIf { it.isNotBlank() }?.let { mapaCapas[capa] = it }
+                    }
+                }
+                emitir()
+            }
+        }
+
+        val registrationSub = subcoleccionCapas().addSnapshotListener { snapshot, error ->
+            if (error != null) return@addSnapshotListener
+            if (snapshot != null) {
+                snapshot.documents.forEach { doc ->
+                    val capa = CapaPersonaje.desdeCampo(doc.id)
+                    val base64 = doc.getString("base64")
+                    if (capa != null) {
+                        if (!base64.isNullOrBlank()) {
+                            mapaCapas[capa] = base64
+                        } else {
+                            mapaCapas.remove(capa)
+                        }
+                    }
+                }
+                emitir()
+            }
+        }
+
+        awaitClose {
+            registrationDoc.remove()
+            registrationSub.remove()
+        }
     }
 
     override suspend fun guardar(capa: CapaPersonaje, pngBase64: String): Result<Unit> = try {
@@ -44,14 +73,18 @@ class FirestoreCapasRepository(
         require(pngBase64.length <= LIMITE_BASE64) {
             "La imagen pesa demasiado. Usa un PNG de hasta $LIMITE_BASE64 caracteres (unos 660 KB)."
         }
-        configuracion().set(mapOf(capa.campo to pngBase64), SetOptions.merge()).await()
+        subcoleccionCapas().document(capa.campo)
+            .set(mapOf("base64" to pngBase64), SetOptions.merge()).await()
         Result.success(Unit)
     } catch (error: Exception) {
         Result.failure(error)
     }
 
     override suspend fun quitar(capa: CapaPersonaje): Result<Unit> = try {
-        configuracion().set(mapOf(capa.campo to null), SetOptions.merge()).await()
+        subcoleccionCapas().document(capa.campo).delete().await()
+        if (capa == CapaPersonaje.BASE || capa == CapaPersonaje.OJOS_NEUTRAL || capa == CapaPersonaje.BOCA_NEUTRAL) {
+            configuracion().set(mapOf(capa.campo to null), SetOptions.merge()).await()
+        }
         Result.success(Unit)
     } catch (error: Exception) {
         Result.failure(error)
