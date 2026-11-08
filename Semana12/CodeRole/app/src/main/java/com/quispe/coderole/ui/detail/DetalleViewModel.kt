@@ -3,6 +3,7 @@ package com.quispe.coderole.ui.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.quispe.coderole.domain.model.ChatUpdate
 import com.quispe.coderole.domain.model.CharacterEmotion
 import com.quispe.coderole.domain.model.MensajeConversacion
 import com.quispe.coderole.domain.model.Personaje
@@ -24,6 +25,8 @@ data class DetalleUiState(
     val emocion: CharacterEmotion = CharacterEmotion.NEUTRAL,
     val estado: UiState<Unit> = UiState.Cargando,
     val enviando: Boolean = false,
+    /** Respuesta parcial recibida en streaming mientras la mentora escribe. */
+    val respuestaParcial: String? = null,
     val errorConversacion: String? = null,
 )
 
@@ -63,22 +66,45 @@ class DetalleViewModel(
         val texto = _uiState.value.textoMensaje.trim()
         if (texto.isBlank() || _uiState.value.enviando) return
         _uiState.update {
-            it.copy(textoMensaje = "", emocion = CharacterEmotion.THINKING, enviando = true, errorConversacion = null)
+            it.copy(
+                textoMensaje = "",
+                emocion = CharacterEmotion.THINKING,
+                enviando = true,
+                respuestaParcial = null,
+                errorConversacion = null,
+            )
         }
         viewModelScope.launch {
-            chatRepository.enviarMensaje(texto)
-                .onSuccess {
-                    _uiState.update { it.copy(emocion = CharacterEmotion.HAPPY, enviando = false) }
-                }
-                .onFailure { error ->
-                    _uiState.update {
-                        it.copy(
-                            emocion = CharacterEmotion.SURPRISED,
-                            enviando = false,
-                            errorConversacion = error.message ?: "No se pudo enviar el mensaje. Comprueba tu conexión.",
-                        )
+            try {
+                chatRepository.enviarMensaje(texto).collect { actualizacion ->
+                    when (actualizacion) {
+                        is ChatUpdate.Parcial -> _uiState.update { it.copy(respuestaParcial = actualizacion.texto) }
+                        ChatUpdate.Completado -> _uiState.update {
+                            it.copy(emocion = CharacterEmotion.HAPPY, enviando = false, respuestaParcial = null)
+                        }
+                        is ChatUpdate.Fallo -> _uiState.update {
+                            it.copy(
+                                emocion = CharacterEmotion.SURPRISED,
+                                enviando = false,
+                                respuestaParcial = null,
+                                errorConversacion = actualizacion.error.message
+                                    ?: "No se pudo enviar el mensaje. Comprueba tu conexión.",
+                            )
+                        }
                     }
                 }
+            } catch (cancelacion: kotlinx.coroutines.CancellationException) {
+                throw cancelacion
+            } catch (error: Exception) {
+                _uiState.update {
+                    it.copy(
+                        emocion = CharacterEmotion.SURPRISED,
+                        enviando = false,
+                        respuestaParcial = null,
+                        errorConversacion = error.message ?: "No se pudo enviar el mensaje. Comprueba tu conexión.",
+                    )
+                }
+            }
         }
     }
 

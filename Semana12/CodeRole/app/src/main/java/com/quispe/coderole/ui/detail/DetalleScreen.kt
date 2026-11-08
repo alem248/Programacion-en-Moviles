@@ -56,7 +56,7 @@ fun DetalleScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val listaConversacion = rememberLazyListState()
-    LaunchedEffect(state.conversacion.size, state.enviando, state.errorConversacion) {
+    LaunchedEffect(state.conversacion.size, state.enviando, state.errorConversacion, state.respuestaParcial) {
         val mensajes = state.conversacion.size.coerceAtLeast(1)
         val extras = (if (state.enviando) 1 else 0) + (if (state.errorConversacion != null) 1 else 0)
         listaConversacion.animateScrollToItem(1 + mensajes + extras)
@@ -126,9 +126,14 @@ fun DetalleScreen(
                         MensajeBubble(mensaje) { viewModel.alternarRespuestaFavorita(mensaje) }
                     }
                     if (state.enviando) item {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            CircularProgressIndicator(Modifier.size(16.dp), color = Rosa, strokeWidth = 2.dp)
-                            Text("Tu mentora está pensando…", color = Tinta, style = MaterialTheme.typography.bodySmall)
+                        val parcial = state.respuestaParcial
+                        if (parcial.isNullOrBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                CircularProgressIndicator(Modifier.size(16.dp), color = Rosa, strokeWidth = 2.dp)
+                                Text("Tu mentora está pensando…", color = Tinta, style = MaterialTheme.typography.bodySmall)
+                            }
+                        } else {
+                            MensajeBubble(MensajeConversacion(id = "parcial", texto = parcial, esUsuario = false, creadoEn = 0L)) { }
                         }
                     }
                     state.errorConversacion?.let { error ->
@@ -186,7 +191,7 @@ private fun MensajeBubble(mensaje: MensajeConversacion, onToggleFavorite: () -> 
             ) {
                 Text(mensaje.texto, Modifier.padding(horizontal = 15.dp, vertical = 12.dp), color = Tinta, style = MaterialTheme.typography.bodyMedium)
             }
-            if (!mensaje.esUsuario && mensaje.id != "bienvenida") {
+            if (!mensaje.esUsuario && mensaje.id != "bienvenida" && mensaje.id != "parcial") {
                 TextButton(onClick = onToggleFavorite) {
                     Text(
                         if (mensaje.favorita) "★ Respuesta guardada" else "☆ Guardar respuesta",
