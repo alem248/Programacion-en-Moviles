@@ -71,7 +71,7 @@ async function callGemini(turnos: Turno[]): Promise<string> {
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: instructions }] },
     contents: turnos.map((turno) => ({ role: turno.role, parts: [{ text: turno.content }] })),
-    generationConfig: { maxOutputTokens: 1_024, temperature: 0.8 },
+    generationConfig: { maxOutputTokens: 4_096, temperature: 0.8 },
   });
 
   for (const model of models) {

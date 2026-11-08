@@ -30,7 +30,11 @@ object GeminiConfig {
     /** Límite de caracteres del mensaje del usuario. */
     const val LIMITE_CARACTERES = 5_000
 
-    const val MAX_TOKENS_RESPUESTA = 1_024
+    /**
+     * Presupuesto de salida: los modelos con pensamiento interno consumen parte
+     * del límite antes de escribir la respuesta, por eso no se ajusta a la baja.
+     */
+    const val MAX_TOKENS_RESPUESTA = 4_096
 
     const val INSTRUCCION = "Eres la mentora de programación de CodeRole, una compañera amable con " +
         "personalidad cálida y expresiva. Respondes en español, explicas conceptos con claridad y " +
