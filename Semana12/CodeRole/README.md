@@ -11,11 +11,14 @@ El proyecto mantiene capas separadas dentro de `app/src/main/java/com/quispe/cod
 - `data/mapper`: conversiones DTO → Entity → modelo de UI.
 - `data/auth`: Firebase Authentication y lectura del rol desde Firestore.
 - `data/chat`: observación reactiva del historial del usuario y cliente de la API de Gemini (`GeminiChatService` y `GeminiConfig`).
-- `data/repository`: implementación del contrato `ItemRepository`.
-- `domain/repository/ChatRepository.kt`: contrato de conversación, desacoplado de Firebase.
-- `domain/model`: `Personaje`, `Sesion`, `Rol` y `CharacterEmotion`.
-- `di/AppContainer.kt`: creación de Room, Retrofit, Firebase y notificador.
-- `ui/`: pantallas Compose, `UiState` y ViewModels.
+- `data/media/Imagenes.kt`: reescalado y codificación a Base64 de las imágenes que viajan a Firestore (capas PNG y foto de perfil).
+- `data/prefs/PreferenciasTema.kt`: preferencia persistente del modo oscuro (`null` = seguir al sistema).
+- `data/repository`: implementación de `ItemRepository`, `ActividadRepository`, `CapasRepository` y `PerfilRepository` sobre Firestore.
+- `domain/repository`: contratos de conversación, actividad diaria, capas del personaje y perfil, desacoplados de Firebase.
+- `domain/model`: `Personaje`, `Sesion`, `Rol`, `CharacterEmotion`, `ActividadDiaria`, `CapasPersonaje` y `PerfilUsuario`.
+- `di/AppContainer.kt`: creación de Room, Retrofit, Firebase, preferencias de tema y notificador.
+- `ui/`: pantallas Compose (`admin`, `perfil`, `detail`, `login`, `favorites`), `UiState` y ViewModels.
+- `ui/theme`: paleta de CodeRole en variantes clara y oscura (`EsquemaClaro` / `EsquemaOscuro`).
 
 La lista y el detalle observan Room mediante `Flow`; Retrofit solo actualiza la caché. La aplicación muestra una sola mentora: la sincronización guarda el primer perfil del servicio de ejemplo bajo el identificador local `1`, con el nombre y el diseño propios de CodeRole. La barra inferior tiene destinos para Mentora, Respuestas, Perfil y, solo para administradores, Admin. Las respuestas favoritas se guardan por usuario en Firestore.
 
@@ -25,7 +28,7 @@ El archivo `app/google-services.json` está ignorado por Git y debe conservarse 
 
 1. Habilita Email/Password en Authentication.
 2. Para crear un administrador, agrega primero su cuenta en **Authentication → Users**. Copia el UID que Firebase le asigne y crea en Firestore `usuarios/{uid}` con los campos `rol: "admin"` y `correo` con el correo de esa cuenta. Esta configuración se hace en Firebase Console; la app no permite que un usuario normal se otorgue el rol admin.
-3. Publica las reglas del archivo `firestore.rules`. El registro desde la app crea `usuarios/{uid}` con correo y rol fijo `usuario`; cada cuenta solo puede leer sus propios mensajes, crear mensajes con la forma `texto`/`rol`/`favorita`/`creadoEn` y actualizar únicamente el indicador de favorito de respuestas de la mentora.
+3. Publica las reglas del archivo `firestore.rules`. El registro desde la app crea `usuarios/{uid}` con correo y rol fijo `usuario`; cada cuenta solo puede leer sus propios mensajes, crear mensajes con la forma `texto`/`rol`/`favorita`/`creadoEn`, actualizar únicamente el indicador de favorito de respuestas de la mentora y modificar su propio `nombre` y `fotoBase64` (nunca `rol` ni `correo`). Las colecciones `actividad/{fecha}` y `configuraciones/personaje` solo se leen como administrador; los contadores de actividad los incrementa cualquier cuenta autenticada y las capas PNG solo las asocia un administrador.
 
    ```powershell
    firebase deploy --only firestore:rules
@@ -52,14 +55,31 @@ El rol nunca se infiere del correo ni se elige en la pantalla. Si falla la creac
 
 Al enviar un mensaje, `FirebaseChatRepository` guarda el texto del usuario en Firestore, envía el historial normalizado (la conversación empieza en el usuario y los turnos consecutivos se fusionan, como exige Gemini) y guarda la respuesta con rol `mentora`.
 
+### Latencia de respuesta
+
+La consulta a Gemini se ejecuta en `Dispatchers.IO` con OkHttp y el historial vive en memoria, alimentado por el listener de Firestore, así que enviar el mensaje del usuario y llamar a la API ocurren en paralelo y la pantalla nunca vuelve a leer la colección completa para reconstruir la conversación. La respuesta se consume en streaming (`enqueue` + `suspendCancellableCoroutine`, `flowOn(Dispatchers.IO)`) y el texto parcial llega a la UI por `StateFlow`, por lo que la mentora empieza a escribir antes de que termine la generación. Los tiempos de espera son de 10 s de conexión, 45 s de lectura y 10 s de escritura, y los códigos 404, 429, 500, 502, 503 y 504 se reintenan con el siguiente modelo de la lista `MODELOS`.
+
 > La llamada actual se hace desde Android, por lo que la clave se incorpora al APK y puede extraerse. `local.properties` evita dejarla en el código fuente, pero no protege la clave del APK. Rota la clave que estuvo escrita en el código y, para distribuir la app, usa la Cloud Function con `GEMINI_API_KEY` como secreto. Administra las claves desde [Google AI Studio](https://aistudio.google.com/apikey).
 
 
 
-Los SVG originales están en `app/src/main/assets/character/`. `base.svg` contiene pose, cabello, orejas, rostro y ropa; `eyes_*.svg` y `mouth_*.svg` tienen el mismo `viewBox` para superponerse desde `ModularCharacterView`. AndroidSVG rasteriza esas capas en ejecución. Cuando estén listas las ilustraciones PNG, se puede cambiar el cargador visual sin alterar `CharacterEmotion`, `DetalleViewModel` ni el layout del chat.
+Los SVG originales están en `app/src/main/assets/character/`. `base.svg` contiene pose, cabello, orejas, rostro y ropa; `eyes_*.svg` y `mouth_*.svg` tienen el mismo `viewBox` para superponerse desde `ModularCharacterView`. AndroidSVG rasteriza esas capas en ejecución. En paralelo, `ModularCharacterView` dibuja primero las capas PNG que el administrador asocie en `configuraciones/personaje` (`base`, `ojos`, `boca`, en Base64) y, si falta alguna, sigue usando los SVG, sin tocar `CharacterEmotion`, `DetalleViewModel` ni el layout del chat.
+
+## Panel de administración
+
+El menú **Admin** (solo rol `admin`) tiene dos paneles:
+
+- **Actividad diaria**: `FirestoreActividadRepository` incrementa los contadores de `actividad/{aaaa-MM-dd}` (`mensajes`, `respuestas`, `favoritos`, `sesiones`) con `FieldValue.increment` y guarda cada interacción en la subcolección `registros`. Los datos se escriben en un `CoroutineScope` propio (`SupervisorJob` + `Dispatchers.IO`) para no frenar el chat. `ActividadPanel` permite elegir el día, ver los totales y el listado de registros; solo una cuenta `admin` puede leerlos.
+- **Capas PNG**: `FirestoreCapasRepository` lee y guarda `configuraciones/personaje` en tiempo real. `CapasPanel` permite asociar, previsualizar y quitar un PNG por capa (base, ojos y boca). `Imagenes.pngParaCapa` valida la firma PNG, reescala a 440 px y vuelve a codificar para no superar el límite de un documento.
+
+## Perfil de usuario y modo oscuro
+
+`ui/perfil/PerfilScreen` permite editar el nombre y la foto de perfil y cerrar sesión. La foto se reescala a 360 px, se guarda como JPEG en Base64 dentro de `usuarios/{uid}` (sin depender de Firebase Storage) y las reglas limitan el documento a 700 000 caracteres. `FirestorePerfilRepository` expone un `Flow<PerfilUsuario>` basado en el snapshot listener: el nombre y la foto se reflejan al instante en el perfil, en la cabecera del chat y en cualquier otro dispositivo de la misma cuenta.
+
+La paleta de la app es Rojo Principal `#e04a4e`, Rosa Secundario `#f4777f`, Crema `#feedb7` y Rosa Pastel `#fbd2cc`, con variantes `EsquemaClaro` y `EsquemaOscuro` en `ui/theme`. El conmutador **Modo oscuro** del perfil guarda la preferencia en `PreferenciasTema` (SharedPreferences); si el usuario aún no eligió nada, la app sigue el tema del sistema. `values-night/themes.xml` evita el destello blanco al arrancar.
 
 ## Ejecución
 
 Abre el proyecto en Android Studio y ejecútalo en un dispositivo con Google Play Services. Agrega `GEMINI_API_KEY=...` a `local.properties` para las llamadas locales a Gemini. Room conserva el perfil de la mentora offline; Firestore conserva el chat y las respuestas favoritas por cuenta. Enviar mensajes requiere conexión. El permiso de notificaciones se solicita al sincronizar desde el panel Admin y la sincronización continúa aunque se deniegue.
 
-La cuenta de administrador abre el panel Admin desde la barra inferior. Allí puede consultar los totales, sincronizar y limpiar la caché.
+La cuenta de administrador abre el panel Admin desde el menú inferior. Allí puede consultar la actividad de cada día, asociar las capas PNG del personaje, sincronizar y limpiar la caché. La foto, el nombre y el modo oscuro se configuran en **Perfil**.
