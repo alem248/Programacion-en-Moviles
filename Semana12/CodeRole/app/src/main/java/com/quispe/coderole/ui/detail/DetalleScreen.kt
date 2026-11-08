@@ -8,11 +8,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,12 +34,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.quispe.coderole.domain.model.CharacterEmotion
 import com.quispe.coderole.domain.model.MensajeConversacion
 import com.quispe.coderole.domain.model.PerfilUsuario
 import com.quispe.coderole.ui.UiState
@@ -48,8 +47,6 @@ import com.quispe.coderole.ui.components.FotoPerfil
 import com.quispe.coderole.ui.components.ModularCharacterView
 import com.quispe.coderole.ui.theme.colorExito
 
-// Tokens de la paleta: se leen del tema actual para que el chat cambie entre
-// el modo claro y el oscuro sin repetir colores fijos por pantalla.
 private val FondoRosado: Color @Composable get() = MaterialTheme.colorScheme.background
 private val Rosa: Color @Composable get() = MaterialTheme.colorScheme.primary
 private val Tinta: Color @Composable get() = MaterialTheme.colorScheme.onBackground
@@ -81,19 +78,31 @@ fun DetalleScreen(
     LaunchedEffect(state.conversacion.size, state.enviando, state.errorConversacion, state.respuestaParcial) {
         val mensajes = state.conversacion.size.coerceAtLeast(1)
         val extras = (if (state.enviando) 1 else 0) + (if (state.errorConversacion != null) 1 else 0)
-        listaConversacion.animateScrollToItem(1 + mensajes + extras)
+        listaConversacion.animateScrollToItem((mensajes + extras - 1).coerceAtLeast(0))
     }
+
     Column(Modifier.fillMaxSize().background(FondoRosado)) {
+        // 1. Barra Superior Fija
         Row(
-            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface.copy(alpha = .92f)).padding(horizontal = 18.dp, vertical = 12.dp),
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = .95f))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(Modifier.weight(1f).padding(start = 10.dp)) {
-                Text("Tu mentora", style = MaterialTheme.typography.titleLarge, color = Tinta, fontWeight = FontWeight.Bold)
-                Text("●  Siempre contigo · programación", style = MaterialTheme.typography.labelMedium, color = colorExito())
+            Column(Modifier.weight(1f).padding(start = 6.dp)) {
+                Text(
+                    text = "Tu mentora",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Tinta,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "●  Siempre contigo · programación",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colorExito(),
+                )
             }
-            // Foto y nombre del usuario: se actualizan solos con el snapshot
-            // de Firestore, igual que en la pantalla de perfil.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -101,23 +110,32 @@ fun DetalleScreen(
                 val nombre = perfil?.nombreVisible
                 if (!nombre.isNullOrBlank()) {
                     Text(
-                        nombre,
+                        text = nombre,
                         style = MaterialTheme.typography.labelMedium,
                         color = TintaSecundaria,
                         maxLines = 1,
                     )
                 }
-                FotoPerfil(perfil, 34.dp)
+                FotoPerfil(perfil, 32.dp)
             }
             TextButton(onClick = viewModel::alternarFavorito) {
-                Text(if (state.personaje?.esFavorito == true) "♥" else "♡", color = Rosa, style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = if (state.personaje?.esFavorito == true) "♥" else "♡",
+                    color = Rosa,
+                    style = MaterialTheme.typography.headlineMedium,
+                )
             }
         }
 
         if (sinConexion) {
             Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("No se sincronizó el perfil de referencia · se conserva la copia local", Modifier.weight(1f), color = Tinta, style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        text = "No se sincronizó el perfil de referencia · se conserva la copia local",
+                        modifier = Modifier.weight(1f),
+                        color = Tinta,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
                     TextButton(onClick = onVolverAIntentar) { Text("Reintentar", color = Rosa) }
                 }
             }
@@ -125,66 +143,146 @@ fun DetalleScreen(
 
         when (val estado = state.estado) {
             UiState.Cargando -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Rosa) }
-            is UiState.Error -> Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            is UiState.Error -> Column(
+                Modifier.fillMaxSize().padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 Text(estado.mensaje, color = Tinta)
                 Button(onClick = onVolverAIntentar, colors = ButtonDefaults.buttonColors(containerColor = Rosa)) { Text("Reintentar") }
             }
             is UiState.Exito -> {
-                LazyColumn(
-                    state = listaConversacion,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                // 2. Contenedor Fijo / Sticky del Personaje (Mentora)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 ) {
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(28.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = state.personaje?.nombre ?: "Mentora CodeRole",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Tinta,
+                            )
+                            Text(
+                                text = when {
+                                    state.enviando -> "Pensando respuesta…"
+                                    state.textoMensaje.isNotBlank() -> "Escuchándote…"
+                                    else -> "En línea para resolver tus dudas"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (state.enviando) Rosa else colorExito(),
+                                modifier = Modifier.padding(top = 2.dp),
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(width = 110.dp, height = 138.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.BottomCenter,
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Box(Modifier.fillMaxWidth().height(214.dp).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.BottomCenter) {
-                                    ModularCharacterView(state.emocion, Modifier.size(width = 190.dp, height = 238.dp))
-                                }
-                                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                                    Text(state.personaje?.nombre ?: "Tu mentora de programación", color = Tinta, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                                    Text("Un personaje que te acompaña en tu aprendizaje de programación.", color = Tinta, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-                                    Spacer(Modifier.height(12.dp))
-                                    Text("¿Qué puedes hacer?", color = Tinta, fontWeight = FontWeight.Bold)
-                                    Text("✓  Consultar consejos y tipos de datos\n✓  Resolver dudas de código\n✓  Guardar a tu mentora en Favoritos", color = Tinta, modifier = Modifier.padding(top = 6.dp))
-                                }
-                            }
+                            ModularCharacterView(
+                                emotion = state.emocion,
+                                modifier = Modifier.size(width = 100.dp, height = 128.dp),
+                                isSpeaking = state.estaHablando,
+                            )
                         }
                     }
-                    item { Text("Conversación", color = Tinta, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
-                    val mensajesVisibles = state.conversacion.ifEmpty {
-                        listOf(MensajeConversacion("bienvenida", "¡Hola! Soy tu mentora de programación. ¿Qué te gustaría aprender hoy?", false, 0L))
-                    }
+                }
+
+                // 3. Área de Conversación del Chat (Desplazable / Scrollable independientemente)
+                val mensajesVisibles = state.conversacion.ifEmpty {
+                    listOf(
+                        MensajeConversacion(
+                            id = "bienvenida",
+                            texto = "¡Hola! Soy tu mentora de programación. ¿Qué te gustaría aprender o consultar hoy?",
+                            esUsuario = false,
+                            creadoEn = 0L,
+                        ),
+                    )
+                }
+
+                LazyColumn(
+                    state = listaConversacion,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     items(mensajesVisibles, key = { it.id }) { mensaje ->
                         MensajeBubble(mensaje) { viewModel.alternarRespuestaFavorita(mensaje) }
                     }
-                    if (state.enviando) item {
-                        val parcial = state.respuestaParcial
-                        if (parcial.isNullOrBlank()) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                CircularProgressIndicator(Modifier.size(16.dp), color = Rosa, strokeWidth = 2.dp)
-                                Text("Tu mentora está pensando…", color = Tinta, style = MaterialTheme.typography.bodySmall)
+                    if (state.enviando) {
+                        item {
+                            val parcial = state.respuestaParcial
+                            if (parcial.isNullOrBlank()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        color = Rosa,
+                                        strokeWidth = 2.dp,
+                                    )
+                                    Text(
+                                        "Tu mentora está pensando la respuesta…",
+                                        color = TintaSecundaria,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                            } else {
+                                MensajeBubble(
+                                    mensaje = MensajeConversacion(
+                                        id = "parcial",
+                                        texto = parcial,
+                                        esUsuario = false,
+                                        creadoEn = 0L,
+                                    ),
+                                    onToggleFavorite = {},
+                                )
                             }
-                        } else {
-                            MensajeBubble(MensajeConversacion(id = "parcial", texto = parcial, esUsuario = false, creadoEn = 0L)) { }
                         }
                     }
                     state.errorConversacion?.let { error ->
                         item {
-                            Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(16.dp)) {
-                                Text(error, Modifier.fillMaxWidth().padding(12.dp), color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall)
+                            Surface(
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                shape = RoundedCornerShape(16.dp),
+                            ) {
+                                Text(
+                                    text = error,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
                             }
                         }
                     }
                 }
+
+                // 4. Barra Inferior Fija de Entrada de Texto
                 Row(
-                    Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = 12.dp, vertical = 10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -233,7 +331,7 @@ private fun MensajeBubble(mensaje: MensajeConversacion, onToggleFavorite: () -> 
             if (!mensaje.esUsuario && mensaje.id != "bienvenida" && mensaje.id != "parcial") {
                 TextButton(onClick = onToggleFavorite) {
                     Text(
-                        if (mensaje.favorita) "★ Respuesta guardada" else "☆ Guardar respuesta",
+                        text = if (mensaje.favorita) "★ Respuesta guardada" else "☆ Guardar respuesta",
                         color = if (mensaje.favorita) Rosa else TintaSecundaria,
                         style = MaterialTheme.typography.labelMedium,
                     )

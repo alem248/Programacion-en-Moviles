@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,6 +24,7 @@ data class DetalleUiState(
     val conversacion: List<MensajeConversacion> = emptyList(),
     val textoMensaje: String = "",
     val emocion: CharacterEmotion = CharacterEmotion.NEUTRAL,
+    val estaHablando: Boolean = false,
     val estado: UiState<Unit> = UiState.Cargando,
     val enviando: Boolean = false,
     /** Respuesta parcial recibida en streaming mientras la mentora escribe. */
@@ -63,7 +63,22 @@ class DetalleViewModel(
         }
     }
 
-    fun cambiarTexto(texto: String) = _uiState.update { it.copy(textoMensaje = texto) }
+    /** Cambia el texto del mensaje y reacciona de forma dinámica con emociones contextualmente. */
+    fun cambiarTexto(texto: String) {
+        _uiState.update { actual ->
+            val nuevaEmocion = when {
+                actual.enviando -> actual.emocion
+                texto.isNotBlank() && actual.textoMensaje.isBlank() -> CharacterEmotion.THINKING
+                texto.isBlank() -> CharacterEmotion.NEUTRAL
+                else -> actual.emocion
+            }
+            actual.copy(
+                textoMensaje = texto,
+                emocion = nuevaEmocion,
+                errorConversacion = null,
+            )
+        }
+    }
 
     fun enviarMensaje() {
         val texto = _uiState.value.textoMensaje.trim()
@@ -72,6 +87,7 @@ class DetalleViewModel(
             it.copy(
                 textoMensaje = "",
                 emocion = CharacterEmotion.THINKING,
+                estaHablando = false,
                 enviando = true,
                 respuestaParcial = null,
                 errorConversacion = null,
@@ -81,13 +97,25 @@ class DetalleViewModel(
             try {
                 chatRepository.enviarMensaje(texto).collect { actualizacion ->
                     when (actualizacion) {
-                        is ChatUpdate.Parcial -> _uiState.update { it.copy(respuestaParcial = actualizacion.texto) }
+                        is ChatUpdate.Parcial -> _uiState.update {
+                            it.copy(
+                                respuestaParcial = actualizacion.texto,
+                                estaHablando = true,
+                                emocion = CharacterEmotion.THINKING,
+                            )
+                        }
                         ChatUpdate.Completado -> _uiState.update {
-                            it.copy(emocion = CharacterEmotion.HAPPY, enviando = false, respuestaParcial = null)
+                            it.copy(
+                                emocion = CharacterEmotion.HAPPY,
+                                estaHablando = false,
+                                enviando = false,
+                                respuestaParcial = null,
+                            )
                         }
                         is ChatUpdate.Fallo -> _uiState.update {
                             it.copy(
                                 emocion = CharacterEmotion.SURPRISED,
+                                estaHablando = false,
                                 enviando = false,
                                 respuestaParcial = null,
                                 errorConversacion = actualizacion.error.message
@@ -102,6 +130,7 @@ class DetalleViewModel(
                 _uiState.update {
                     it.copy(
                         emocion = CharacterEmotion.SURPRISED,
+                        estaHablando = false,
                         enviando = false,
                         respuestaParcial = null,
                         errorConversacion = error.message ?: "No se pudo enviar el mensaje. Comprueba tu conexión.",
