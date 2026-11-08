@@ -17,16 +17,15 @@ El proyecto mantiene capas separadas dentro de `app/src/main/java/com/quispe/cod
 - `di/AppContainer.kt`: creación de Room, Retrofit, Firebase y notificador.
 - `ui/`: pantallas Compose, `UiState` y ViewModels.
 
-La lista y el detalle observan Room mediante `Flow`; Retrofit solo actualiza la caché. La aplicación muestra una sola mentora: la sincronización guarda el primer perfil del servicio de ejemplo bajo el identificador local `1`, con el nombre y el diseño propios de CodeRole. La barra inferior tiene destinos únicos para Mentora, Favoritos, Perfil y, solo para administradores, Admin.
+La lista y el detalle observan Room mediante `Flow`; Retrofit solo actualiza la caché. La aplicación muestra una sola mentora: la sincronización guarda el primer perfil del servicio de ejemplo bajo el identificador local `1`, con el nombre y el diseño propios de CodeRole. La barra inferior tiene destinos para Mentora, Respuestas, Perfil y, solo para administradores, Admin. Las respuestas favoritas se guardan por usuario en Firestore.
 
 ## Firebase
 
 El archivo `app/google-services.json` está ignorado por Git y debe conservarse localmente. El paquete registrado debe ser `com.quispe.coderole`. En Firebase Console:
 
 1. Habilita Email/Password en Authentication.
-2. Publica las reglas del archivo `firestore.rules`. El registro desde la app crea `usuarios/{uid}` con correo y rol fijo `usuario`; cada cuenta solo puede leer sus propios mensajes y crear mensajes con la forma exacta `texto`/`rol`/`creadoEn`, sin editarlos ni borrarlos. Las reglas no permiten que la app cambie o eleve el rol.
-3. Crea la cuenta administradora desde Firebase Console y asigna manualmente `rol: "admin"` en `usuarios/{uid}`.
-4. Publica las reglas de Firestore:
+2. Para crear un administrador, agrega primero su cuenta en **Authentication → Users**. Copia el UID que Firebase le asigne y crea en Firestore `usuarios/{uid}` con los campos `rol: "admin"` y `correo` con el correo de esa cuenta. Esta configuración se hace en Firebase Console; la app no permite que un usuario normal se otorgue el rol admin.
+3. Publica las reglas del archivo `firestore.rules`. El registro desde la app crea `usuarios/{uid}` con correo y rol fijo `usuario`; cada cuenta solo puede leer sus propios mensajes, crear mensajes con la forma `texto`/`rol`/`favorita`/`creadoEn` y actualizar únicamente el indicador de favorito de respuestas de la mentora.
 
    ```powershell
    firebase deploy --only firestore:rules
@@ -61,6 +60,6 @@ Los SVG originales están en `app/src/main/assets/character/`. `base.svg` contie
 
 ## Ejecución
 
-Abre el proyecto en Android Studio y ejecútalo en un dispositivo con Google Play Services. Se requiere conexión para el primer perfil remoto y Firestore; después, Room conserva el mentor y su favorito para el uso offline. El permiso de notificaciones se solicita al sincronizar desde el panel Admin y la sincronización continúa aunque se deniegue.
+Abre el proyecto en Android Studio y ejecútalo en un dispositivo con Google Play Services. Agrega `GEMINI_API_KEY=...` a `local.properties` para las llamadas locales a Gemini. Room conserva el perfil de la mentora offline; Firestore conserva el chat y las respuestas favoritas por cuenta. Enviar mensajes requiere conexión. El permiso de notificaciones se solicita al sincronizar desde el panel Admin y la sincronización continúa aunque se deniegue.
 
 La cuenta de administrador abre el panel Admin desde la barra inferior. Allí puede consultar los totales, sincronizar y limpiar la caché.
