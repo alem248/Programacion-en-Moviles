@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -63,7 +65,7 @@ fun CodeRoleApp(container: AppContainer) {
         val favorites by lista.favoritos.collectAsStateWithLifecycle()
         var section by remember(sesion.uid) { mutableStateOf(Seccion.CHAT) }
 
-        Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1))) {
+        Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).imePadding()) {
             Box(Modifier.weight(1f)) {
                 when (section) {
                     Seccion.CHAT -> DetalleScreen(detalle, listaState.sinConexion) {
@@ -87,7 +89,11 @@ fun CodeRoleApp(container: AppContainer) {
 
 @Composable
 private fun BottomMenu(esAdmin: Boolean, actual: Seccion, onSelect: (Seccion) -> Unit) {
-    Surface(color = Color.White, shadowElevation = 8.dp) {
+    Surface(
+        modifier = Modifier.navigationBarsPadding(),
+        color = Color.White,
+        shadowElevation = 8.dp,
+    ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             OpcionNavegacion("♥", "Mentora", actual == Seccion.CHAT, Modifier.weight(1f)) { onSelect(Seccion.CHAT) }
             OpcionNavegacion("☆", "Favoritos", actual == Seccion.FAVORITOS, Modifier.weight(1f)) { onSelect(Seccion.FAVORITOS) }
