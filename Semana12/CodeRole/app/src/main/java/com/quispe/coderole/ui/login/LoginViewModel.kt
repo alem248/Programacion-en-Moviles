@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.quispe.coderole.data.auth.AuthRepository
 import com.quispe.coderole.domain.model.Sesion
+import com.quispe.coderole.domain.model.TipoActividad
+import com.quispe.coderole.domain.repository.ActividadRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -20,12 +22,19 @@ data class LoginUiState(
     val sesion: Sesion? = null,
 )
 
-class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
+class LoginViewModel(
+    private val auth: AuthRepository,
+    private val actividad: ActividadRepository,
+) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch { _uiState.update { it.copy(cargando = false, sesion = auth.sesionActual()) } }
+        viewModelScope.launch {
+            val sesion = auth.sesionActual()
+            _uiState.update { it.copy(cargando = false, sesion = sesion) }
+            if (sesion != null) actividad.registrar(TipoActividad.SESION)
+        }
     }
 
     fun cambiarCorreo(valor: String) = _uiState.update { it.copy(correo = valor, error = null) }
@@ -70,7 +79,10 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(cargando = true, error = null, mensaje = null) }
             auth.iniciarSesion(actual.correo, actual.clave)
-                .onSuccess { sesion -> _uiState.update { it.copy(cargando = false, sesion = sesion) } }
+                .onSuccess { sesion ->
+                    actividad.registrar(TipoActividad.SESION)
+                    _uiState.update { it.copy(cargando = false, sesion = sesion) }
+                }
                 .onFailure { e -> _uiState.update { it.copy(cargando = false, error = e.message ?: "No se pudo iniciar sesión.") } }
         }
     }
@@ -80,8 +92,11 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
         _uiState.update { LoginUiState(cargando = false) }
     }
 
-    class Factory(private val auth: AuthRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val auth: AuthRepository,
+        private val actividad: ActividadRepository,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = LoginViewModel(auth) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = LoginViewModel(auth, actividad) as T
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,22 +34,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quispe.coderole.di.AppContainer
 import com.quispe.coderole.domain.model.Rol
+import com.quispe.coderole.domain.model.CapasPersonaje
 import com.quispe.coderole.domain.model.MensajeConversacion
 import com.quispe.coderole.domain.model.Sesion
 import com.quispe.coderole.ui.admin.AdminScreen
 import com.quispe.coderole.ui.admin.AdminViewModel
+import com.quispe.coderole.ui.components.ConCapasPersonaje
 import com.quispe.coderole.ui.detail.DetalleScreen
 import com.quispe.coderole.ui.detail.DetalleViewModel
 import com.quispe.coderole.ui.lista.ListaViewModel
 import com.quispe.coderole.ui.login.LoginScreen
 import com.quispe.coderole.ui.login.LoginViewModel
 import com.quispe.coderole.ui.theme.CodeRoleTheme
+import kotlinx.coroutines.flow.catch
 
 private enum class Seccion { CHAT, FAVORITOS, PERFIL, ADMIN }
 
 @Composable
 fun CodeRoleApp(container: AppContainer) {
-    val login: LoginViewModel = viewModel(factory = LoginViewModel.Factory(container.auth))
+    val login: LoginViewModel = viewModel(factory = LoginViewModel.Factory(container.auth, container.actividad))
     val loginState by login.uiState.collectAsStateWithLifecycle()
     CodeRoleTheme {
         val sesion = loginState.sesion
@@ -62,35 +66,52 @@ fun CodeRoleApp(container: AppContainer) {
         val lista: ListaViewModel = viewModel(key = "lista-${sesion.uid}", factory = ListaViewModel.Factory(container.personajes))
         val detalle: DetalleViewModel = viewModel(
             key = "detalle-${sesion.uid}",
-            factory = DetalleViewModel.Factory(container.personajes, container.chat),
+            factory = DetalleViewModel.Factory(container.personajes, container.chat, container.actividad),
         )
         val listaState by lista.uiState.collectAsStateWithLifecycle()
         val favorites by lista.favoritos.collectAsStateWithLifecycle()
         val detalleState by detalle.uiState.collectAsStateWithLifecycle()
         var section by remember(sesion.uid) { mutableStateOf(Seccion.CHAT) }
 
-        Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).imePadding()) {
-            Box(Modifier.weight(1f)) {
-                when (section) {
-                    Seccion.CHAT -> DetalleScreen(detalle, listaState.sinConexion) {
-                        lista.sincronizar()
-                    }
-                    Seccion.FAVORITOS -> FavoritesScreen(
-                        respuestas = detalleState.conversacion.filter { it.favorita && !it.esUsuario },
-                        mentoraGuardada = favorites.isNotEmpty(),
-                        error = detalleState.errorConversacion,
-                        quitarRespuesta = detalle::alternarRespuestaFavorita,
-                    ) { section = Seccion.CHAT }
-                    Seccion.PERFIL -> ProfileScreen(sesion, login::cerrarSesion) {
-                        if (sesion.rol == Rol.ADMIN) section = Seccion.ADMIN
-                    }
-                    Seccion.ADMIN -> {
-                        val admin: AdminViewModel = viewModel(key = "admin-${sesion.uid}", factory = AdminViewModel.Factory(container.personajes, container.notificador))
-                        AdminScreen(admin)
+        // Capas PNG del personaje: se escuchan una vez por sesión para que el
+        // panel de administración refleje los cambios en tiempo real.
+        var capas by remember(sesion.uid) { mutableStateOf(CapasPersonaje()) }
+        LaunchedEffect(sesion.uid) {
+            container.capas.observar().catch { }.collect { capas = it }
+        }
+
+        ConCapasPersonaje(capas) {
+            Column(Modifier.fillMaxSize().background(Color(0xFFFFF2F1)).imePadding()) {
+                Box(Modifier.weight(1f)) {
+                    when (section) {
+                        Seccion.CHAT -> DetalleScreen(detalle, listaState.sinConexion) {
+                            lista.sincronizar()
+                        }
+                        Seccion.FAVORITOS -> FavoritesScreen(
+                            respuestas = detalleState.conversacion.filter { it.favorita && !it.esUsuario },
+                            mentoraGuardada = favorites.isNotEmpty(),
+                            error = detalleState.errorConversacion,
+                            quitarRespuesta = detalle::alternarRespuestaFavorita,
+                        ) { section = Seccion.CHAT }
+                        Seccion.PERFIL -> ProfileScreen(sesion, login::cerrarSesion) {
+                            if (sesion.rol == Rol.ADMIN) section = Seccion.ADMIN
+                        }
+                        Seccion.ADMIN -> {
+                            val admin: AdminViewModel = viewModel(
+                                key = "admin-${sesion.uid}",
+                                factory = AdminViewModel.Factory(
+                                    container.personajes,
+                                    container.notificador,
+                                    container.actividad,
+                                    container.capas,
+                                ),
+                            )
+                            AdminScreen(admin)
+                        }
                     }
                 }
+                BottomMenu(sesion.rol == Rol.ADMIN, section, onSelect = { section = it })
             }
-            BottomMenu(sesion.rol == Rol.ADMIN, section, onSelect = { section = it })
         }
     }
 }

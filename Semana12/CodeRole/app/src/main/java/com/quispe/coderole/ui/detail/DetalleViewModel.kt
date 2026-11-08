@@ -7,6 +7,8 @@ import com.quispe.coderole.domain.model.ChatUpdate
 import com.quispe.coderole.domain.model.CharacterEmotion
 import com.quispe.coderole.domain.model.MensajeConversacion
 import com.quispe.coderole.domain.model.Personaje
+import com.quispe.coderole.domain.model.TipoActividad
+import com.quispe.coderole.domain.repository.ActividadRepository
 import com.quispe.coderole.domain.repository.ChatRepository
 import com.quispe.coderole.domain.repository.ItemRepository
 import com.quispe.coderole.ui.UiState
@@ -33,6 +35,7 @@ data class DetalleUiState(
 class DetalleViewModel(
     private val repositorio: ItemRepository,
     private val chatRepository: ChatRepository,
+    private val actividad: ActividadRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DetalleUiState())
     val uiState: StateFlow<DetalleUiState> = _uiState.asStateFlow()
@@ -109,8 +112,11 @@ class DetalleViewModel(
     }
 
     fun alternarFavorito() {
-        val id = _uiState.value.personaje?.id ?: return
-        viewModelScope.launch { repositorio.alternarFavorito(id) }
+        val personaje = _uiState.value.personaje ?: return
+        viewModelScope.launch {
+            repositorio.alternarFavorito(personaje.id)
+            if (!personaje.esFavorito) actividad.registrar(TipoActividad.FAVORITO, "Mentora")
+        }
     }
 
     fun alternarRespuestaFavorita(mensaje: MensajeConversacion) {
@@ -128,9 +134,10 @@ class DetalleViewModel(
     class Factory(
         private val repositorio: ItemRepository,
         private val chatRepository: ChatRepository,
+        private val actividad: ActividadRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            DetalleViewModel(repositorio, chatRepository) as T
+            DetalleViewModel(repositorio, chatRepository, actividad) as T
     }
 }

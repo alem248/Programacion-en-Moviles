@@ -1,6 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    // El rol vive en el propio documento del usuario; solo así puede consultarse
+    // sin dejar que un usuario normal se lo asigne a sí mismo.
+    function esAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
     match /usuarios/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null
@@ -32,6 +43,54 @@ service cloud.firestore {
           && request.resource.data.favorita is bool;
         allow delete: if false;
       }
+    }
+
+    // Panel de actividad diaria del mentor: los contadores se incrementan desde
+    // cualquier cuenta autenticada y solo el administrador puede leerlos.
+    match /actividad/{fecha} {
+      allow get, list: if esAdmin();
+      allow create, update: if autenticado()
+        && fecha.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && request.resource.data.fecha == fecha
+        && request.resource.data.keys().hasOnly(['fecha', 'mensajes', 'respuestas', 'favoritos', 'sesiones'])
+        && (!('mensajes' in request.resource.data)
+            || (request.resource.data.mensajes is int && request.resource.data.mensajes >= 0))
+        && (!('respuestas' in request.resource.data)
+            || (request.resource.data.respuestas is int && request.resource.data.respuestas >= 0))
+        && (!('favoritos' in request.resource.data)
+            || (request.resource.data.favoritos is int && request.resource.data.favoritos >= 0))
+        && (!('sesiones' in request.resource.data)
+            || (request.resource.data.sesiones is int && request.resource.data.sesiones >= 0));
+
+      match /registros/{registroId} {
+        allow get, list: if esAdmin();
+        allow create: if autenticado()
+          && request.resource.data.keys().hasOnly(['tipo', 'uid', 'detalle', 'creadoEn'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.tipo in ['MENSAJE', 'RESPUESTA', 'FAVORITO', 'SESION']
+          && request.resource.data.detalle is string
+          && request.resource.data.detalle.size() <= 140
+          && request.resource.data.creadoEn == request.time;
+        allow update, delete: if false;
+      }
+    }
+
+    // Capas PNG del personaje: las lee cualquier cuenta autenticada para
+    // dibujar al mentora y solo el administrador puede asociarlas o quitarlas.
+    match /configuraciones/{documento} {
+      allow get, list: if autenticado();
+      allow create, update: if esAdmin()
+        && request.resource.data.keys().hasOnly(['base', 'ojos', 'boca'])
+        && (!('base' in request.resource.data)
+            || request.resource.data.base == null
+            || (request.resource.data.base is string && request.resource.data.base.size() <= 900000))
+        && (!('ojos' in request.resource.data)
+            || request.resource.data.ojos == null
+            || (request.resource.data.ojos is string && request.resource.data.ojos.size() <= 900000))
+        && (!('boca' in request.resource.data)
+            || request.resource.data.boca == null
+            || (request.resource.data.boca is string && request.resource.data.boca.size() <= 900000));
+      allow delete: if false;
     }
   }
 }

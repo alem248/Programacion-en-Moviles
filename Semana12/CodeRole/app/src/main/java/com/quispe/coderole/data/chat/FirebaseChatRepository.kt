@@ -7,6 +7,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.quispe.coderole.domain.model.ChatUpdate
 import com.quispe.coderole.domain.model.MensajeConversacion
+import com.quispe.coderole.domain.model.TipoActividad
+import com.quispe.coderole.domain.repository.ActividadRepository
 import com.quispe.coderole.domain.repository.ChatRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
@@ -35,6 +37,7 @@ class FirebaseChatRepository(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val gemini: GeminiChatService,
+    private val actividad: ActividadRepository,
 ) : ChatRepository {
     /** Historial ya descargado: evita una consulta a Firestore por cada envío. */
     private val historial = MutableStateFlow<List<MensajeConversacion>>(emptyList())
@@ -107,6 +110,7 @@ class FirebaseChatRepository(
             }
             if (respuesta.isBlank()) throw IllegalStateException("La mentora devolvió una respuesta vacía.")
             guardar(referencias, respuesta.toString(), "mentora").getOrThrow()
+            actividad.registrar(TipoActividad.RESPUESTA)
         } catch (cancelacion: CancellationException) {
             throw cancelacion
         } catch (error: Exception) {
@@ -114,7 +118,10 @@ class FirebaseChatRepository(
         }
 
         val resultadoUsuario = escrituraUsuario.await()
-        resultadoUsuario.getOrNull()?.let { id -> publicarEnHistorial(id, mensaje, esUsuario = true) }
+        resultadoUsuario.getOrNull()?.let { id ->
+            publicarEnHistorial(id, mensaje, esUsuario = true)
+            actividad.registrar(TipoActividad.MENSAJE)
+        }
         if (fallo == null) {
             resultadoUsuario.exceptionOrNull()?.let { error -> fallo = error as? Exception ?: Exception(error) }
         }
@@ -167,6 +174,7 @@ class FirebaseChatRepository(
             val mensaje = referencia.get().await()
             check(mensaje.getString("rol") == "mentora") { "Solo puedes guardar respuestas de tu mentora." }
             referencia.update("favorita", favorita).await()
+            if (favorita) actividad.registrar(TipoActividad.FAVORITO, "Respuesta de la mentora")
             Result.success(Unit)
         } catch (error: Exception) {
             Result.failure(error)

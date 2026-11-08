@@ -12,11 +12,18 @@ import com.quispe.coderole.data.local.AppDatabase
 import com.quispe.coderole.data.notification.Notificador
 import com.quispe.coderole.data.notification.NotificadorAndroid
 import com.quispe.coderole.data.remote.RetrofitClient
+import com.quispe.coderole.data.repository.FirestoreActividadRepository
+import com.quispe.coderole.data.repository.FirestoreCapasRepository
 import com.quispe.coderole.data.repository.PersonajeRepositoryImpl
 import com.quispe.coderole.domain.repository.ItemRepository
+import com.quispe.coderole.domain.repository.ActividadRepository
+import com.quispe.coderole.domain.repository.CapasRepository
 import com.quispe.coderole.domain.repository.ChatRepository
 
 class AppContainer(contexto: Context) {
+    private val firestore = FirebaseFirestore.getInstance()
+    private val authFirebase = FirebaseAuth.getInstance()
+
     private val database = Room.databaseBuilder(
         contexto.applicationContext,
         AppDatabase::class.java,
@@ -27,11 +34,18 @@ class AppContainer(contexto: Context) {
         api = RetrofitClient.personajes,
         dao = database.personajeDao(),
     )
-    val auth: AuthRepository = FirebaseAuthRepository(FirebaseAuth.getInstance(), FirebaseFirestore.getInstance())
+    val auth: AuthRepository = FirebaseAuthRepository(authFirebase, firestore)
+
+    val actividad: ActividadRepository = FirestoreActividadRepository(authFirebase, firestore)
+
+    val capas: CapasRepository = FirestoreCapasRepository(firestore)
+
     val chat: ChatRepository = FirebaseChatRepository(
-        auth = FirebaseAuth.getInstance(),
-        firestore = FirebaseFirestore.getInstance(),
+        auth = authFirebase,
+        firestore = firestore,
         gemini = GeminiChatService(),
+        actividad = actividad,
     )
+
     val notificador: Notificador = NotificadorAndroid(contexto)
 }
