@@ -20,9 +20,9 @@ object GeminiConfig {
      * siguiente, así el chat sigue respondiendo cuando hay alta demanda.
      */
     val MODELOS = listOf(
-        "gemini-3.8-flash",
-        "gemini-3.6-flash",
-        "gemini-3.5-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
     )
 
     /** Máximo de mensajes del historial que se envían como contexto. */

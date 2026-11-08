@@ -23,9 +23,17 @@ import com.quispe.coderole.domain.repository.CapasRepository
 import com.quispe.coderole.domain.repository.ChatRepository
 import com.quispe.coderole.domain.repository.PerfilRepository
 
+import com.google.firebase.FirebaseApp
+
 class AppContainer(contexto: Context) {
-    private val firestore = FirebaseFirestore.getInstance()
-    private val authFirebase = FirebaseAuth.getInstance()
+    init {
+        if (FirebaseApp.getApps(contexto).isEmpty()) {
+            FirebaseApp.initializeApp(contexto)
+        }
+    }
+
+    private val firestore get() = FirebaseFirestore.getInstance()
+    private val authFirebase get() = FirebaseAuth.getInstance()
 
     private val database = Room.databaseBuilder(
         contexto.applicationContext,
