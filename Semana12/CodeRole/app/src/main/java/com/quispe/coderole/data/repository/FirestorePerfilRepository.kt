@@ -12,7 +12,7 @@ import kotlinx.coroutines.tasks.await
 
 /**
  * Perfil del usuario en `usuarios/{uid}`. La foto viaja como PNG/JPEG en
- * Base64 para no depender de Firebase Storage; se reescalá antes de guardarla
+ * Base64 para no depender de Firebase Storage; se reescala antes de guardarla
  * para no superar el límite de un documento de Firestore.
  */
 class FirestorePerfilRepository(
@@ -40,23 +40,33 @@ class FirestorePerfilRepository(
     }
 
     override suspend fun actualizarNombre(nombre: String): Result<Unit> = try {
+        val user = requireNotNull(auth.currentUser) { "La sesión terminó. Vuelve a iniciar sesión." }
         val limpio = nombre.trim().take(LARGO_MAXIMO)
         require(limpio.length >= LARGO_MINIMO) {
             "El nombre debe tener al menos $LARGO_MINIMO caracteres."
         }
-        documento().set(mapOf("nombre" to limpio), SetOptions.merge()).await()
+        val datos = mutableMapOf<String, Any>(
+            "nombre" to limpio,
+        )
+        user.email?.takeIf { it.isNotBlank() }?.let { datos["correo"] = it }
+        documento().set(datos, SetOptions.merge()).await()
         Result.success(Unit)
     } catch (error: Exception) {
         Result.failure(error)
     }
 
     override suspend fun actualizarFoto(fotoBase64: String?): Result<Unit> = try {
+        val user = requireNotNull(auth.currentUser) { "La sesión terminó. Vuelve a iniciar sesión." }
         if (fotoBase64 != null) {
             require(fotoBase64.length <= FOTO_MAXIMA) {
                 "La imagen pesa demasiado. Elige una foto más ligera."
             }
         }
-        documento().set(mapOf("fotoBase64" to fotoBase64), SetOptions.merge()).await()
+        val datos = mutableMapOf<String, Any?>(
+            "fotoBase64" to fotoBase64,
+        )
+        user.email?.takeIf { it.isNotBlank() }?.let { datos["correo"] = it }
+        documento().set(datos, SetOptions.merge()).await()
         Result.success(Unit)
     } catch (error: Exception) {
         Result.failure(error)

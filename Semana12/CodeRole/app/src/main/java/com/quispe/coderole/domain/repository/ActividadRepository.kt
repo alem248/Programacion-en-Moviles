@@ -13,6 +13,9 @@ interface ActividadRepository {
     /** Cuenta la interacción del día en curso (mensaje, respuesta, favorito o sesión). */
     fun registrar(tipo: TipoActividad, detalle: String = "")
 
+    /** Registra tiempo de uso activo en minutos acumulado por todos los usuarios. */
+    fun registrarTiempoUso(minutos: Int)
+
     /** Últimos [dias] días con actividad, del más reciente al más antiguo. */
     fun observarDias(dias: Int = DIAS_POR_DEFECTO): Flow<List<ActividadDiaria>>
 

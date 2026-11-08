@@ -1,5 +1,7 @@
 package com.quispe.coderole.ui.detail
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import androidx.compose.foundation.background
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -62,6 +64,20 @@ fun DetalleScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val listaConversacion = rememberLazyListState()
+
+    // Contador de tiempo de uso activo en la pantalla de la mentora
+    LaunchedEffect(Unit) {
+        var segundosActivos = 0
+        while (isActive) {
+            delay(1_000L)
+            segundosActivos++
+            if (segundosActivos >= 60) {
+                viewModel.registrarTiempoActivo(1)
+                segundosActivos = 0
+            }
+        }
+    }
+
     LaunchedEffect(state.conversacion.size, state.enviando, state.errorConversacion, state.respuestaParcial) {
         val mensajes = state.conversacion.size.coerceAtLeast(1)
         val extras = (if (state.enviando) 1 else 0) + (if (state.errorConversacion != null) 1 else 0)

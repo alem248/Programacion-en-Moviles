@@ -24,8 +24,7 @@ import kotlinx.coroutines.tasks.await
  * contadores con `FieldValue.increment` y guarda cada interacción en su
  * subcolección `registros`.
  *
- * [registrar] nunca bloquea al usuario: corre en su propio alcance y cualquier
- * fallo se descarta, porque una métrica perdida no debe interrumpir el chat.
+ * [registrar] y [registrarTiempoUso] corren en segundo plano sin bloquear la UI.
  */
 class FirestoreActividadRepository(
     private val auth: FirebaseAuth,
@@ -62,6 +61,36 @@ class FirestoreActividadRepository(
         }
     }
 
+    override fun registrarTiempoUso(minutos: Int) {
+        if (minutos <= 0) return
+        val uid = auth.currentUser?.uid ?: return
+        val fecha = Fechas.hoy()
+        alcance.launch {
+            runCatching {
+                val dia = firestore.collection(COLECCION).document(fecha)
+                val lote = firestore.batch()
+                lote.set(
+                    dia,
+                    mapOf(
+                        "fecha" to fecha,
+                        "tiempoUsoMinutos" to FieldValue.increment(minutos.toLong()),
+                    ),
+                    SetOptions.merge(),
+                )
+                lote.set(
+                    dia.collection(REGISTROS).document(),
+                    mapOf(
+                        "tipo" to TipoActividad.TIEMPO_USO.name,
+                        "uid" to uid,
+                        "detalle" to "Uso activo de la mentora: $minutos min",
+                        "creadoEn" to FieldValue.serverTimestamp(),
+                    ),
+                )
+                lote.commit().await()
+            }
+        }
+    }
+
     override fun observarDias(dias: Int): Flow<List<ActividadDiaria>> = callbackFlow {
         val registration = firestore.collection(COLECCION)
             .orderBy("fecha", Query.Direction.DESCENDING)
@@ -77,6 +106,7 @@ class FirestoreActividadRepository(
                             respuestas = documento.getLong("respuestas")?.toInt() ?: 0,
                             favoritos = documento.getLong("favoritos")?.toInt() ?: 0,
                             sesiones = documento.getLong("sesiones")?.toInt() ?: 0,
+                            tiempoUsoMinutos = documento.getLong("tiempoUsoMinutos")?.toInt() ?: 0,
                         )
                     }
                     trySend(diasActividad)
@@ -125,4 +155,5 @@ private val TipoActividad.contador: String
         TipoActividad.RESPUESTA -> "respuestas"
         TipoActividad.FAVORITO -> "favoritos"
         TipoActividad.SESION -> "sesiones"
+        TipoActividad.TIEMPO_USO -> "tiempoUsoMinutos"
     }

@@ -1,7 +1,7 @@
 package com.quispe.coderole.domain.model
 
 /** Tipos de interacción que el panel de actividad registra por día. */
-enum class TipoActividad { MENSAJE, RESPUESTA, FAVORITO, SESION }
+enum class TipoActividad { MENSAJE, RESPUESTA, FAVORITO, SESION, TIEMPO_USO }
 
 /** Una interacción concreta dentro de un día. */
 data class RegistroActividad(
@@ -21,6 +21,7 @@ data class ActividadDiaria(
     val respuestas: Int = 0,
     val favoritos: Int = 0,
     val sesiones: Int = 0,
+    val tiempoUsoMinutos: Int = 0,
     val registros: List<RegistroActividad> = emptyList(),
 ) {
     /** Total de interacciones del día. */

@@ -111,6 +111,11 @@ class DetalleViewModel(
         }
     }
 
+    fun registrarTiempoActivo(minutos: Int) {
+        if (minutos <= 0) return
+        actividad.registrarTiempoUso(minutos)
+    }
+
     fun alternarFavorito() {
         val personaje = _uiState.value.personaje ?: return
         viewModelScope.launch {
