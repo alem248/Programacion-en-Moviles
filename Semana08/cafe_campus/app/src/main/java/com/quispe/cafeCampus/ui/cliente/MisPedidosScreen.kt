@@ -14,6 +14,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.quispe.cafeCampus.model.EstadoPedido
 import com.quispe.cafeCampus.ui.components.AppTopBar
+import com.quispe.cafeCampus.ui.components.CafeButton
 import com.quispe.cafeCampus.ui.components.PedidoCard
 import com.quispe.cafeCampus.viewmodel.PedidosClienteViewModel
 
@@ -38,10 +40,19 @@ private val estadosActivos = setOf(
 fun MisPedidosScreen(
     vm: PedidosClienteViewModel,
     onPedido: (Int) -> Unit,
+    onRepetir: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val pedidos by vm.misPedidos.collectAsState()
+    val aviso by vm.aviso.collectAsState()
     var tab by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(aviso) {
+        if (aviso != null) {
+            onRepetir()
+            vm.limpiarAviso()
+        }
+    }
 
     val activos = pedidos.filter { EstadoPedido.valueOf(it.pedido.estado) in estadosActivos }
     val historial = pedidos.filter { EstadoPedido.valueOf(it.pedido.estado) !in estadosActivos }
@@ -83,16 +94,26 @@ fun MisPedidosScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(lista, key = { it.pedido.id }) { dato ->
-                    PedidoCard(
-                        numero = dato.pedido.id,
-                        cliente = dato.cliente.nombre,
-                        resumen = dato.resumen(),
-                        fecha = dato.pedido.fecha,
-                        total = dato.pedido.total,
-                        estado = EstadoPedido.valueOf(dato.pedido.estado),
-                        onClick = { onPedido(dato.pedido.id) },
-                        mostrarCliente = false
-                    )
+                    Column {
+                        PedidoCard(
+                            numero = dato.pedido.id,
+                            cliente = dato.cliente.nombre,
+                            resumen = dato.resumen(),
+                            fecha = dato.pedido.fecha,
+                            total = dato.pedido.total,
+                            estado = EstadoPedido.valueOf(dato.pedido.estado),
+                            onClick = { onPedido(dato.pedido.id) },
+                            mostrarCliente = false
+                        )
+                        if (tab == 1) {
+                            Spacer(Modifier.height(6.dp))
+                            CafeButton(
+                                texto = "Repetir pedido",
+                                onClick = { vm.repetirPedido(dato) },
+                                outlined = true
+                            )
+                        }
+                    }
                 }
             }
         }

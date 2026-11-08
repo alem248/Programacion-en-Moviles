@@ -1,6 +1,6 @@
 # CafeCampus 
 
-App de pedidos para la cafetería del campus: un **Estudiante** arma su pedido, lo confirma y sigue su estado en tiempo real; un **Administrador** atiende los pedidos, gestiona el menú y revisa las ventas del día. Arquitectura **MVVM + Room + Jetpack Compose**, con dos perfiles en el mismo dispositivo y sesión recordada con DataStore.
+App de pedidos para la cafetería del campus: un **Estudiante** arma su pedido, lo confirma y sigue su estado en tiempo real; un **Administrador** atiende los pedidos, gestiona el menú y revisa las ventas del día. Arquitectura **MVVM + Room + Jetpack Compose**, con dos perfiles en el mismo dispositivo, sesión recordada con DataStore y **pago con QR interoperable de Yape/Plin con el monto automático**.
 
 ## Estructura de paquetes
 
@@ -12,23 +12,37 @@ com.quispe.cafeCampus
 │   │   ├── entity/       Producto, Usuario, Pedido, DetallePedido
 │   │   ├── relation/     PedidoConDetalle
 │   │   ├── CafeDatabase.kt · DatosIniciales.kt
-│   ├── prefs/            PreferenciasStore (DataStore: perfil, modo oscuro, recibir pedidos)
+│   ├── pago/             QrEmvCo (generador de payloads EMVCo + CRC16)
+│   ├── prefs/            PreferenciasStore (DataStore: perfil, modo oscuro, recibir pedidos, QR de pago)
 │   └── repository/       CafeRepository (interface) · CafeRepositoryRoom
 ├── model/                Rol, EstadoPedido, ItemCarrito
 ├── viewmodel/            SesionViewModel, MenuViewModel, PedidosClienteViewModel,
 │                         PanelAdminViewModel, PedidosAdminViewModel, MenuAdminViewModel,
+│                         RegistroViewModel, ReporteViewModel, PagoViewModel,
 │                         CafeViewModelFactory
 ├── ui
 │   ├── theme/            Color, Type, Theme (tema según perfil)
 │   ├── components/       AppTopBar, CafeButton, CafeTextField, EstadoChip,
 │   │                     ProductoIcono, ProductoCard, PedidoCard, StepperEstado
-│   ├── cliente/          Splash, Login, Menu, DetalleProducto, ConfirmarPedido,
-│   │                     Seguimiento, MisPedidos
+│   ├── cliente/          Splash, Login, Registro, Menu, DetalleProducto, ConfirmarPedido,
+│   │                     Seguimiento, MisPedidos, PagoQr
 │   ├── admin/            Panel, PedidosAdmin, DetallePedidoAdmin, MenuAdmin,
-│   │                     FormularioProducto, Ajustes
+│   │                     FormularioProducto, Reporte, Ajustes
 │   └── navigation/       Rutas, NavCafe (grafo completo con navegación inferior)
 ├── CafeApp.kt · MainActivity.kt
 ```
+
+## Configurar el QR de pago (Yape/Plin)
+
+El QR de cobro **no está en el repositorio**. Para precargarlo, agrega a `local.properties`
+(ignorado por Git) el texto de tu QR, obtenido al escanearlo con cualquier lector:
+
+```properties
+pago.qr.payload=000201010211...6304XXXX
+```
+
+También se puede pegar o cambiar desde la app: **Perfil → Ajustes → Pagos con QR** (administrador).
+Si la billetera no respeta el monto automático, la pantalla de pago tiene "Usar QR sin monto".
 
 ## Diagrama MVVM
 

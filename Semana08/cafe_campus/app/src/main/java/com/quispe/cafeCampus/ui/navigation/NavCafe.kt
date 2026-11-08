@@ -36,18 +36,24 @@ import com.quispe.cafeCampus.ui.admin.FormularioProductoScreen
 import com.quispe.cafeCampus.ui.admin.MenuAdminScreen
 import com.quispe.cafeCampus.ui.admin.PanelScreen
 import com.quispe.cafeCampus.ui.admin.PedidosAdminScreen
+import com.quispe.cafeCampus.ui.admin.ReporteScreen
 import com.quispe.cafeCampus.ui.cliente.ConfirmarPedidoScreen
 import com.quispe.cafeCampus.ui.cliente.DetalleProductoScreen
 import com.quispe.cafeCampus.ui.cliente.LoginScreen
 import com.quispe.cafeCampus.ui.cliente.MenuScreen
 import com.quispe.cafeCampus.ui.cliente.MisPedidosScreen
+import com.quispe.cafeCampus.ui.cliente.PagoQrScreen
+import com.quispe.cafeCampus.ui.cliente.RegistroScreen
 import com.quispe.cafeCampus.ui.cliente.SeguimientoScreen
 import com.quispe.cafeCampus.ui.cliente.SplashScreen
 import com.quispe.cafeCampus.viewmodel.MenuAdminViewModel
 import com.quispe.cafeCampus.viewmodel.MenuViewModel
+import com.quispe.cafeCampus.viewmodel.PagoViewModel
 import com.quispe.cafeCampus.viewmodel.PanelAdminViewModel
 import com.quispe.cafeCampus.viewmodel.PedidosAdminViewModel
 import com.quispe.cafeCampus.viewmodel.PedidosClienteViewModel
+import com.quispe.cafeCampus.viewmodel.RegistroViewModel
+import com.quispe.cafeCampus.viewmodel.ReporteViewModel
 import com.quispe.cafeCampus.viewmodel.SesionViewModel
 
 private data class Pestania(val ruta: String, val titulo: String, val icono: ImageVector)
@@ -65,24 +71,23 @@ fun NavCafe(
     val panelVm: PanelAdminViewModel = viewModel(factory = factory)
     val pedidosAdminVm: PedidosAdminViewModel = viewModel(factory = factory)
     val menuAdminVm: MenuAdminViewModel = viewModel(factory = factory)
+    val registroVm: RegistroViewModel = viewModel(factory = factory)
+    val reporteVm: ReporteViewModel = viewModel(factory = factory)
+    val pagoVm: PagoViewModel = viewModel(factory = factory)
 
     val rol by sesion.rolActivo.collectAsState()
 
-    fun limpiarPila() {
-        while (navController.popBackStack()) {
-            // vacía toda la pila de navegación
+    fun irADestinoPrincipal() {
+        val destino = if (sesion.rolActivo.value == Rol.ADMIN) Rutas.PANEL else Rutas.MENU
+        navController.navigate(destino) {
+            popUpTo(0) { inclusive = true }
         }
     }
 
-    fun irADestinoPrincipal() {
-        val destino = if (sesion.rolActivo.value == Rol.ADMIN) Rutas.PANEL else Rutas.MENU
-        limpiarPila()
-        navController.navigate(destino)
-    }
-
     fun irALogin() {
-        limpiarPila()
-        navController.navigate(Rutas.LOGIN)
+        navController.navigate(Rutas.LOGIN) {
+            popUpTo(0) { inclusive = true }
+        }
     }
 
     val pestanias = when (rol) {
@@ -158,7 +163,16 @@ fun NavCafe(
             composable(Rutas.LOGIN) {
                 LoginScreen(
                     vm = sesion,
-                    onIngresar = { irADestinoPrincipal() }
+                    onIngresar = { irADestinoPrincipal() },
+                    onRegistro = { navController.navigate(Rutas.REGISTRO) }
+                )
+            }
+
+            composable(Rutas.REGISTRO) {
+                RegistroScreen(
+                    vm = registroVm,
+                    onRegistrado = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
                 )
             }
 
@@ -166,7 +180,7 @@ fun NavCafe(
                 val usuario by sesion.usuarioActual.collectAsState()
                 MenuScreen(
                     vm = menuVm,
-                    nombreUsuario = usuario?.nombre?.split(" ")?.firstOrNull() ?: "estudiante",
+                    nombreUsuario = usuario?.nombre?.split(" ")?.firstOrNull() ?: "Alexandra",
                     onProducto = { productoId ->
                         navController.navigate(Rutas.detalle(productoId))
                     },
@@ -183,7 +197,22 @@ fun NavCafe(
                             popUpTo(Rutas.CONFIRMAR) { inclusive = true }
                         }
                     },
+                    onPagarQr = { monto -> navController.navigate(Rutas.pagoQr(monto)) },
                     onSeguirPidiendo = { navController.popBackStack(Rutas.MENU, false) },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Rutas.PAGO_QR,
+                arguments = listOf(navArgument("monto") { type = NavType.StringType })
+            ) { entry ->
+                // Se recibe como texto para evitar problemas de formato numérico
+                val monto = entry.arguments?.getString("monto")
+                    ?.replace(',', '.')?.toDoubleOrNull() ?: 0.0
+                PagoQrScreen(
+                    vm = pagoVm,
+                    monto = monto,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -206,6 +235,7 @@ fun NavCafe(
                     onPedido = { pedidoId ->
                         navController.navigate(Rutas.seguimiento(pedidoId))
                     },
+                    onRepetir = { navController.popBackStack(Rutas.MENU, false) },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -214,7 +244,15 @@ fun NavCafe(
                 PanelScreen(
                     vm = panelVm,
                     onPedidos = { navController.navigate(Rutas.PEDIDOS_ADMIN) },
-                    onMenu = { navController.navigate(Rutas.MENU_ADMIN) }
+                    onMenu = { navController.navigate(Rutas.MENU_ADMIN) },
+                    onReporte = { navController.navigate(Rutas.REPORTE) }
+                )
+            }
+
+            composable(Rutas.REPORTE) {
+                ReporteScreen(
+                    vm = reporteVm,
+                    onBack = { navController.popBackStack() }
                 )
             }
 
@@ -270,11 +308,9 @@ fun NavCafe(
             composable(Rutas.AJUSTES) {
                 AjustesScreen(
                     vm = sesion,
-                    onCambiarPerfil = { nuevoRol ->
-                        sesion.cambiarPerfil(nuevoRol)
-                        irADestinoPrincipal()
-                    },
+                    vmPago = pagoVm,
                     onCerrarSesion = {
+                        menuVm.vaciar()
                         sesion.cerrarSesion()
                         irALogin()
                     }

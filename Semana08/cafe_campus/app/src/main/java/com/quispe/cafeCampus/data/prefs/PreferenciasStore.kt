@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.quispe.cafeCampus.BuildConfig
 import com.quispe.cafeCampus.model.Rol
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -17,18 +18,40 @@ class PreferenciasStore(private val context: Context) {
 
     private object Llaves {
         val PERFIL_ACTIVO = stringPreferencesKey("perfilActivo")
+        val CORREO_ACTIVO = stringPreferencesKey("correoActivo")
         val MODO_OSCURO = booleanPreferencesKey("modoOscuro")
         val RECIBIR_PEDIDOS = booleanPreferencesKey("recibirPedidos")
+        val PAGO_QR = stringPreferencesKey("pagoQrPayload")
     }
 
     val perfilActivo: Flow<String> = context.dataStore.data.map { it[Llaves.PERFIL_ACTIVO] ?: "" }
+
+    /** Correo del usuario logueado: identifica al usuario exacto (no solo al rol). */
+    val correoActivo: Flow<String> = context.dataStore.data.map { it[Llaves.CORREO_ACTIVO] ?: "" }
 
     val modoOscuro: Flow<Boolean> = context.dataStore.data.map { it[Llaves.MODO_OSCURO] ?: false }
 
     val recibirPedidos: Flow<Boolean> = context.dataStore.data.map { it[Llaves.RECIBIR_PEDIDOS] ?: true }
 
-    suspend fun guardarPerfil(rol: Rol) {
-        context.dataStore.edit { it[Llaves.PERFIL_ACTIVO] = rol.name }
+    /**
+     * Payload base del QR de pago (cuenta destino Yape/Plin) configurado por el admin.
+     * Mientras el admin no guarde uno, se usa el de local.properties (fuera de Git);
+     * si lo desactiva se guarda "" y ya no vuelve el de por defecto.
+     */
+    val payloadQr: Flow<String> =
+        context.dataStore.data.map { it[Llaves.PAGO_QR] ?: BuildConfig.QR_PAGO_DEFECTO }
+
+    val fotoPerfilUri: Flow<String> = context.dataStore.data.map { prefs ->
+        val correo = prefs[Llaves.CORREO_ACTIVO] ?: ""
+        val key = stringPreferencesKey("foto_perfil_" + correo)
+        prefs[key] ?: ""
+    }
+
+    suspend fun guardarPerfil(rol: Rol, correo: String) {
+        context.dataStore.edit {
+            it[Llaves.PERFIL_ACTIVO] = rol.name
+            it[Llaves.CORREO_ACTIVO] = correo
+        }
     }
 
     suspend fun guardarModoOscuro(valor: Boolean) {
@@ -39,7 +62,22 @@ class PreferenciasStore(private val context: Context) {
         context.dataStore.edit { it[Llaves.RECIBIR_PEDIDOS] = valor }
     }
 
+    suspend fun guardarPayloadQr(payload: String) {
+        context.dataStore.edit { it[Llaves.PAGO_QR] = payload }
+    }
+
+    suspend fun guardarFotoPerfil(uri: String) {
+        context.dataStore.edit { prefs ->
+            val correo = prefs[Llaves.CORREO_ACTIVO] ?: ""
+            val key = stringPreferencesKey("foto_perfil_" + correo)
+            prefs[key] = uri
+        }
+    }
+
     suspend fun cerrarSesion() {
-        context.dataStore.edit { it[Llaves.PERFIL_ACTIVO] = "" }
+        context.dataStore.edit {
+            it[Llaves.PERFIL_ACTIVO] = ""
+            it[Llaves.CORREO_ACTIVO] = ""
+        }
     }
 }

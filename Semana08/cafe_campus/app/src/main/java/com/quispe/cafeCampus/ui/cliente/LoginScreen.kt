@@ -36,7 +36,8 @@ import com.quispe.cafeCampus.viewmodel.SesionViewModel
 @Composable
 fun LoginScreen(
     vm: SesionViewModel,
-    onIngresar: (Rol) -> Unit
+    onIngresar: (Rol) -> Unit,
+    onRegistro: () -> Unit = {}
 ) {
     val error by vm.error.collectAsState()
     val usuario by vm.usuarioActual.collectAsState()
@@ -126,5 +127,15 @@ fun LoginScreen(
                 com.quispe.cafeCampus.ui.theme.IndigoPrimary
             }
         )
+
+        if (rolSeleccionado == Rol.CLIENTE) {
+            Spacer(Modifier.height(12.dp))
+            CafeButton(
+                texto = "Crear cuenta de estudiante",
+                onClick = onRegistro,
+                outlined = true,
+                color = com.quispe.cafeCampus.ui.theme.NaranjaPrimary
+            )
+        }
     }
 }

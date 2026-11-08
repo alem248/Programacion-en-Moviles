@@ -1,20 +1,26 @@
 package com.quispe.clinicasalud.ui.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,7 +42,7 @@ import com.quispe.clinicasalud.modelos.citasAgendadas
 import com.quispe.clinicasalud.modelos.doctorPorId
 import com.quispe.clinicasalud.modelos.listaFechas
 import com.quispe.clinicasalud.modelos.listaHorarios
-import androidx.compose.foundation.Image
+import com.quispe.clinicasalud.ui.components.HorarioFilterChip
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -45,13 +52,20 @@ fun AgendarCitaScreen(
     onConfirmada: () -> Unit
 ) {
     val doctor = doctorPorId(doctorId)
+    // Estado local para fecha y hora seleccionada
     var fechaSeleccionada by remember { mutableStateOf(listaFechas.first()) }
     var horaSeleccionada by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Agendar cita") },
+                title = {
+                    Text(
+                        text = "Agendar cita",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -65,39 +79,71 @@ fun AgendarCitaScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
-            Image(
-                painter = painterResource(doctor.imagenRes),
-                contentDescription = doctor.nombre,
-                modifier = Modifier.size(64.dp)
-            )
-            Text(
-                text = doctor.nombre,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = 12.dp)
-            )
-            Text(
-                text = doctor.especialidad,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(doctor.imagenRes),
+                            contentDescription = doctor.nombre,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 16.dp)
+                    ) {
+                        Text(
+                            text = doctor.nombre,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = doctor.especialidad,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                }
+            }
 
             Text(
                 text = "Selecciona fecha",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 24.dp, bottom = 12.dp)
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listaFechas.forEach { fecha ->
-                    FilterChip(
-                        selected = fecha == fechaSeleccionada,
-                        onClick = { fechaSeleccionada = fecha },
-                        label = { Text(fecha) }
+                    HorarioFilterChip(
+                        texto = fecha,
+                        seleccionado = fecha == fechaSeleccionada,
+                        onSelect = { fechaSeleccionada = fecha }
                     )
                 }
             }
@@ -105,30 +151,42 @@ fun AgendarCitaScreen(
             Text(
                 text = "Selecciona hora",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 24.dp, bottom = 12.dp)
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listaHorarios.forEach { hora ->
-                    FilterChip(
-                        selected = hora == horaSeleccionada,
-                        onClick = {
+                    HorarioFilterChip(
+                        texto = hora,
+                        seleccionado = hora == horaSeleccionada,
+                        onSelect = {
                             horaSeleccionada = if (hora == horaSeleccionada) null else hora
-                        },
-                        label = { Text(hora) }
+                        }
                     )
                 }
             }
 
-            Text(
-                text = horaSeleccionada?.let { "Seleccion: $fechaSeleccionada - $it" }
-                    ?: "Seleccione un horario para continuar",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 24.dp)
-            )
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
+            ) {
+                Text(
+                    text = horaSeleccionada?.let { "Selección: $fechaSeleccionada • $it" }
+                        ?: "Seleccione un horario para continuar",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
 
             Button(
                 onClick = {
@@ -139,9 +197,12 @@ fun AgendarCitaScreen(
                 enabled = horaSeleccionada != null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp)
+                    .padding(top = 28.dp)
             ) {
-                Text("Confirmar cita")
+                Text(
+                    text = "Confirmar cita",
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }

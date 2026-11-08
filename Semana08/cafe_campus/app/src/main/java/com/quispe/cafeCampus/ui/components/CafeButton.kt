@@ -23,6 +23,14 @@ fun CafeButton(
     color: Color = MaterialTheme.colorScheme.primary,
     outlined: Boolean = false
 ) {
+    val esquema = MaterialTheme.colorScheme
+    // En modo oscuro el primario es claro (tono M3), así que el texto debe ser
+    // oscuro; para errores se usa onError. Blanco solo sobre fondos oscuros.
+    val colorContenido = when (color) {
+        esquema.primary -> esquema.onPrimary
+        esquema.error -> esquema.onError
+        else -> Color.White
+    }
     if (outlined) {
         OutlinedButton(
             onClick = onClick,
@@ -45,7 +53,7 @@ fun CafeButton(
             shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = color,
-                contentColor = Color.White
+                contentColor = colorContenido
             )
         ) {
             Text(texto, fontWeight = FontWeight.SemiBold)

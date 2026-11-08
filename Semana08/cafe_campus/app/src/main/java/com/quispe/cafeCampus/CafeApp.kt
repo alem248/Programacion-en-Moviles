@@ -4,6 +4,7 @@ import android.app.Application
 import com.quispe.cafeCampus.data.local.CafeDatabase
 import com.quispe.cafeCampus.data.local.DatosIniciales
 import com.quispe.cafeCampus.data.repository.CafeRepositoryRoom
+import com.quispe.cafeCampus.data.repository.CarritoHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,6 +17,9 @@ class CafeApp : Application() {
     val database: CafeDatabase by lazy { CafeDatabase.obtener(this) }
 
     val repository: CafeRepositoryRoom by lazy { CafeRepositoryRoom(database) }
+
+    /** Única instancia del carrito, compartida entre ViewModels. */
+    val carritoHolder: CarritoHolder by lazy { CarritoHolder() }
 
     override fun onCreate() {
         super.onCreate()

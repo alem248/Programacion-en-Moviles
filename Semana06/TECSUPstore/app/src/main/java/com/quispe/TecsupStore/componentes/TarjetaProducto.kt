@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingBag
@@ -45,7 +46,11 @@ data class Producto(
 )
 
 @Composable
-fun TarjetaProducto(producto: Producto) {
+fun TarjetaProducto(
+    producto: Producto,
+    esFavorito: Boolean = false,
+    onToggleFavorito: (Producto) -> Unit = {}
+) {
     var expanded by remember { mutableStateOf(false) }
     val moradoTecsup = Color(0xFF4A148C)
 
@@ -112,8 +117,17 @@ fun TarjetaProducto(producto: Producto) {
                 ) {
                     DropdownMenuItem(
                         text = { Text("Favoritos") },
-                        leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) },
-                        onClick = { expanded = false }
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (esFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = if (esFavorito) "Quitar de favoritos" else "Agregar a favoritos",
+                                tint = if (esFavorito) moradoTecsup else Color.Black
+                            )
+                        },
+                        onClick = {
+                            onToggleFavorito(producto)
+                            expanded = false
+                        }
                     )
                     HorizontalDivider()
                     DropdownMenuItem(

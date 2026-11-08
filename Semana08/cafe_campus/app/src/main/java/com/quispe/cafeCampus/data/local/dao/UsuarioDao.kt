@@ -15,8 +15,17 @@ interface UsuarioDao {
     @Query("SELECT * FROM usuarios WHERE rol = :rol LIMIT 1")
     suspend fun porRol(rol: String): Usuario?
 
+    @Query("SELECT * FROM usuarios WHERE correo = :correo LIMIT 1")
+    suspend fun porCorreo(correo: String): Usuario?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(u: Usuario)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertarNuevo(u: Usuario): Long
+
+    @Query("SELECT COUNT(*) FROM usuarios WHERE correo = :correo")
+    suspend fun existeCorreo(correo: String): Int
 
     @Query("SELECT COUNT(*) FROM usuarios")
     suspend fun contar(): Int

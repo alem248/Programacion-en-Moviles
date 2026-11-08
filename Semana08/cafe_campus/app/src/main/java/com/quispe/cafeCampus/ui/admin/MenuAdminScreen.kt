@@ -86,7 +86,7 @@ fun MenuAdminScreen(
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 text = { Text("Agregar") },
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
+                contentColor = MaterialTheme.colorScheme.onPrimary
             )
         }
     ) { padding ->

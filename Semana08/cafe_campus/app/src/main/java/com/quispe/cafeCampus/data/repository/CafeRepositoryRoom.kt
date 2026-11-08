@@ -8,8 +8,12 @@ import com.quispe.cafeCampus.data.local.entity.Usuario
 import com.quispe.cafeCampus.data.local.relation.PedidoConDetalle
 import com.quispe.cafeCampus.model.EstadoPedido
 import com.quispe.cafeCampus.model.ItemCarrito
+import com.quispe.cafeCampus.model.ProductoVendido
+import com.quispe.cafeCampus.model.ResultadoRegistro
 import com.quispe.cafeCampus.model.Rol
+import com.quispe.cafeCampus.model.TotalPorPago
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
 
@@ -22,6 +26,41 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
 
     override suspend fun usuarioPorRol(rol: Rol): Usuario? =
         usuarioDao.porRol(rol.name)
+
+    override suspend fun usuarioPorCorreo(correo: String): Usuario? =
+        usuarioDao.porCorreo(correo)
+
+    override suspend fun registrar(
+        nombre: String,
+        correo: String,
+        clave: String
+    ): ResultadoRegistro {
+        val nombreLimpio = nombre.trim()
+        val correoLimpio = correo.trim().lowercase()
+
+        if (nombreLimpio.isEmpty() || correoLimpio.isEmpty() || clave.isEmpty()) {
+            return ResultadoRegistro.Error("Completa todos los campos")
+        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(correoLimpio).matches()) {
+            return ResultadoRegistro.Error("El correo no tiene un formato válido")
+        }
+        if (clave.length < 4) {
+            return ResultadoRegistro.Error("La clave debe tener al menos 4 caracteres")
+        }
+        if (usuarioDao.existeCorreo(correoLimpio) > 0) {
+            return ResultadoRegistro.Error("Este correo ya está registrado")
+        }
+
+        usuarioDao.insertarNuevo(
+            Usuario(
+                nombre = nombreLimpio,
+                correo = correoLimpio,
+                clave = clave,
+                rol = Rol.CLIENTE.name
+            )
+        )
+        return ResultadoRegistro.Exito
+    }
 
     override fun observarProductos(): Flow<List<Producto>> = productoDao.observarTodos()
 
@@ -81,6 +120,44 @@ class CafeRepositoryRoom(private val db: CafeDatabase) : CafeRepository {
     override fun observarVentasHoy(inicioDia: Long): Flow<Double> =
         pedidoDao.ventasDesde(inicioDia)
 
+    override fun observarVentasPorDia(inicioSemana: Long): Flow<List<com.quispe.cafeCampus.model.VentaDia>> {
+        val nombresDias = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
+        val nombresLargos = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
+        val calHoy = java.util.Calendar.getInstance()
+        val diaHoyIndex = (calHoy.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
+
+        return pedidoDao.observarPedidosDesde(inicioSemana).map { pedidos ->
+            val sumasReales = DoubleArray(7) { 0.0 }
+            val cal = java.util.Calendar.getInstance()
+            for (p in pedidos) {
+                cal.timeInMillis = p.fecha
+                val idx = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
+                if (idx in 0..6) {
+                    sumasReales[idx] += p.total
+                }
+            }
+
+            List(7) { i ->
+                com.quispe.cafeCampus.model.VentaDia(
+                    dia = nombresDias[i],
+                    diaLargo = nombresLargos[i],
+                    total = sumasReales[i],
+                    esHoy = (i == diaHoyIndex)
+                )
+            }
+        }
+    }
+
     override fun observarCantidadPorEstado(estado: EstadoPedido): Flow<Int> =
         pedidoDao.cantidadPorEstado(estado.name)
+
+    override fun observarMasVendido(inicioDia: Long): Flow<ProductoVendido?> =
+        pedidoDao.masVendido(inicioDia).map { filas ->
+            filas.firstOrNull()?.let { ProductoVendido(it.nombre, it.cantidadTotal) }
+        }
+
+    override fun observarTotalesPorPago(inicioDia: Long): Flow<List<TotalPorPago>> =
+        pedidoDao.totalesPorPago(inicioDia).map { filas ->
+            filas.map { TotalPorPago(it.pago, it.total) }
+        }
 }

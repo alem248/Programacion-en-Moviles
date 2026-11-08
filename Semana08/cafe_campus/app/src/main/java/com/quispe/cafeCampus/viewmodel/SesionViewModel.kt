@@ -37,13 +37,20 @@ class SesionViewModel(
     val recibirPedidos: StateFlow<Boolean> = prefs.recibirPedidos
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+    val fotoPerfilUri: StateFlow<String> = prefs.fotoPerfilUri
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     init {
         viewModelScope.launch {
             val perfil = prefs.perfilActivo.first()
+            val correo = prefs.correoActivo.first()
             if (perfil.isNotEmpty()) {
                 val rol = Rol.entries.find { it.name == perfil }
                 if (rol != null) {
-                    val usuario = repo.usuarioPorRol(rol)
+                    // Resuelve al usuario EXACTO por correo; si es una sesión antigua
+                    // (sin correo guardado) cae al primer usuario de ese rol.
+                    val usuario = (if (correo.isNotBlank()) repo.usuarioPorCorreo(correo) else null)
+                        ?: repo.usuarioPorRol(rol)
                     if (usuario != null) {
                         _usuarioActual.value = usuario
                         _rolActivo.value = rol
@@ -71,7 +78,7 @@ class SesionViewModel(
                 _error.value = "Este usuario no pertenece al rol seleccionado"
                 return@launch
             }
-            prefs.guardarPerfil(rolUsuario)
+            prefs.guardarPerfil(rolUsuario, usuario.correo)
             _usuarioActual.value = usuario
             _rolActivo.value = rolUsuario
         }
@@ -101,11 +108,9 @@ class SesionViewModel(
         }
     }
 
-    fun cambiarPerfil(rol: Rol) {
+    fun actualizarFotoPerfil(uri: String) {
         viewModelScope.launch {
-            prefs.guardarPerfil(rol)
-            _usuarioActual.value = repo.usuarioPorRol(rol)
-            _rolActivo.value = rol
+            prefs.guardarFotoPerfil(uri)
         }
     }
 }
