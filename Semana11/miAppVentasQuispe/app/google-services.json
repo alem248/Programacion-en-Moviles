@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "95503572162",
+    "project_id": "miappventasquispe",
+    "storage_bucket": "miappventasquispe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95503572162:android:b4c99c2ca6bff5b2b12f5b",
+        "android_client_info": {
+          "package_name": "com.quispe.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmxu9j0EcIhqhm4VxTHOl1cvEhvyiX9Is"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

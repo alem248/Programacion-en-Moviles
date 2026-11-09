@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="400" viewBox="0 0 320 400">
+ <!-- Cejas alegres: arco marcado y levantado -->
+ <g fill="none" stroke="#39263b" stroke-width="6" stroke-linecap="round">
+  <path d="M106 135q20-14 40-8"/>
+  <path d="M176 127q20-14 40 8"/>
+ </g>
+</svg>

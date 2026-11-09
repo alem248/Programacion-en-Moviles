@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -41,13 +43,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.quispe.coderole.domain.model.CapaPersonaje
 import com.quispe.coderole.domain.model.CharacterEmotion
+import com.quispe.coderole.domain.model.GrupoCapa
 import com.quispe.coderole.ui.components.LocalCapasPersonaje
 import com.quispe.coderole.ui.components.ModularCharacterView
+import com.quispe.coderole.ui.components.VistaSvg
 
 /**
- * Sección del panel de administración para gestionar las capas modulares del
- * personaje (base, cabello/orejas, ojos por emoción, boca por emoción y accesorios)
- * asociando o reemplazando archivos PNG en tiempo real.
+ * Panel de administración de las piezas del personaje: agrupa las 18 piezas
+ * (estructura, cejas, ojos, boca y parpadeo) y permite asociar o quitar su PNG
+ * mientras se previsualiza el mentor con la expresión elegida.
  */
 @Composable
 fun CapasPanel(
@@ -57,86 +61,93 @@ fun CapasPanel(
 ) {
     val contexto = LocalContext.current
     val capas = LocalCapasPersonaje.current
-    var emocionPrueba by remember { mutableStateOf(CharacterEmotion.NEUTRAL) }
+    var emocion by remember { mutableStateOf(CharacterEmotion.NEUTRAL) }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text(
-            "Capas del personaje",
+            "Piezas del personaje",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            "Asocia archivos PNG (con fondo transparente) para personalizar las capas del personaje " +
-                "(cuerpo, cabello/orejas, ojos, boca y accesorios). " +
-                "El cambio se aplica en tiempo real a todos los dispositivos.",
+            "El mentor se dibuja con ${CapaPersonaje.entries.size} piezas apiladas. Asocia un PNG " +
+                "con fondo transparente a la que quieras cambiar; el cambio se aplica en tiempo " +
+                "real a todos los dispositivos.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
         )
 
         TarjetaAdmin {
-            Column(
-                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(vertical = 14.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    Modifier.padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    ModularCharacterView(emocionPrueba, Modifier.size(width = 160.dp, height = 200.dp))
-                }
-                Row(
-                    Modifier.padding(bottom = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    CharacterEmotion.entries.forEach { emocion ->
-                        FilterChip(
-                            selected = emocionPrueba == emocion,
-                            onClick = { emocionPrueba = emocion },
-                            label = { Text(emocion.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                        )
-                    }
+                ModularCharacterView(emocion, Modifier.size(width = 150.dp, height = 188.dp))
+            }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                CharacterEmotion.entries.forEach { opcion ->
+                    FilterChip(
+                        selected = emocion == opcion,
+                        onClick = { emocion = opcion },
+                        label = { Text(opcion.titulo, style = MaterialTheme.typography.labelSmall) },
+                    )
                 }
             }
-            Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            Column(Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                 Text(
                     if (capas.algunaPersonalizada) "Personaje personalizado" else "Diseño original (SVG)",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    "${CapaPersonaje.entries.count { capas.tienePng(it) }} de ${CapaPersonaje.entries.size} capas con PNG propio",
+                    capas.resumen,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        GrupoCapa.entries.forEach { grupo ->
+            val piezas = CapaPersonaje.entries.filter { it.grupo == grupo }
+            if (piezas.isEmpty()) return@forEach
 
-        val categorias = CapaPersonaje.entries.groupBy { it.categoria }
-
-        categorias.forEach { (cat, listaCapas) ->
             Text(
-                cat,
+                grupo.titulo,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(vertical = 6.dp),
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
             )
-            listaCapas.forEach { capa ->
+            piezas.forEach { pieza ->
                 CapaCard(
-                    capa = capa,
-                    pngBase64 = capas.pngDe(capa),
-                    procesando = state.procesandoCapa == capa,
-                    onElegir = { uri -> onGuardar(capa, uri, contexto) },
-                    onQuitar = { onQuitar(capa) },
+                    capa = pieza,
+                    pngBase64 = capas.pngDe(pieza),
+                    procesando = state.procesandoCapa == pieza,
+                    onElegir = { uri -> onGuardar(pieza, uri, contexto) },
+                    onQuitar = { onQuitar(pieza) },
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
             }
-            Spacer(Modifier.height(8.dp))
         }
+
+        Text(
+            "Las piezas sin diseño incluido (orejas y accesorios) permanecen ocultas hasta que " +
+                "les asocias un PNG.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+        )
     }
 }
 
@@ -159,11 +170,15 @@ private fun CapaCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            MiniaturaCapa(pngBase64, Modifier.size(width = 54.dp, height = 68.dp))
+            MiniaturaCapa(pngBase64, capa.asset, Modifier.size(width = 54.dp, height = 68.dp))
             Column(Modifier.weight(1f)) {
                 Text(capa.titulo, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Text(
-                    if (tienePng) "PNG personalizado" else "Capa por defecto",
+                    when {
+                        tienePng -> "PNG personalizado"
+                        capa.asset != null -> "Diseño incluido en la app"
+                        else -> "Sin pieza todavía"
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -198,9 +213,9 @@ private fun CapaCard(
     }
 }
 
-/** Miniatura de la capa; muestra el PNG elegido o un marcador de diseño por defecto. */
+/** Miniatura de la pieza: el PNG elegido, el SVG incluido o un hueco. */
 @Composable
-private fun MiniaturaCapa(pngBase64: String?, modifier: Modifier) {
+private fun MiniaturaCapa(pngBase64: String?, asset: String?, modifier: Modifier) {
     val bitmap = remember(pngBase64) {
         if (pngBase64.isNullOrBlank()) null
         else runCatching {
@@ -215,10 +230,14 @@ private fun MiniaturaCapa(pngBase64: String?, modifier: Modifier) {
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
-        if (bitmap != null) {
-            Image(bitmap = bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize())
-        } else {
-            Text("DEF", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        when {
+            bitmap != null -> Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            )
+            asset != null -> VistaSvg(asset, Modifier.fillMaxSize().padding(3.dp))
+            else -> Text("—", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

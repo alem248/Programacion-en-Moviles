@@ -30,11 +30,19 @@ service cloud.firestore {
     }
 
     match /usuarios/{uid} {
-      allow get: if esDueno(uid) || esAdmin();
-      // Alta y actualización desde la app: el usuario autenticado puede actualizar
-      // su propio perfil (nombre y fotoBase64), sin alterar permisos de administración.
-      allow create, update: if esDueno(uid)
-        && (!('rol' in request.resource.data) || request.resource.data.rol in ['usuario', 'admin'])
+      allow get: if esDueno(uid);
+      // Alta desde la app; admite también el merge inicial con nombre/foto
+      // por si el documento todavía no existe cuando se guarda el perfil.
+      allow create: if esDueno(uid)
+        && request.resource.data.keys().hasAll(['rol', 'correo'])
+        && request.resource.data.keys().hasOnly(['rol', 'correo', 'nombre', 'fotoBase64'])
+        && request.resource.data.rol == 'usuario'
+        && request.resource.data.correo == request.auth.token.email
+        && perfilValido();
+      // El dueño solo cambia su nombre y su foto; el rol y el correo quedan
+      // fuera para que nadie se autoasigne administración.
+      allow update: if esDueno(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'fotoBase64'])
         && perfilValido();
       allow list, delete: if false;
 
@@ -68,18 +76,22 @@ service cloud.firestore {
       allow create, update: if autenticado()
         && fecha.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
         && request.resource.data.fecha == fecha
-        && (!('mensajes' in request.resource.data) || (request.resource.data.mensajes is int && request.resource.data.mensajes >= 0))
-        && (!('respuestas' in request.resource.data) || (request.resource.data.respuestas is int && request.resource.data.respuestas >= 0))
-        && (!('favoritos' in request.resource.data) || (request.resource.data.favoritos is int && request.resource.data.favoritos >= 0))
-        && (!('sesiones' in request.resource.data) || (request.resource.data.sesiones is int && request.resource.data.sesiones >= 0))
-        && (!('tiempoUsoMinutos' in request.resource.data) || (request.resource.data.tiempoUsoMinutos is int && request.resource.data.tiempoUsoMinutos >= 0));
+        && request.resource.data.keys().hasOnly(['fecha', 'mensajes', 'respuestas', 'favoritos', 'sesiones'])
+        && (!('mensajes' in request.resource.data)
+            || (request.resource.data.mensajes is int && request.resource.data.mensajes >= 0))
+        && (!('respuestas' in request.resource.data)
+            || (request.resource.data.respuestas is int && request.resource.data.respuestas >= 0))
+        && (!('favoritos' in request.resource.data)
+            || (request.resource.data.favoritos is int && request.resource.data.favoritos >= 0))
+        && (!('sesiones' in request.resource.data)
+            || (request.resource.data.sesiones is int && request.resource.data.sesiones >= 0));
 
       match /registros/{registroId} {
         allow get, list: if esAdmin();
         allow create: if autenticado()
           && request.resource.data.keys().hasOnly(['tipo', 'uid', 'detalle', 'creadoEn'])
           && request.resource.data.uid == request.auth.uid
-          && request.resource.data.tipo in ['MENSAJE', 'RESPUESTA', 'FAVORITO', 'SESION', 'TIEMPO_USO']
+          && request.resource.data.tipo in ['MENSAJE', 'RESPUESTA', 'FAVORITO', 'SESION']
           && request.resource.data.detalle is string
           && request.resource.data.detalle.size() <= 140
           && request.resource.data.creadoEn == request.time;
@@ -89,9 +101,6 @@ service cloud.firestore {
 
     // Capas PNG del personaje: las lee cualquier cuenta autenticada para
     // dibujar al mentora y solo el administrador puede asociarlas o quitarlas.
-    // `configuraciones/personaje` conserva los tres campos originales; el resto
-    // de las piezas vive en la subcolección `capas`, un documento por pieza,
-    // para no superar el límite de 1 MiB de Firestore.
     match /configuraciones/{documento} {
       allow get, list: if autenticado();
       allow create, update: if esAdmin()
@@ -107,14 +116,19 @@ service cloud.firestore {
             || (request.resource.data.boca is string && request.resource.data.boca.size() <= 900000));
       allow delete: if false;
 
+      // Una pieza por documento para no acercarse al límite de 1 MiB:
+      // `configuraciones/personaje/capas/{clave}` guarda el PNG en Base64.
+      // Se lee con cualquier cuenta autenticada y solo el administrador
+      // asocia (base64 con texto) o restablece (base64 nulo) la pieza.
       match /capas/{clave} {
         allow get, list: if autenticado();
         allow create, update: if esAdmin()
-          && clave.matches('[a-z]+(_[a-z]+)?')
+          && clave.matches('[a-z]+(_[a-z]+)*')
           && request.resource.data.keys().hasOnly(['base64'])
           && (!('base64' in request.resource.data)
               || request.resource.data.base64 == null
-              || (request.resource.data.base64 is string && request.resource.data.base64.size() <= 900000));
+              || (request.resource.data.base64 is string
+                  && request.resource.data.base64.size() <= 900000));
         allow delete: if esAdmin();
       }
     }

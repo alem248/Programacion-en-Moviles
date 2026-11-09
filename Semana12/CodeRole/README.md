@@ -28,7 +28,7 @@ El archivo `app/google-services.json` está ignorado por Git y debe conservarse 
 
 1. Habilita Email/Password en Authentication.
 2. Para crear un administrador, agrega primero su cuenta en **Authentication → Users**. Copia el UID que Firebase le asigne y crea en Firestore `usuarios/{uid}` con los campos `rol: "admin"` y `correo` con el correo de esa cuenta. Esta configuración se hace en Firebase Console; la app no permite que un usuario normal se otorgue el rol admin.
-3. Publica las reglas del archivo `firestore.rules`. El registro desde la app crea `usuarios/{uid}` con correo y rol fijo `usuario`; cada cuenta solo puede leer sus propios mensajes, crear mensajes con la forma `texto`/`rol`/`favorita`/`creadoEn`, actualizar únicamente el indicador de favorito de respuestas de la mentora y modificar su propio `nombre` y `fotoBase64` (nunca `rol` ni `correo`). Las colecciones `actividad/{fecha}` y `configuraciones/personaje` solo se leen como administrador; los contadores de actividad los incrementa cualquier cuenta autenticada y las capas PNG solo las asocia un administrador.
+3. Publica las reglas del archivo `firestore.rules`. El registro desde la app crea `usuarios/{uid}` con correo y rol fijo `usuario`; cada cuenta solo puede leer sus propios mensajes, crear mensajes con la forma `texto`/`rol`/`favorita`/`creadoEn`, actualizar únicamente el indicador de favorito de respuestas de la mentora y modificar su propio `nombre` y `fotoBase64` (nunca `rol` ni `correo`). `actividad/{fecha}` y sus `registros` solo se leen como administrador y los contadores los incrementa cualquier cuenta autenticada. `configuraciones/personaje` y su subcolección `capas/{clave}` las lee cualquier cuenta autenticada para dibujar al mentor, pero solo un administrador asocia o restablece un PNG (campo `base64` de hasta 900 000 caracteres o `null`).
 
    ```powershell
    firebase deploy --only firestore:rules
@@ -63,14 +63,16 @@ La consulta a Gemini se ejecuta en `Dispatchers.IO` con OkHttp y el historial vi
 
 
 
-Los SVG originales están en `app/src/main/assets/character/`. `base.svg` contiene pose, cabello, orejas, rostro y ropa; `eyes_*.svg` y `mouth_*.svg` tienen el mismo `viewBox` para superponerse desde `ModularCharacterView`. AndroidSVG rasteriza esas capas en ejecución. En paralelo, `ModularCharacterView` dibuja primero las capas PNG que el administrador asocie en `configuraciones/personaje` (`base`, `ojos`, `boca`, en Base64) y, si falta alguna, sigue usando los SVG, sin tocar `CharacterEmotion`, `DetalleViewModel` ni el layout del chat.
+Los SVG originales están en `app/src/main/assets/character/`. `base.svg` conserva pose, rostro y ropa, mientras que `cabello.svg` y `flequillo.svg` separan el pelo para poder cambiarlo pieza por pieza; `eyes_*.svg`, `mouth_*.svg`, `cejas_*.svg` y `eyes_closed.svg` comparten el mismo `viewBox` para superponerse desde `ModularCharacterView`. AndroidSVG rasteriza esas capas en ejecución.
+
+`ModularCharacterView` apila las 18 piezas en este orden: cabello (atrás), cabeza y cuerpo, orejas, flequillo, cejas, ojos, boca y accesorios. Cada pieza usa el PNG que el administrador asocie en `configuraciones/personaje/capas/{clave}` o, si no tiene, el SVG incluido; las piezas sin diseño (orejas y accesorios) no se dibujan hasta que reciben un PNG. La pila queda viva con una respiración suave, un parpadeo cada ~4 s (intercambiando los ojos por `eyes_closed.svg`) y un fundido de 240 ms al cambiar la expresión. `DetalleViewModel` devuelve al mentor a `NEUTRAL` 3,5 s después de cada reacción para que no quede con la última cara pegada.
 
 ## Panel de administración
 
 El menú **Admin** (solo rol `admin`) tiene dos paneles:
 
 - **Actividad diaria**: `FirestoreActividadRepository` incrementa los contadores de `actividad/{aaaa-MM-dd}` (`mensajes`, `respuestas`, `favoritos`, `sesiones`) con `FieldValue.increment` y guarda cada interacción en la subcolección `registros`. Los datos se escriben en un `CoroutineScope` propio (`SupervisorJob` + `Dispatchers.IO`) para no frenar el chat. `ActividadPanel` permite elegir el día, ver los totales y el listado de registros; solo una cuenta `admin` puede leerlos.
-- **Capas PNG**: `FirestoreCapasRepository` lee y guarda `configuraciones/personaje` en tiempo real. `CapasPanel` permite asociar, previsualizar y quitar un PNG por capa (base, ojos y boca). `Imagenes.pngParaCapa` valida la firma PNG, reescala a 440 px y vuelve a codificar para no superar el límite de un documento.
+- **Piezas del personaje**: `FirestoreCapasRepository` escucha en tiempo real el documento `configuraciones/personaje` (los campos heredados `base`, `ojos` y `boca`, que siguen leyéndose como respaldo) y su subcolección `capas`, con un documento por pieza (`{clave}` + `base64`), y combina ambas fuentes. `CapasPanel` agrupa las 18 piezas en estructura, cejas, ojos, boca y parpadeo, deja previsualizar el mentor con cualquiera de las cuatro expresiones y asocia o quita un PNG por pieza. `Imagenes.pngParaCapa` valida la firma PNG, reescala a 440 px y vuelve a codificar para no superar el límite de un documento.
 
 ## Perfil de usuario y modo oscuro
 
@@ -82,4 +84,4 @@ La paleta de la app es Rojo Principal `#e04a4e`, Rosa Secundario `#f4777f`, Crem
 
 Abre el proyecto en Android Studio y ejecútalo en un dispositivo con Google Play Services. Agrega `GEMINI_API_KEY=...` a `local.properties` para las llamadas locales a Gemini. Room conserva el perfil de la mentora offline; Firestore conserva el chat y las respuestas favoritas por cuenta. Enviar mensajes requiere conexión. El permiso de notificaciones se solicita al sincronizar desde el panel Admin y la sincronización continúa aunque se deniegue.
 
-La cuenta de administrador abre el panel Admin desde el menú inferior. Allí puede consultar la actividad de cada día, asociar las capas PNG del personaje, sincronizar y limpiar la caché. La foto, el nombre y el modo oscuro se configuran en **Perfil**.
+La cuenta de administrador abre el panel Admin desde el menú inferior. Allí puede consultar la actividad de cada día, cambiar las 18 piezas del personaje (cabello, flequillo, orejas, cejas, ojos, boca y accesorios) previsualizando cada expresión, sincronizar y limpiar la caché. La foto, el nombre y el modo oscuro se configuran en **Perfil**.
