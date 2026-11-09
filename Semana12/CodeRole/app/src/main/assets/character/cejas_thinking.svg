@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="400" viewBox="0 0 320 400">
+ <!-- Cejas alzadas al pensar: una más alta que la otra -->
+ <g fill="none" stroke="#39263b" stroke-width="6" stroke-linecap="round">
+  <path d="M106 124q20-12 40-4"/>
+  <path d="M176 137q20-4 40 2"/>
+ </g>
+</svg>

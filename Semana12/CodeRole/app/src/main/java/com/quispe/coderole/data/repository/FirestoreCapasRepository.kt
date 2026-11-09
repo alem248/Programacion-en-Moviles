@@ -1,7 +1,6 @@
 package com.quispe.coderole.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import com.quispe.coderole.domain.model.CapaPersonaje
 import com.quispe.coderole.domain.model.CapasPersonaje
 import com.quispe.coderole.domain.repository.CapasRepository
@@ -11,32 +10,68 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 /**
- * Capas del personaje guardadas en `configuraciones/personaje` como PNG en
- * Base64. El listener mantiene el estado en tiempo real: cuando el mentor
- * actualiza una capa desde la administración, todos los dispositivos la ven.
+ * Capas del personaje en Firestore. Cada pieza vive en un documento propio de
+ * la subcolección `configuraciones/personaje/capas` (un PNG por documento, para
+ * no acercarse al límite de 1 MiB) y los tres campos heredados del documento
+ * principal (`base`, `ojos`, `boca`) siguen leyéndose como respaldo, así los
+ * PNG que ya había guardado el administrador no se pierden.
+ *
+ * Los dos listeners mantienen el estado en tiempo real: cuando el mentor
+ * actualiza una pieza desde la administración, todos la ven al instante.
  */
 class FirestoreCapasRepository(
     private val firestore: FirebaseFirestore,
 ) : CapasRepository {
     private fun configuracion() = firestore.collection(COLECCION).document(DOCUMENTO)
 
+    private fun capas() = configuracion().collection(SUBCOLECCION)
+
     override fun observar(): Flow<CapasPersonaje> = callbackFlow {
-        val registration = configuracion().addSnapshotListener { snapshot, error ->
+        // PNG guardados antes de la subdivisión: base, ojos y boca.
+        var legado: Map<CapaPersonaje, String> = emptyMap()
+        // Piezas actuales; el valor null significa «volver al diseño incluido».
+        var actuales: Map<CapaPersonaje, String?> = emptyMap()
+
+        fun emitir() {
+            val combinadas = mutableMapOf<CapaPersonaje, String>()
+            CapaPersonaje.entries.forEach { capa ->
+                val png = if (actuales.containsKey(capa)) actuales[capa] else legado[capa]
+                if (!png.isNullOrBlank()) combinadas[capa] = png
+            }
+            trySend(CapasPersonaje(combinadas))
+        }
+
+        val documento = configuracion().addSnapshotListener { snapshot, error ->
             if (error != null) {
                 close(error)
                 return@addSnapshotListener
             }
-            if (snapshot == null || !snapshot.exists()) {
-                trySend(CapasPersonaje())
+            legado = if (snapshot == null || !snapshot.exists()) {
+                emptyMap()
+            } else {
+                CapaPersonaje.entries.mapNotNull { capa ->
+                    capa.legado?.let { campo -> snapshot.getString(campo)?.takeIf(String::isNotBlank)?.let { capa to it } }
+                }.toMap()
+            }
+            emitir()
+        }
+
+        val subcoleccion = capas().addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
                 return@addSnapshotListener
             }
-            val personalizadas = mutableMapOf<CapaPersonaje, String>()
-            CapaPersonaje.entries.forEach { capa ->
-                snapshot.getString(capa.campo)?.takeIf { it.isNotBlank() }?.let { personalizadas[capa] = it }
-            }
-            trySend(CapasPersonaje(personalizadas))
+            actuales = snapshot?.documents?.mapNotNull { documento ->
+                val capa = CapaPersonaje.entries.firstOrNull { it.clave == documento.id } ?: return@mapNotNull null
+                capa to documento.getString(CAMPO_BASE64)
+            }?.toMap() ?: emptyMap()
+            emitir()
         }
-        awaitClose { registration.remove() }
+
+        awaitClose {
+            documento.remove()
+            subcoleccion.remove()
+        }
     }
 
     override suspend fun guardar(capa: CapaPersonaje, pngBase64: String): Result<Unit> = try {
@@ -44,14 +79,15 @@ class FirestoreCapasRepository(
         require(pngBase64.length <= LIMITE_BASE64) {
             "La imagen pesa demasiado. Usa un PNG de hasta $LIMITE_BASE64 caracteres (unos 660 KB)."
         }
-        configuracion().set(mapOf(capa.campo to pngBase64), SetOptions.merge()).await()
+        capas().document(capa.clave).set(mapOf(CAMPO_BASE64 to pngBase64)).await()
         Result.success(Unit)
     } catch (error: Exception) {
         Result.failure(error)
     }
 
+    /** Escribe null: la pieza vuelve al SVG incluido en la app. */
     override suspend fun quitar(capa: CapaPersonaje): Result<Unit> = try {
-        configuracion().set(mapOf(capa.campo to null), SetOptions.merge()).await()
+        capas().document(capa.clave).set(mapOf(CAMPO_BASE64 to null)).await()
         Result.success(Unit)
     } catch (error: Exception) {
         Result.failure(error)
@@ -60,6 +96,8 @@ class FirestoreCapasRepository(
     private companion object {
         const val COLECCION = "configuraciones"
         const val DOCUMENTO = "personaje"
+        const val SUBCOLECCION = "capas"
+        const val CAMPO_BASE64 = "base64"
         const val LIMITE_BASE64 = 900_000
     }
 }

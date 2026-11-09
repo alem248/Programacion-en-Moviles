@@ -115,6 +115,22 @@ service cloud.firestore {
             || request.resource.data.boca == null
             || (request.resource.data.boca is string && request.resource.data.boca.size() <= 900000));
       allow delete: if false;
+
+      // Una pieza por documento para no acercarse al límite de 1 MiB:
+      // `configuraciones/personaje/capas/{clave}` guarda el PNG en Base64.
+      // Se lee con cualquier cuenta autenticada y solo el administrador
+      // asocia (base64 con texto) o restablece (base64 nulo) la pieza.
+      match /capas/{clave} {
+        allow get, list: if autenticado();
+        allow create, update: if esAdmin()
+          && clave.matches('[a-z]+(_[a-z]+)*')
+          && request.resource.data.keys().hasOnly(['base64'])
+          && (!('base64' in request.resource.data)
+              || request.resource.data.base64 == null
+              || (request.resource.data.base64 is string
+                  && request.resource.data.base64.size() <= 900000));
+        allow delete: if esAdmin();
+      }
     }
   }
 }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="400" viewBox="0 0 320 400">
+ <defs>
+  <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9c4c49"/><stop offset=".52" stop-color="#63303c"/><stop offset="1" stop-color="#351f35"/></linearGradient>
+ </defs>
+ <!-- Cabello posterior y mechones: se pinta detrás de la cabeza -->
+ <path d="M70 125 45 30q-3-12 8-5l71 45 37-6 42-32q13-10 13 6l-3 45q43 31 42 91l-12 93H72l-22-83q-8-39 20-59Z" fill="url(#hair)" stroke="#351f35" stroke-width="7" stroke-linejoin="round"/>
+ <path d="m57 36 49 29-29 22Z" fill="#e99891"/><path d="m244 57-37 22 31 8Z" fill="#e99891"/>
+</svg>

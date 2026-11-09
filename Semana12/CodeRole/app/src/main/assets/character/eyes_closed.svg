@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="400" viewBox="0 0 320 400">
+ <!-- Ojos cerrados: se pinta un instante durante el parpadeo -->
+ <g fill="none" stroke="#39263b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M104 163q23 16 48 1"/>
+  <path d="M169 164q23 15 48 0"/>
+ </g>
+ <path d="M91 194q15-8 29-2m80 0q15-6 29 2" fill="none" stroke="#ee8a91" stroke-width="6" stroke-linecap="round" opacity=".55"/>
+</svg>

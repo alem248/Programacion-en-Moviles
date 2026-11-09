@@ -12,6 +12,8 @@ import com.quispe.coderole.domain.repository.ActividadRepository
 import com.quispe.coderole.domain.repository.ChatRepository
 import com.quispe.coderole.domain.repository.ItemRepository
 import com.quispe.coderole.ui.UiState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** Espera antes de que el mentor vuelva a la expresión neutra. */
+private const val REGRESO_NEUTRAL_MS = 3_500L
 
 data class DetalleUiState(
     val personaje: Personaje? = null,
@@ -39,6 +44,9 @@ class DetalleViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DetalleUiState())
     val uiState: StateFlow<DetalleUiState> = _uiState.asStateFlow()
+
+    /** Regreso a la expresión neutra después de reaccionar a un mensaje. */
+    private var regresoANeutral: Job? = null
 
     init {
         viewModelScope.launch {
@@ -77,22 +85,29 @@ class DetalleViewModel(
                 errorConversacion = null,
             )
         }
+        programarRegreso()
         viewModelScope.launch {
             try {
                 chatRepository.enviarMensaje(texto).collect { actualizacion ->
                     when (actualizacion) {
                         is ChatUpdate.Parcial -> _uiState.update { it.copy(respuestaParcial = actualizacion.texto) }
-                        ChatUpdate.Completado -> _uiState.update {
-                            it.copy(emocion = CharacterEmotion.HAPPY, enviando = false, respuestaParcial = null)
+                        ChatUpdate.Completado -> {
+                            _uiState.update {
+                                it.copy(emocion = CharacterEmotion.HAPPY, enviando = false, respuestaParcial = null)
+                            }
+                            programarRegreso()
                         }
-                        is ChatUpdate.Fallo -> _uiState.update {
-                            it.copy(
-                                emocion = CharacterEmotion.SURPRISED,
-                                enviando = false,
-                                respuestaParcial = null,
-                                errorConversacion = actualizacion.error.message
-                                    ?: "No se pudo enviar el mensaje. Comprueba tu conexión.",
-                            )
+                        is ChatUpdate.Fallo -> {
+                            _uiState.update {
+                                it.copy(
+                                    emocion = CharacterEmotion.SURPRISED,
+                                    enviando = false,
+                                    respuestaParcial = null,
+                                    errorConversacion = actualizacion.error.message
+                                        ?: "No se pudo enviar el mensaje. Comprueba tu conexión.",
+                                )
+                            }
+                            programarRegreso()
                         }
                     }
                 }
@@ -107,6 +122,22 @@ class DetalleViewModel(
                         errorConversacion = error.message ?: "No se pudo enviar el mensaje. Comprueba tu conexión.",
                     )
                 }
+                programarRegreso()
+            }
+        }
+    }
+
+    /**
+     * Pasa a neutral unos segundos después de cada reacción, para que el
+     * mentor no quede con la última expresión pegada en la cara.
+     */
+    private fun programarRegreso() {
+        regresoANeutral?.cancel()
+        regresoANeutral = viewModelScope.launch {
+            delay(REGRESO_NEUTRAL_MS)
+            _uiState.update { actual ->
+                if (actual.enviando || actual.emocion == CharacterEmotion.NEUTRAL) actual
+                else actual.copy(emocion = CharacterEmotion.NEUTRAL)
             }
         }
     }
