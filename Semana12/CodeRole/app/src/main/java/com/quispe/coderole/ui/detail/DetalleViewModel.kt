@@ -3,6 +3,7 @@ package com.quispe.coderole.ui.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.quispe.coderole.di.AppContainer
 import com.quispe.coderole.domain.model.ChatUpdate
 import com.quispe.coderole.domain.model.CharacterEmotion
 import com.quispe.coderole.domain.model.MensajeConversacion
@@ -196,13 +197,9 @@ class DetalleViewModel(
         }
     }
 
-    class Factory(
-        private val repositorio: ItemRepository,
-        private val chatRepository: ChatRepository,
-        private val actividad: ActividadRepository,
-    ) : ViewModelProvider.Factory {
+    class Factory(private val container: AppContainer) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            DetalleViewModel(repositorio, chatRepository, actividad) as T
+            DetalleViewModel(container.personajes, container.chat, container.actividad) as T
     }
 }

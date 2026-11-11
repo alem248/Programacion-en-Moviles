@@ -14,13 +14,13 @@ El proyecto mantiene capas separadas dentro de `app/src/main/java/com/quispe/cod
 - `data/media/Imagenes.kt`: reescalado y codificación a Base64 de las imágenes que viajan a Firestore (capas PNG y foto de perfil).
 - `data/prefs/PreferenciasTema.kt`: preferencia persistente del modo oscuro (`null` = seguir al sistema).
 - `data/repository`: implementación de `ItemRepository`, `ActividadRepository`, `CapasRepository` y `PerfilRepository` sobre Firestore.
-- `domain/repository`: contratos de conversación, actividad diaria, capas del personaje y perfil, desacoplados de Firebase.
+- `domain/repository`: contratos de catálogo, conversación, actividad diaria, capas del personaje, perfil y procesamiento de imágenes, desacoplados de Android y Firebase.
 - `domain/model`: `Personaje`, `Sesion`, `Rol`, `CharacterEmotion`, `ActividadDiaria`, `CapasPersonaje` y `PerfilUsuario`.
 - `di/AppContainer.kt`: creación de Room, Retrofit, Firebase, preferencias de tema y notificador.
 - `ui/`: pantallas Compose (`admin`, `perfil`, `detail`, `login`, `favorites`), `UiState` y ViewModels.
 - `ui/theme`: paleta de CodeRole en variantes clara y oscura (`EsquemaClaro` / `EsquemaOscuro`).
 
-La lista y el detalle observan Room mediante `Flow`; Retrofit solo actualiza la caché. La aplicación muestra una sola mentora: la sincronización guarda el primer perfil del servicio de ejemplo bajo el identificador local `1`, con el nombre y el diseño propios de CodeRole. La barra inferior tiene destinos para Mentora, Respuestas, Perfil y, solo para administradores, Admin. Las respuestas favoritas se guardan por usuario en Firestore.
+La barra inferior permite abrir el catálogo, la conversación con la mentora, las respuestas guardadas y el perfil; los administradores también acceden al panel Admin. El catálogo y sus favoritos se observan desde Room mediante `Flow`; Retrofit actualiza la caché local y el detalle consulta el endpoint individual. Si no hay red, se muestra la caché con un aviso o un estado de error con reintento cuando no hay datos locales. Los favoritos del catálogo viven en Room; las respuestas favoritas se guardan por usuario en Firestore.
 
 ## Firebase
 
@@ -49,7 +49,7 @@ El rol nunca se infiere del correo ni se elige en la pantalla. Si falla la creac
 
 ## Chat con Gemini
 
-`data/chat/GeminiConfig.kt` concentra la lista de modelos de reserva (`MODELOS`), el límite de 5 000 caracteres, los 20 mensajes de contexto y la instrucción de sistema. La clave local se lee de `GEMINI_API_KEY` en `local.properties`, archivo ignorado por Git.
+`data/chat/GeminiConfig.kt` concentra la lista de modelos estables de reserva (`MODELOS`), el límite de 5 000 caracteres, los 20 mensajes de contexto y la instrucción de sistema. La clave local se lee de `GEMINI_API_KEY` en `local.properties`, archivo ignorado por Git.
 
 `GeminiChatService.kt` hace la llamada REST a `generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent` con OkHttp y Gson, sin dependencias adicionales. Si un modelo responde 404, 429 o 503, se prueba el siguiente de la lista; los errores 401/403 y 400 se traducen a mensajes claros en la pantalla del chat.
 
@@ -84,4 +84,8 @@ La paleta de la app es Rojo Principal `#e04a4e`, Rosa Secundario `#f4777f`, Crem
 
 Abre el proyecto en Android Studio y ejecútalo en un dispositivo con Google Play Services. Agrega `GEMINI_API_KEY=...` a `local.properties` para las llamadas locales a Gemini. Room conserva el perfil de la mentora offline; Firestore conserva el chat y las respuestas favoritas por cuenta. Enviar mensajes requiere conexión. El permiso de notificaciones se solicita al sincronizar desde el panel Admin y la sincronización continúa aunque se deniegue.
 
-La cuenta de administrador abre el panel Admin desde el menú inferior. Allí puede consultar la actividad de cada día, cambiar las 18 piezas del personaje (cabello, flequillo, orejas, cejas, ojos, boca y accesorios) previsualizando cada expresión, sincronizar y limpiar la caché. La foto, el nombre y el modo oscuro se configuran en **Perfil**.
+La cuenta de administrador abre el panel Admin desde el menú inferior. Allí puede consultar la actividad de cada día, cambiar las capas del personaje, sincronizar y limpiar la caché. Un botón separado permite pasar a la vista previa de usuario. La foto, el nombre y el modo oscuro se configuran en **Perfil**.
+
+## Pruebas unitarias
+
+`ListaViewModelTest` usa un repositorio falso para cubrir la carga de datos, la conservación de la caché ante una falla de red y el estado de error recuperable cuando no hay datos locales. Para ejecutarlas: `gradlew.bat test` en Windows o `./gradlew test` en macOS/Linux.

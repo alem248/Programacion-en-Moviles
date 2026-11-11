@@ -9,6 +9,8 @@ import com.quispe.coderole.data.chat.GeminiChatService
 import com.quispe.coderole.data.auth.AuthRepository
 import com.quispe.coderole.data.auth.FirebaseAuthRepository
 import com.quispe.coderole.data.local.AppDatabase
+import com.quispe.coderole.data.media.ProcesadorImagenCapaAndroid
+import com.quispe.coderole.data.media.ProcesadorImagenPerfilAndroid
 import com.quispe.coderole.data.notification.Notificador
 import com.quispe.coderole.data.notification.NotificadorAndroid
 import com.quispe.coderole.data.prefs.PreferenciasTema
@@ -22,6 +24,8 @@ import com.quispe.coderole.domain.repository.ActividadRepository
 import com.quispe.coderole.domain.repository.CapasRepository
 import com.quispe.coderole.domain.repository.ChatRepository
 import com.quispe.coderole.domain.repository.PerfilRepository
+import com.quispe.coderole.domain.repository.ProcesadorImagenCapa
+import com.quispe.coderole.domain.repository.ProcesadorImagenPerfil
 
 import com.google.firebase.FirebaseApp
 
@@ -65,4 +69,6 @@ class AppContainer(contexto: Context) {
     )
 
     val notificador: Notificador = NotificadorAndroid(contexto)
+    val procesadorImagenCapa: ProcesadorImagenCapa = ProcesadorImagenCapaAndroid(contexto)
+    val procesadorImagenPerfil: ProcesadorImagenPerfil = ProcesadorImagenPerfilAndroid(contexto)
 }

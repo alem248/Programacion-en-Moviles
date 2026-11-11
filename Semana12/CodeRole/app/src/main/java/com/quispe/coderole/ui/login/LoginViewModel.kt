@@ -3,6 +3,7 @@ package com.quispe.coderole.ui.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.quispe.coderole.di.AppContainer
 import com.quispe.coderole.data.auth.AuthRepository
 import com.quispe.coderole.domain.model.Sesion
 import com.quispe.coderole.domain.model.TipoActividad
@@ -92,11 +93,8 @@ class LoginViewModel(
         _uiState.update { LoginUiState(cargando = false) }
     }
 
-    class Factory(
-        private val auth: AuthRepository,
-        private val actividad: ActividadRepository,
-    ) : ViewModelProvider.Factory {
+    class Factory(private val container: AppContainer) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = LoginViewModel(auth, actividad) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = LoginViewModel(container.auth, container.actividad) as T
     }
 }

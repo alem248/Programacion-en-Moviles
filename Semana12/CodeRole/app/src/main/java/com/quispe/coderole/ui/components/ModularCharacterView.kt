@@ -52,11 +52,7 @@ private const val DURACION_PARPADEO = 4200
 private const val INICIO_CIERRE = 0.972f
 private const val FIN_CIERRE = 0.996f
 
-/**
- * Capas PNG personalizadas desde la administración. Si una pieza no tiene PNG
- * se dibuja el SVG incluido en `assets/character/` y, si tampoco existe, la
- * pieza no aparece (así se agregan orejas o accesorios bajo demanda).
- */
+/** Capas PNG personalizadas desde administración, con recursos locales de respaldo. */
 val LocalCapasPersonaje = staticCompositionLocalOf { CapasPersonaje() }
 
 /** Provee las capas personalizadas a toda la interfaz. */
@@ -66,9 +62,8 @@ fun ConCapasPersonaje(capas: CapasPersonaje, contenido: @Composable () -> Unit) 
 }
 
 /**
- * Mentor animado: pinta las piezas en orden (cabello → cabeza → orejas →
- * flequillo → cejas → ojos → boca → accesorios) y las mantiene vivas con
- * respiración, parpadeo y fundido entre expresiones.
+ * Mentora animada compuesta con las capas PNG del personaje y las expresiones
+ * existentes. Cada pieza local se usa como base y admite el PNG del panel admin.
  */
 @Composable
 fun ModularCharacterView(
@@ -77,9 +72,7 @@ fun ModularCharacterView(
     /** true mientras la mentora escribe la respuesta (muestra la boca de habla). */
     isSpeaking: Boolean = false,
 ) {
-    val capas = LocalCapasPersonaje.current
     val infinita = rememberInfiniteTransition(label = "mentora")
-
     val respiracion by infinita.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -95,7 +88,7 @@ fun ModularCharacterView(
     val cerrando = ciclo in INICIO_CIERRE..FIN_CIERRE
     val alturaFlotar = with(LocalDensity.current) { 4.dp.toPx() }
 
-    Box(modifier = modifier.aspectRatio(0.8f).semantics { contentDescription = "Mentora de programación" }) {
+    Box(modifier = modifier.aspectRatio(0.93f).semantics { contentDescription = "Mentora de programación" }) {
         Box(
             Modifier
                 .fillMaxSize()
@@ -108,31 +101,50 @@ fun ModularCharacterView(
                     transformOrigin = TransformOrigin(0.5f, 0.9f)
                 },
         ) {
-            // Piezas fijas, de atrás hacia adelante.
+            // Cabello posterior y cuerpo forman el fondo del personaje.
             CapaDibujada(CapaPersonaje.CABELLO, Modifier.fillMaxSize())
             CapaDibujada(CapaPersonaje.BASE, Modifier.fillMaxSize())
-            CapaDibujada(CapaPersonaje.OREJAS, Modifier.fillMaxSize())
-            CapaDibujada(CapaPersonaje.FLEQUILLO, Modifier.fillMaxSize())
+            CapaDibujada(CapaPersonaje.CUELLO, Modifier.fillMaxSize())
+            CapaDibujada(CapaPersonaje.BUFANDA_ATRAS, Modifier.fillMaxSize())
+            OrejasDibujadas(Modifier.fillMaxSize())
+            CapaDibujada(CapaPersonaje.ROSTRO, Modifier.fillMaxSize())
 
-            // Expresión: cada cambio de emoción se funde en ~240 ms.
+            // Los mechones laterales caen sobre los hombros y los bordes del rostro.
+            CapaDibujada(CapaPersonaje.CABELLO_INFERIOR, Modifier.fillMaxSize())
+
+            // Expresión: las cejas y la boca siguen cambiando con la conversación.
             CapaExpresiva(CapaPersonaje.CEJAS_NEUTRAL, emotion, Modifier.fillMaxSize())
             OjosConParpadeo(emotion, cerrando, Modifier.fillMaxSize())
+            CapaDibujada(CapaPersonaje.NARIZ, Modifier.fillMaxSize())
             BocaConHabla(emotion, isSpeaking, Modifier.fillMaxSize())
 
-            // Lo último pinta encima de todo (gafas, aretes, sombreros…).
+            CapaDibujada(CapaPersonaje.FLEQUILLO, Modifier.fillMaxSize())
+            CapaDibujada(CapaPersonaje.BUFANDA, Modifier.fillMaxSize())
             CapaDibujada(CapaPersonaje.ACCESORIOS, Modifier.fillMaxSize())
         }
     }
 }
 
-/** Pieza fija: PNG propio, o el SVG incluido, o nada si no tiene diseño. */
+/** Usa la pieza de orejas personalizada si existe; si no, dibuja ambas orejas locales. */
+@Composable
+private fun OrejasDibujadas(modifier: Modifier) {
+    val personalizadas = LocalCapasPersonaje.current.pngDe(CapaPersonaje.OREJAS)
+    if (!personalizadas.isNullOrBlank()) {
+        CapaDibujada(CapaPersonaje.OREJAS, modifier)
+    } else {
+        CapaDibujada(CapaPersonaje.OREJA_IZQUIERDA, modifier)
+        CapaDibujada(CapaPersonaje.OREJA_DERECHA, modifier)
+    }
+}
+
+/** Pieza fija: PNG personalizado, PNG incluido, SVG incluido o nada. */
 @Composable
 private fun CapaDibujada(capa: CapaPersonaje, modifier: Modifier) {
     val png = LocalCapasPersonaje.current.pngDe(capa)
-    val asset = capa.asset
     when {
         !png.isNullOrBlank() -> CapaPng(png, modifier)
-        asset != null -> CapaSvg(asset, modifier)
+        capa.assetPng != null -> CapaPngAsset(capa.assetPng, modifier)
+        capa.asset != null -> CapaSvg(capa.asset, modifier)
     }
 }
 
@@ -152,10 +164,7 @@ private fun CapaExpresiva(pieza: CapaPersonaje, emocion: CharacterEmotion, modif
     }
 }
 
-/**
- * Boca: mientras la mentora escribe se usa la pieza `boca_speaking` (si el
- * administrador le asignó un PNG) y, si no, la boca de la emoción actual.
- */
+/** Boca: mientras la mentora escribe se usa la pieza `boca_speaking` si existe. */
 @Composable
 private fun BocaConHabla(emocion: CharacterEmotion, hablando: Boolean, modifier: Modifier) {
     val pngHablando = LocalCapasPersonaje.current.pngDe(CapaPersonaje.BOCA_SPEAKING)
@@ -166,15 +175,12 @@ private fun BocaConHabla(emocion: CharacterEmotion, hablando: Boolean, modifier:
     }
 }
 
-/**
- * Ojos con parpadeo: mientras están cerrados se muestra la pieza
- * `ojos_cerrado` y, si no existe, se comprime la mirada abierta.
- */
+/** Ojos locales con iris independiente; las variantes expresivas siguen admitiendo PNG. */
 @Composable
 private fun OjosConParpadeo(emocion: CharacterEmotion, cerrando: Boolean, modifier: Modifier) {
     val capas = LocalCapasPersonaje.current
     val cerrado = CapaPersonaje.OJOS_CERRADO
-    val hayCerrado = capas.tienePng(cerrado) || cerrado.asset != null
+    val hayCerrado = capas.tienePng(cerrado) || cerrado.asset != null || cerrado.assetPng != null
 
     if (cerrando && hayCerrado) {
         CapaDibujada(cerrado, modifier)
@@ -184,10 +190,16 @@ private fun OjosConParpadeo(emocion: CharacterEmotion, cerrando: Boolean, modifi
             transitionSpec = { fadeIn(tween(240)) togetherWith fadeOut(tween(160)) },
             label = "expresion_ojos",
         ) { actual ->
-            CapaDibujada(
-                CapaPersonaje.OJOS_NEUTRAL.paraEmocion(actual),
-                modifier.graphicsLayer { if (cerrando) scaleY = 0.08f },
-            )
+            Box(Modifier.fillMaxSize()) {
+                CapaDibujada(
+                    CapaPersonaje.OJOS_NEUTRAL.paraEmocion(actual),
+                    Modifier.fillMaxSize().graphicsLayer { if (cerrando) scaleY = 0.08f },
+                )
+                CapaDibujada(
+                    CapaPersonaje.IRIS,
+                    Modifier.fillMaxSize().graphicsLayer { if (cerrando) scaleY = 0.08f },
+                )
+            }
         }
     }
 }
@@ -196,10 +208,15 @@ private fun OjosConParpadeo(emocion: CharacterEmotion, cerrando: Boolean, modifi
 private fun CapaPng(base64: String, modifier: Modifier) {
     val bitmap = rememberPng(base64) ?: return
     Canvas(modifier = modifier) {
-        drawImage(
-            image = bitmap,
-            dstSize = IntSize(size.width.toInt(), size.height.toInt()),
-        )
+        drawImage(image = bitmap, dstSize = IntSize(size.width.toInt(), size.height.toInt()))
+    }
+}
+
+@Composable
+private fun CapaPngAsset(asset: String, modifier: Modifier) {
+    val bitmap = rememberPngAsset(asset) ?: return
+    Canvas(modifier = modifier) {
+        drawImage(image = bitmap, dstSize = IntSize(size.width.toInt(), size.height.toInt()))
     }
 }
 
@@ -210,6 +227,26 @@ private fun rememberPng(base64: String): ImageBitmap? = remember(base64) {
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
     }.getOrNull()
 }
+
+/** Decodifica los recursos grandes a una resolución apropiada para la vista móvil. */
+@Composable
+private fun rememberPngAsset(asset: String): ImageBitmap? {
+    val context = LocalContext.current
+    return remember(context, asset) {
+        runCatching {
+            val limites = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            context.assets.open(asset).use { BitmapFactory.decodeStream(it, null, limites) }
+            var muestra = 1
+            while (limites.outWidth / muestra > MAX_LADO_RECURSO || limites.outHeight / muestra > MAX_LADO_RECURSO) {
+                muestra *= 2
+            }
+            val opciones = BitmapFactory.Options().apply { inSampleSize = muestra }
+            context.assets.open(asset).use { BitmapFactory.decodeStream(it, null, opciones)?.asImageBitmap() }
+        }.getOrNull()
+    }
+}
+
+private const val MAX_LADO_RECURSO = 640
 
 @Composable
 private fun CapaSvg(asset: String, modifier: Modifier) {

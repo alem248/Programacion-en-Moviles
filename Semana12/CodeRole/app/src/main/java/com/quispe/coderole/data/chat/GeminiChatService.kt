@@ -175,7 +175,6 @@ class GeminiChatService(
             "generationConfig",
             JsonObject().apply {
                 addProperty("maxOutputTokens", GeminiConfig.MAX_TOKENS_RESPUESTA)
-                addProperty("temperature", 0.8)
             },
         )
         return raiz.toString()

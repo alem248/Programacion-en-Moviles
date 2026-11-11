@@ -170,7 +170,7 @@ fun DetalleScreen(
                     ) {
                         ModularCharacterView(
                             emotion = state.emocion,
-                            modifier = Modifier.size(width = 145.dp, height = 182.dp),
+                            modifier = Modifier.height(180.dp),
                             isSpeaking = state.estaHablando,
                         )
                     }

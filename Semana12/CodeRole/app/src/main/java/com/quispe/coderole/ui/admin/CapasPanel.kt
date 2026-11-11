@@ -1,6 +1,5 @@
 package com.quispe.coderole.ui.admin
 
-import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
@@ -38,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.quispe.coderole.domain.model.CapaPersonaje
@@ -49,17 +47,16 @@ import com.quispe.coderole.ui.components.ModularCharacterView
 import com.quispe.coderole.ui.components.VistaSvg
 
 /**
- * Panel de administración de las piezas del personaje: agrupa las 18 piezas
+ * Panel de administración de las piezas del personaje: agrupa las piezas incluidas
  * (estructura, cejas, ojos, boca y parpadeo) y permite asociar o quitar su PNG
  * mientras se previsualiza el mentor con la expresión elegida.
  */
 @Composable
 fun CapasPanel(
     state: AdminUiState,
-    onGuardar: (CapaPersonaje, Uri, Context) -> Unit,
+    onGuardar: (CapaPersonaje, String) -> Unit,
     onQuitar: (CapaPersonaje) -> Unit,
 ) {
-    val contexto = LocalContext.current
     val capas = LocalCapasPersonaje.current
     var emocion by remember { mutableStateOf(CharacterEmotion.NEUTRAL) }
 
@@ -87,7 +84,7 @@ fun CapasPanel(
                     .padding(vertical = 14.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                ModularCharacterView(emocion, Modifier.size(width = 150.dp, height = 188.dp))
+                ModularCharacterView(emocion, Modifier.height(188.dp))
             }
             Row(
                 Modifier
@@ -106,7 +103,7 @@ fun CapasPanel(
             }
             Column(Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                 Text(
-                    if (capas.algunaPersonalizada) "Personaje personalizado" else "Diseño original (SVG)",
+                    if (capas.algunaPersonalizada) "Mentora personalizada" else "Diseño base de CodeRole",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -134,7 +131,7 @@ fun CapasPanel(
                     capa = pieza,
                     pngBase64 = capas.pngDe(pieza),
                     procesando = state.procesandoCapa == pieza,
-                    onElegir = { uri -> onGuardar(pieza, uri, contexto) },
+                    onElegir = { uri -> onGuardar(pieza, uri.toString()) },
                     onQuitar = { onQuitar(pieza) },
                 )
                 Spacer(Modifier.height(10.dp))
@@ -142,8 +139,8 @@ fun CapasPanel(
         }
 
         Text(
-            "Las piezas sin diseño incluido (orejas y accesorios) permanecen ocultas hasta que " +
-                "les asocias un PNG.",
+            "Los PNG incluidos se usan como diseño base. Al quitar una personalización, la pieza " +
+                "vuelve a su ilustración original.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
@@ -170,13 +167,13 @@ private fun CapaCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            MiniaturaCapa(pngBase64, capa.asset, Modifier.size(width = 54.dp, height = 68.dp))
+            MiniaturaCapa(pngBase64, capa.assetPng, capa.asset, Modifier.size(width = 54.dp, height = 68.dp))
             Column(Modifier.weight(1f)) {
                 Text(capa.titulo, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Text(
                     when {
                         tienePng -> "PNG personalizado"
-                        capa.asset != null -> "Diseño incluido en la app"
+                        capa.assetPng != null || capa.asset != null -> "Diseño incluido en la app"
                         else -> "Sin pieza todavía"
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -213,14 +210,23 @@ private fun CapaCard(
     }
 }
 
-/** Miniatura de la pieza: el PNG elegido, el SVG incluido o un hueco. */
+/** Miniatura del PNG personalizado o del recurso incluido en la app. */
 @Composable
-private fun MiniaturaCapa(pngBase64: String?, asset: String?, modifier: Modifier) {
-    val bitmap = remember(pngBase64) {
-        if (pngBase64.isNullOrBlank()) null
-        else runCatching {
-            val bytes = Base64.decode(pngBase64, Base64.DEFAULT)
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+private fun MiniaturaCapa(pngBase64: String?, assetPng: String?, asset: String?, modifier: Modifier) {
+    val contexto = LocalContext.current
+    val bitmap = remember(pngBase64, assetPng, contexto) {
+        runCatching {
+            when {
+                !pngBase64.isNullOrBlank() -> {
+                    val bytes = Base64.decode(pngBase64, Base64.DEFAULT)
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                }
+                assetPng != null -> {
+                    val opciones = BitmapFactory.Options().apply { inSampleSize = 4 }
+                    contexto.assets.open(assetPng).use { BitmapFactory.decodeStream(it, null, opciones) }
+                }
+                else -> null
+            }
         }.getOrNull()
     }
 

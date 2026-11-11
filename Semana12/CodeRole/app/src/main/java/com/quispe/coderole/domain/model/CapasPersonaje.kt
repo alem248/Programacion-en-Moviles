@@ -5,7 +5,7 @@ package com.quispe.coderole.domain.model
  * grupo por grupo para que sea fácil localizar la que se quiere cambiar.
  */
 enum class GrupoCapa(val titulo: String) {
-    ESTRUCTURA("Estructura y cabello"),
+    ESTRUCTURA("Cuerpo, cabello y accesorios"),
     CEJAS("Cejas (expresión)"),
     OJOS("Ojos (expresión)"),
     BOCA("Boca (expresión)"),
@@ -14,9 +14,8 @@ enum class GrupoCapa(val titulo: String) {
 
 /**
  * Piezas modulares del personaje. Cada pieza puede llevar un PNG personalizado
- * guardado en `configuraciones/personaje/capas/{clave}`; si no lo tiene se usa
- * el SVG incluido en `assets/character/` y, si tampoco existe, la pieza no se
- * dibuja (así se agregan accesorios u orejas solo cuando el mentor los necesita).
+ * guardado en `configuraciones/personaje/capas/{clave}`. Si no tiene uno, se
+ * muestra el PNG o SVG incluido en la app.
  *
  * El orden de declaración no importa para el dibujado: la pinta la vista
  * [com.quispe.coderole.ui.components.ModularCharacterView].
@@ -32,12 +31,22 @@ enum class CapaPersonaje(
     val asset: String? = null,
     /** Campo heredado del documento `configuraciones/personaje`. */
     val legado: String? = null,
+    /** PNG incluido en la app que se usa cuando no hay una personalización. */
+    val assetPng: String? = null,
 ) {
-    // --- Estructura: se dibujan detrás y delante de la cabeza ---
-    CABELLO("cabello", "Cabello (atrás)", GrupoCapa.ESTRUCTURA, asset = "character/cabello.svg"),
-    BASE("base", "Cabeza y cuerpo", GrupoCapa.ESTRUCTURA, asset = "character/base.svg", legado = "base"),
-    OREJAS("orejas", "Orejas", GrupoCapa.ESTRUCTURA),
-    FLEQUILLO("flequillo", "Flequillo", GrupoCapa.ESTRUCTURA, asset = "character/flequillo.svg"),
+    // --- Ilustración nueva, de atrás hacia delante ---
+    CABELLO("cabello", "Cabello (atrás)", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/cabello_atras.png"),
+    CABELLO_INFERIOR("cabello_inferior", "Cabello inferior", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/cabello_inferior.png"),
+    BASE("cuerpo", "Cuerpo", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/cuerpo.png"),
+    CUELLO("cuello", "Cuello", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/cuello.png"),
+    BUFANDA_ATRAS("bufanda_atras", "Bufanda (atrás)", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/bufanda_atras.png"),
+    OREJAS("orejas", "Orejas (personalizadas)", GrupoCapa.ESTRUCTURA),
+    OREJA_IZQUIERDA("oreja_izquierda", "Oreja izquierda", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/oreja_izquierda.png"),
+    OREJA_DERECHA("oreja_derecha", "Oreja derecha", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/oreja_derecha.png"),
+    ROSTRO("rostro", "Rostro", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/rostro.png"),
+    FLEQUILLO("flequillo", "Cabello (frente)", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/cabello_superior.png"),
+    NARIZ("nariz", "Nariz", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/nariz.png"),
+    BUFANDA("bufanda", "Bufanda (frente)", GrupoCapa.ESTRUCTURA, assetPng = "character/mentora/bufanda.png"),
     ACCESORIOS("accesorios", "Accesorios (gafas, aretes…)", GrupoCapa.ESTRUCTURA),
 
     // --- Cejas: cambian con la expresión ---
@@ -58,43 +67,42 @@ enum class CapaPersonaje(
         CharacterEmotion.SURPRISED, "character/cejas_surprised.svg",
     ),
 
-    // --- Ojos: cambian con la expresión (antes eran un solo campo `ojos`) ---
+    // --- Ojos e iris: el PNG de ojos se conserva como base para cada gesto ---
     OJOS_NEUTRAL(
         "ojos_neutral", "Ojos · neutral", GrupoCapa.OJOS,
-        CharacterEmotion.NEUTRAL, "character/eyes_neutral.svg", "ojos",
+        CharacterEmotion.NEUTRAL, assetPng = "character/mentora/ojos.png",
     ),
     OJOS_THINKING(
         "ojos_thinking", "Ojos · pensando", GrupoCapa.OJOS,
-        CharacterEmotion.THINKING, "character/eyes_thinking.svg", "ojos",
+        CharacterEmotion.THINKING, assetPng = "character/mentora/ojos.png",
     ),
     OJOS_HAPPY(
         "ojos_happy", "Ojos · feliz", GrupoCapa.OJOS,
-        CharacterEmotion.HAPPY, "character/eyes_happy.svg", "ojos",
+        CharacterEmotion.HAPPY, assetPng = "character/mentora/ojos.png",
     ),
     OJOS_SURPRISED(
         "ojos_surprised", "Ojos · sorprendido", GrupoCapa.OJOS,
-        CharacterEmotion.SURPRISED, "character/eyes_surprised.svg", "ojos",
+        CharacterEmotion.SURPRISED, assetPng = "character/mentora/ojos.png",
     ),
+    IRIS("iris", "Iris", GrupoCapa.OJOS, assetPng = "character/mentora/iris.png"),
 
-    // --- Boca: cambia con la expresión (antes era un solo campo `boca`) ---
+    // --- Boca: conserva las expresiones existentes ---
     BOCA_NEUTRAL(
         "boca_neutral", "Boca · neutral", GrupoCapa.BOCA,
-        CharacterEmotion.NEUTRAL, "character/mouth_neutral.svg", "boca",
+        CharacterEmotion.NEUTRAL, "character/mouth_neutral.svg", "boca", "character/mentora/boca_feliz.png",
     ),
     BOCA_THINKING(
         "boca_thinking", "Boca · pensando", GrupoCapa.BOCA,
-        CharacterEmotion.THINKING, "character/mouth_thinking.svg", "boca",
+        CharacterEmotion.THINKING, "character/mouth_thinking.svg", "boca", "character/mentora/boca_triste.png",
     ),
     BOCA_HAPPY(
         "boca_happy", "Boca · feliz", GrupoCapa.BOCA,
-        CharacterEmotion.HAPPY, "character/mouth_happy.svg", "boca",
+        CharacterEmotion.HAPPY, "character/mouth_happy.svg", "boca", "character/mentora/boca_feliz.png",
     ),
     BOCA_SURPRISED(
         "boca_surprised", "Boca · sorprendido", GrupoCapa.BOCA,
         CharacterEmotion.SURPRISED, "character/mouth_surprised.svg", "boca",
     ),
-    // Boca mientras la mentora escribe: sin SVG propio, se usa el PNG que
-    // asigne el administrador y, si no hay, la boca de la emoción actual.
     BOCA_SPEAKING("boca_speaking", "Boca · hablando", GrupoCapa.BOCA),
 
     // --- Parpadeo: se muestra un instante cada pocos segundos ---

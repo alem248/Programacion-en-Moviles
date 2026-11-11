@@ -33,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,10 +55,9 @@ fun PerfilScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val perfil = state.perfil
-    val contexto = LocalContext.current
     val temaSistema = isSystemInDarkTheme()
     val selectorFoto = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) viewModel.cambiarFoto(uri, contexto)
+        if (uri != null) viewModel.cambiarFoto(uri.toString())
     }
 
     Column(

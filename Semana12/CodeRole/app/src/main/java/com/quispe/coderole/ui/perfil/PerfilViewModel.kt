@@ -1,15 +1,13 @@
 package com.quispe.coderole.ui.perfil
 
-import android.content.Context
-import android.net.Uri
-import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.quispe.coderole.data.media.Imagenes
+import com.quispe.coderole.di.AppContainer
 import com.quispe.coderole.data.prefs.PreferenciasTema
 import com.quispe.coderole.domain.model.PerfilUsuario
 import com.quispe.coderole.domain.repository.PerfilRepository
+import com.quispe.coderole.domain.repository.ProcesadorImagenPerfil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -32,6 +30,7 @@ class PerfilViewModel(
     private val correo: String,
     private val perfilRepository: PerfilRepository,
     private val tema: PreferenciasTema,
+    private val procesadorImagen: ProcesadorImagenPerfil,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PerfilUiState())
     val uiState = _uiState.asStateFlow()
@@ -77,12 +76,11 @@ class PerfilViewModel(
     }
 
     /** Sube la foto elegida desde la galería. */
-    fun cambiarFoto(uri: Uri, contexto: Context) {
+    fun cambiarFoto(uri: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(procesandoFoto = true, mensaje = null, error = null) }
-            Imagenes.jpegParaPerfil(contexto, uri).fold(
-                onSuccess = { bytes ->
-                    val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+            procesadorImagen.convertir(uri).fold(
+                onSuccess = { base64 ->
                     perfilRepository.actualizarFoto(base64)
                         .onSuccess {
                             _uiState.update { it.copy(procesandoFoto = false, mensaje = "Foto actualizada en toda la app.") }
@@ -118,14 +116,9 @@ class PerfilViewModel(
     /** Guarda la preferencia de tema: `true` = oscuro, `false` = claro. */
     fun cambiarModoOscuro(valor: Boolean) = tema.establecerOscuro(valor)
 
-    class Factory(
-        private val uid: String,
-        private val correo: String,
-        private val perfilRepository: PerfilRepository,
-        private val tema: PreferenciasTema,
-    ) : ViewModelProvider.Factory {
+    class Factory(private val container: AppContainer, private val uid: String, private val correo: String) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            PerfilViewModel(uid, correo, perfilRepository, tema) as T
+            PerfilViewModel(uid, correo, container.perfil, container.tema, container.procesadorImagenPerfil) as T
     }
 }

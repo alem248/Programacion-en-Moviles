@@ -15,14 +15,11 @@ object GeminiConfig {
     /** Endpoint base de la Google Generative Language API (REST v1beta). */
     const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
 
-    /**
-     * Modelos probados en orden: si uno devuelve 404, 429 o 503 se pasa al
-     * siguiente, así el chat sigue respondiendo cuando hay alta demanda.
-     */
+    /** Modelos estables vigentes, en orden de preferencia y disponibilidad. */
     val MODELOS = listOf(
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
+        "gemini-3.8-flash",
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
     )
 
     /** Máximo de mensajes del historial que se envían como contexto. */

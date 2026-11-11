@@ -3,6 +3,7 @@ package com.quispe.coderole.ui.lista
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.quispe.coderole.di.AppContainer
 import com.quispe.coderole.domain.model.Personaje
 import com.quispe.coderole.domain.repository.ItemRepository
 import com.quispe.coderole.ui.UiState
@@ -34,6 +35,8 @@ class ListaViewModel(private val repositorio: ItemRepository) : ViewModel() {
         SharingStarted.WhileSubscribed(5_000),
         emptyList(),
     )
+    private val _detalle = MutableStateFlow<UiState<Personaje>>(UiState.Cargando)
+    val detalle: StateFlow<UiState<Personaje>> = _detalle.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -65,8 +68,22 @@ class ListaViewModel(private val repositorio: ItemRepository) : ViewModel() {
         }
     }
 
-    class Factory(private val repositorio: ItemRepository) : ViewModelProvider.Factory {
+    /** Carga el detalle remoto y lo guarda en Room para que también quede disponible offline. */
+    fun cargarDetalle(id: Int) {
+        viewModelScope.launch {
+            _detalle.value = UiState.Cargando
+            repositorio.obtenerDetalle(id)
+                .onSuccess { personaje -> _detalle.value = UiState.Exito(personaje) }
+                .onFailure { error -> _detalle.value = UiState.Error(error.message ?: "No se pudo cargar el detalle.") }
+        }
+    }
+
+    fun alternarFavorito(id: Int) {
+        viewModelScope.launch { repositorio.alternarFavorito(id) }
+    }
+
+    class Factory(private val container: AppContainer) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = ListaViewModel(repositorio) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = ListaViewModel(container.personajes) as T
     }
 }

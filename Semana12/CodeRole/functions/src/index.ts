@@ -10,7 +10,7 @@ const maxCharacters = 5_000;
 const contextMessageCount = 20;
 
 const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/";
-const models = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
+const models = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash"];
 const instructions =
   "Eres la mentora de programación de CodeRole, una compañera amable con personalidad cálida y " +
   "expresiva. Respondes en español, explicas conceptos con claridad y ejemplos pequeños, guías " +
@@ -72,7 +72,7 @@ async function callGemini(turnos: Turno[]): Promise<string> {
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: instructions }] },
     contents: turnos.map((turno) => ({ role: turno.role, parts: [{ text: turno.content }] })),
-    generationConfig: { maxOutputTokens: 4_096, temperature: 0.8 },
+    generationConfig: { maxOutputTokens: 4_096 },
   });
 
   for (const model of models) {

@@ -12,9 +12,8 @@ import kotlinx.coroutines.tasks.await
 /**
  * Capas del personaje en Firestore. Cada pieza vive en un documento propio de
  * la subcolección `configuraciones/personaje/capas` (un PNG por documento, para
- * no acercarse al límite de 1 MiB) y los tres campos heredados del documento
- * principal (`base`, `ojos`, `boca`) siguen leyéndose como respaldo, así los
- * PNG que ya había guardado el administrador no se pierden.
+ * no acercarse al límite de 1 MiB). Las bocas heredadas del documento principal
+ * siguen leyéndose como respaldo para conservar las personalizaciones previas.
  *
  * Los dos listeners mantienen el estado en tiempo real: cuando el mentor
  * actualiza una pieza desde la administración, todos la ven al instante.
@@ -27,7 +26,7 @@ class FirestoreCapasRepository(
     private fun capas() = configuracion().collection(SUBCOLECCION)
 
     override fun observar(): Flow<CapasPersonaje> = callbackFlow {
-        // PNG guardados antes de la subdivisión: base, ojos y boca.
+        // Se conservan como respaldo las bocas PNG del esquema anterior.
         var legado: Map<CapaPersonaje, String> = emptyMap()
         // Piezas actuales; el valor null significa «volver al diseño incluido».
         var actuales: Map<CapaPersonaje, String?> = emptyMap()
@@ -52,7 +51,7 @@ class FirestoreCapasRepository(
                 CapaPersonaje.entries.mapNotNull { capa ->
                     // Primero el campo con el nombre exacto de la pieza (datos
                     // guardados por la rama IA) y después el campo heredado
-                    // único (base, ojos, boca) del documento principal.
+                    // único de la boca desde el documento principal.
                     val png = snapshot.getString(capa.clave)?.takeIf(String::isNotBlank)
                         ?: capa.legado?.let { snapshot.getString(it)?.takeIf(String::isNotBlank) }
                     png?.let { capa to it }

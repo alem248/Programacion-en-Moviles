@@ -1,12 +1,9 @@
 package com.quispe.coderole.ui.admin
 
-import android.content.Context
-import android.net.Uri
-import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.quispe.coderole.data.media.Imagenes
+import com.quispe.coderole.di.AppContainer
 import com.quispe.coderole.data.notification.Notificador
 import com.quispe.coderole.domain.model.ActividadDiaria
 import com.quispe.coderole.domain.model.CapaPersonaje
@@ -14,6 +11,7 @@ import com.quispe.coderole.domain.model.RegistroActividad
 import com.quispe.coderole.domain.repository.ActividadRepository
 import com.quispe.coderole.domain.repository.CapasRepository
 import com.quispe.coderole.domain.repository.ItemRepository
+import com.quispe.coderole.domain.repository.ProcesadorImagenCapa
 import com.quispe.coderole.domain.util.Fechas
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +43,7 @@ class AdminViewModel(
     private val notificador: Notificador,
     private val actividad: ActividadRepository,
     private val capas: CapasRepository,
+    private val procesadorImagen: ProcesadorImagenCapa,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AdminUiState())
     val uiState = _uiState.asStateFlow()
@@ -76,10 +75,10 @@ class AdminViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(procesando = true, mensaje = null, error = null) }
             repositorio.refrescar()
-                .onSuccess { _ ->
+                .onSuccess { cantidad ->
                     actualizarTotales()
                     _uiState.update { it.copy(procesando = false, mensaje = "Se sincronizó el perfil de tu mentora.") }
-                    notificador.mostrar("CodeRole", "Se guardó el perfil de tu mentora en el dispositivo.")
+                    notificador.mostrar("CodeRole", "Se guardaron $cantidad elementos en el dispositivo.")
                 }
                 .onFailure { e -> _uiState.update { it.copy(procesando = false, error = e.message ?: "No se pudo sincronizar.") } }
         }
@@ -98,12 +97,11 @@ class AdminViewModel(
     }
 
     /** Lee el PNG elegido, lo prepara y lo asocia a la capa del personaje. */
-    fun guardarCapa(capa: CapaPersonaje, uri: Uri, contexto: Context) {
+    fun guardarCapa(capa: CapaPersonaje, uri: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(procesandoCapa = capa, mensaje = null, error = null) }
-            Imagenes.pngParaCapa(contexto, uri).fold(
-                onSuccess = { bytes ->
-                    val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+            procesadorImagen.convertir(uri).fold(
+                onSuccess = { base64 ->
                     capas.guardar(capa, base64)
                         .onSuccess {
                             _uiState.update {
@@ -121,7 +119,7 @@ class AdminViewModel(
         }
     }
 
-    /** Vuelve al SVG incluido en la app para la capa indicada. */
+    /** Restaura el PNG o SVG incluido en la app para la capa indicada. */
     fun quitarCapa(capa: CapaPersonaje) {
         viewModelScope.launch {
             _uiState.update { it.copy(procesandoCapa = capa, mensaje = null, error = null) }
@@ -143,14 +141,14 @@ class AdminViewModel(
         }
     }
 
-    class Factory(
-        private val repo: ItemRepository,
-        private val notificador: Notificador,
-        private val actividad: ActividadRepository,
-        private val capas: CapasRepository,
-    ) : ViewModelProvider.Factory {
+    class Factory(private val container: AppContainer) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            AdminViewModel(repo, notificador, actividad, capas) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = AdminViewModel(
+            container.personajes,
+            container.notificador,
+            container.actividad,
+            container.capas,
+            container.procesadorImagenCapa,
+        ) as T
     }
 }
