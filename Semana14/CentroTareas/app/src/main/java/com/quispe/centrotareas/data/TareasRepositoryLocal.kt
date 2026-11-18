@@ -10,7 +10,14 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
-class TareasRepositoryLocal : TareasRepository {
+class TareasRepositoryLocal(
+    private val historialStore: HistorialDataStore
+) : TareasRepository {
+
+    // Mejora 3: el historial se delega en DataStore
+    override fun historial(): Flow<List<String>> = historialStore.resultados
+
+    override suspend fun agregarAlHistorial(resultado: String) = historialStore.agregar(resultado)
 
     // Mejora 1: tarea simulada con progreso como Flow; flowOn mueve la ejecución a Default
     override fun progresoTarea(): Flow<Float> = flow {

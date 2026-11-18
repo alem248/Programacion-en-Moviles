@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -47,13 +48,15 @@ import com.quispe.centrotareas.viewmodel.TareasViewModelFactory
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaTareas(modifier: Modifier = Modifier) {
-    val vm: TareasViewModel = viewModel(factory = TareasViewModelFactory())
+    val contexto = LocalContext.current
+    val vm: TareasViewModel = viewModel(factory = TareasViewModelFactory(contexto))
     val mensaje by vm.mensaje.collectAsState()
     val progreso by vm.progreso.collectAsState()
     val corriendo by vm.corriendo.collectAsState()
     val primos by vm.primos.collectAsState()
     val carga by vm.carga.collectAsState()
     val simularError by vm.simularError.collectAsState()
+    val historial by vm.historial.collectAsState()
     var toques by remember { mutableIntStateOf(0) }
     var nTexto by remember { mutableStateOf("1000") }
 
@@ -256,6 +259,27 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
                         }
 
                         CargaUi.Inicial -> Unit
+                    }
+                }
+            }
+
+            // ----- Tarjeta 4: Historial de resultados (Mejora 3)
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Historial de resultados",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (historial.isEmpty()) {
+                        Text("Sin resultados todavía")
+                    } else {
+                        historial.forEach { entrada ->
+                            Text(text = "• $entrada")
+                        }
                     }
                 }
             }

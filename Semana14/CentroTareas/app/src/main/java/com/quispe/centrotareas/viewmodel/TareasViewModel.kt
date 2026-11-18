@@ -14,6 +14,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
@@ -72,6 +74,7 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
                 val cantidad = repo.contarPrimos(hasta)
                 val ms = System.currentTimeMillis() - inicio
                 _primos.value = PrimosUi.Listo(cantidad, ms)
+                repo.agregarAlHistorial("Primos: $cantidad hasta $hasta ($ms ms)")
             } catch (e: CancellationException) {
                 _primos.value = PrimosUi.Cancelado
                 throw e // se vuelve a lanzar para no romper la cancelación
@@ -100,6 +103,7 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
                 }
                 val ms = System.currentTimeMillis() - inicio
                 _carga.value = CargaUi.Exito("Una por una", perfil, pedidos.size, ms)
+                repo.agregarAlHistorial("Una por una: ${pedidos.size} pedidos ($ms ms)")
             } catch (e: TimeoutCancellationException) {
                 // Mejora 2: se superó el tiempo máximo de espera
                 _carga.value = CargaUi.Error("Tardó demasiado (máximo $TIEMPO_MAXIMO_MS ms)")
@@ -127,6 +131,7 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
                 }
                 val ms = System.currentTimeMillis() - inicio
                 _carga.value = CargaUi.Exito("A la vez", perfil, pedidos.size, ms)
+                repo.agregarAlHistorial("A la vez: ${pedidos.size} pedidos ($ms ms)")
             } catch (e: TimeoutCancellationException) {
                 // Mejora 2: se superó el tiempo máximo de espera
                 _carga.value = CargaUi.Error("Tardó demasiado (máximo $TIEMPO_MAXIMO_MS ms)")
@@ -144,6 +149,11 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
     fun cambiarSimularError(valor: Boolean) {
         _simularError.value = valor
     }
+
+    // ----- Historial (Mejora 3)
+    // Se lee de DataStore al abrir la pantalla y se actualiza con cada resultado
+    val historial: StateFlow<List<String>> = repo.historial()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private companion object {
         // Mejora 2: límite de espera de las cargas.

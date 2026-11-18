@@ -9,4 +9,8 @@ interface TareasRepository {
 
     // Mejora 1: la tarea simulada vive en el Repository y publica su progreso (0f..1f)
     fun progresoTarea(): Flow<Float>
+
+    // Mejora 3: últimos resultados persistidos con DataStore
+    fun historial(): Flow<List<String>>
+    suspend fun agregarAlHistorial(resultado: String)
 }
