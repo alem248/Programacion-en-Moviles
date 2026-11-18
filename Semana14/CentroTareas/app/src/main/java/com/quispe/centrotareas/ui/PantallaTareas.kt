@@ -13,6 +13,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -37,6 +38,7 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
     val vm: TareasViewModel = viewModel(factory = TareasViewModelFactory())
     val mensaje by vm.mensaje.collectAsState()
     val progreso by vm.progreso.collectAsState()
+    val corriendo by vm.corriendo.collectAsState()
     var toques by remember { mutableIntStateOf(0) }
 
     Scaffold(
@@ -78,8 +80,11 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
                         Button(onClick = { toques++ }) {
                             Text("Tócame: $toques")
                         }
-                        Button(onClick = { vm.tareaLarga() }) {
+                        Button(onClick = { vm.tareaLarga() }, enabled = !corriendo) {
                             Text("Iniciar")
+                        }
+                        OutlinedButton(onClick = { vm.cancelar() }, enabled = corriendo) {
+                            Text("Cancelar")
                         }
                     }
                     LinearProgressIndicator(
@@ -88,7 +93,6 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
                     )
                     Text(text = "${(progreso * 100).toInt()} %")
                     Text(text = mensaje)
-                    // TODO Paso 4: botón Cancelar (OutlinedButton) habilitado mientras corre
                 }
             }
 
