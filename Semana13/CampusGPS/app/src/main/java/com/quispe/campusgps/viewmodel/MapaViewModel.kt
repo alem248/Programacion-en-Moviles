@@ -7,6 +7,8 @@ import com.quispe.campusgps.data.UbicacionRepository
 import com.quispe.campusgps.model.LugarConDistancia
 import com.quispe.campusgps.model.TipoError
 import com.quispe.campusgps.model.UbicacionUi
+import com.quispe.campusgps.model.Posicion
+import com.quispe.campusgps.util.distanciaMetros
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -35,7 +37,10 @@ class MapaViewModel(
                 return@launch
             }
             ubicacionRepo.obtenerPosicion()
-                .onSuccess { _estado.value = UbicacionUi.Lista(it) }
+                .onSuccess {
+                    actualizarDistancias(it)
+                    _estado.value = UbicacionUi.Lista(it)
+                }
                 .onFailure { error ->
                     val tipo = if (error is SecurityException) TipoError.SIN_PERMISO else TipoError.GPS_APAGADO
                     _estado.value = UbicacionUi.Error(
@@ -50,5 +55,11 @@ class MapaViewModel(
         _estado.value = UbicacionUi.Error(
             "Sin permiso de ubicación no puedo mostrar dónde estás", TipoError.SIN_PERMISO
         )
+    }
+
+    private fun actualizarDistancias(posicion: Posicion) {
+        _lugares.value = lugaresRepo.obtenerLugares()
+            .map { LugarConDistancia(it, distanciaMetros(posicion, it)) }
+            .sortedBy { it.metros }
     }
 }
