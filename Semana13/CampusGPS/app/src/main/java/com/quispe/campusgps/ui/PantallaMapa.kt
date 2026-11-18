@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -80,12 +79,14 @@ fun PantallaMapa(vm: MapaViewModel) {
                 masCercano = masCercano,
                 modifier = Modifier.weight(1f)
             )
-            ListaLugares(
-                lugares = lugares,
-                seleccionado = seleccionado,
-                onClick = vm::seleccionar,
-                modifier = Modifier.fillMaxWidth().height(220.dp)
-            )
+            if (estado !is UbicacionUi.Error) {
+                ListaLugares(
+                    lugares = lugares,
+                    seleccionado = seleccionado,
+                    onClick = vm::seleccionar,
+                    modifier = Modifier.fillMaxWidth().height(220.dp)
+                )
+            }
             when (val current = estado) {
                 UbicacionUi.Inicial -> Text("Encuentra los lugares del campus más cercanos a ti", modifier = Modifier.height(48.dp))
                 UbicacionUi.Buscando -> CircularProgressIndicator(modifier = Modifier.height(48.dp))
@@ -103,7 +104,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                         context.startActivity(intent)
                     },
                     onRetry = vm::buscar,
-                    modifier = Modifier.height(96.dp)
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
