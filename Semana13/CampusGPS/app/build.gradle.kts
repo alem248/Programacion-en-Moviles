@@ -9,6 +9,12 @@ val localProps = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
+val mapsApiKey = localProps.getProperty("MAPS_API_KEY").orEmpty()
+    .trim()
+    .removeSurrounding("\"")
+if (mapsApiKey.isBlank()) {
+    logger.warn("MAPS_API_KEY is missing or empty in local.properties; Google Maps will render a blank map.")
+}
 
 android {
     namespace = "com.quispe.campusgps"
@@ -22,7 +28,7 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
-        manifestPlaceholders["MAPS_API_KEY"] = localProps.getProperty("MAPS_API_KEY", "")
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

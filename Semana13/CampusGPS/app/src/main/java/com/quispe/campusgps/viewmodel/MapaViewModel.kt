@@ -35,6 +35,7 @@ class MapaViewModel(
 
     fun buscar() {
         if (_estado.value is UbicacionUi.Buscando) return
+        _seleccionado.value = null
         _estado.value = UbicacionUi.Buscando
         viewModelScope.launch {
             if (!ubicacionRepo.playServicesDisponible()) {

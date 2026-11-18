@@ -5,9 +5,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -32,16 +32,22 @@ fun MapaUbicacion(
 
     LaunchedEffect(estado) {
         if (estado is UbicacionUi.Lista) {
-            camera.animate(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(
-                LatLng(estado.posicion.latitud, estado.posicion.longitud), 16f
-            )))
+            camera.animate(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(estado.posicion.latitud, estado.posicion.longitud),
+                    16f
+                )
+            )
         }
     }
-    LaunchedEffect(seleccionado, lugares) {
+    LaunchedEffect(seleccionado) {
         val item = lugares.firstOrNull { it.lugar.id == seleccionado } ?: return@LaunchedEffect
-        camera.animate(CameraUpdateFactory.newCameraPosition(
-            CameraPosition.fromLatLngZoom(LatLng(item.lugar.latitud, item.lugar.longitud), 17f)
-        ))
+        camera.animate(
+            CameraUpdateFactory.newLatLngZoom(
+                LatLng(item.lugar.latitud, item.lugar.longitud),
+                17f
+            )
+        )
     }
 
     GoogleMap(modifier = modifier, cameraPositionState = camera) {
