@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.quispe.centrotareas.data.TareasRepository
 import com.quispe.centrotareas.model.CargaUi
 import com.quispe.centrotareas.model.PrimosUi
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -64,7 +65,28 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
     // ----- Contar primos (paso 5)
     private val _primos = MutableStateFlow<PrimosUi>(PrimosUi.Inicial)
     val primos: StateFlow<PrimosUi> = _primos.asStateFlow()
-    // TODO Paso 5: fun contar(hasta: Int) y fun cancelarPrimos()
+    // Paso 5: contar números primos en segundo plano
+    private var primosJob: Job? = null
+
+    fun contar(hasta: Int) {
+        if (primosJob?.isActive == true) return // doble inicio prevenido
+        _primos.value = PrimosUi.Calculando
+        val inicio = System.currentTimeMillis()
+        primosJob = viewModelScope.launch {
+            try {
+                val cantidad = repo.contarPrimos(hasta)
+                val ms = System.currentTimeMillis() - inicio
+                _primos.value = PrimosUi.Listo(cantidad, ms)
+            } catch (e: CancellationException) {
+                _primos.value = PrimosUi.Cancelado
+                throw e // se vuelve a lanzar para no romper la cancelación
+            }
+        }
+    }
+
+    fun cancelarPrimos() {
+        primosJob?.cancel()
+    }
 
     // ----- Dos cargas (pasos 6 y 7)
     private val _carga = MutableStateFlow<CargaUi>(CargaUi.Inicial)
