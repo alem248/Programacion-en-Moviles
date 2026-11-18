@@ -5,7 +5,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,6 +33,8 @@ import com.quispe.campusgps.viewmodel.MapaViewModel
 fun PantallaMapa(vm: MapaViewModel) {
     val context = LocalContext.current
     val estado by vm.estado.collectAsState()
+    val lugares by vm.lugares.collectAsState()
+    val seleccionado by vm.seleccionado.collectAsState()
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
@@ -47,16 +52,25 @@ fun PantallaMapa(vm: MapaViewModel) {
         Column(
             Modifier.fillMaxSize().padding(padding).padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Button(onClick = ::alPulsar, enabled = estado !is UbicacionUi.Buscando) {
+            Button(onClick = ::alPulsar, enabled = estado !is UbicacionUi.Buscando, modifier = Modifier.fillMaxWidth()) {
                 Text("Obtener mi ubicación")
             }
+            MapaUbicacion(
+                estado = estado,
+                lugares = lugares,
+                seleccionado = seleccionado,
+                modifier = Modifier.weight(1f)
+            )
             when (val current = estado) {
-                UbicacionUi.Inicial -> Text("Encuentra los lugares del campus más cercanos a ti")
-                UbicacionUi.Buscando -> CircularProgressIndicator()
-                is UbicacionUi.Lista -> Text("Latitud: ${current.posicion.latitud}\nLongitud: ${current.posicion.longitud}")
-                is UbicacionUi.Error -> Text(current.mensaje)
+                UbicacionUi.Inicial -> Text("Encuentra los lugares del campus más cercanos a ti", modifier = Modifier.height(48.dp))
+                UbicacionUi.Buscando -> CircularProgressIndicator(modifier = Modifier.height(48.dp))
+                is UbicacionUi.Lista -> Text(
+                    "Latitud: ${current.posicion.latitud}  ·  Longitud: ${current.posicion.longitud}",
+                    modifier = Modifier.height(48.dp)
+                )
+                is UbicacionUi.Error -> Text(current.mensaje, modifier = Modifier.height(48.dp))
             }
         }
     }
