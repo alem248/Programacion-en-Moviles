@@ -34,6 +34,12 @@ fun MapaUbicacion(
             ))
         }
     }
+    LaunchedEffect(seleccionado, lugares) {
+        val item = lugares.firstOrNull { it.lugar.id == seleccionado } ?: return@LaunchedEffect
+        camera.animate(
+            CameraPosition.fromLatLngZoom(LatLng(item.lugar.latitud, item.lugar.longitud), 17f)
+        )
+    }
 
     GoogleMap(modifier = modifier, cameraPositionState = camera) {
         if (estado is UbicacionUi.Lista) {

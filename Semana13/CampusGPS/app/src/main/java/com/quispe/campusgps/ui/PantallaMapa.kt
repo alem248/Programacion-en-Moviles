@@ -50,7 +50,7 @@ fun PantallaMapa(vm: MapaViewModel) {
 
     Scaffold(topBar = { TopAppBar(title = { Text("CampusGPS") }) }) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).padding(20.dp),
+            Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -62,6 +62,12 @@ fun PantallaMapa(vm: MapaViewModel) {
                 lugares = lugares,
                 seleccionado = seleccionado,
                 modifier = Modifier.weight(1f)
+            )
+            ListaLugares(
+                lugares = lugares,
+                seleccionado = seleccionado,
+                onClick = vm::seleccionar,
+                modifier = Modifier.fillMaxWidth().height(220.dp)
             )
             when (val current = estado) {
                 UbicacionUi.Inicial -> Text("Encuentra los lugares del campus más cercanos a ti", modifier = Modifier.height(48.dp))
