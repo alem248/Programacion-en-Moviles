@@ -8,12 +8,14 @@ import com.quispe.centrotareas.model.CargaUi
 import com.quispe.centrotareas.model.PrimosUi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
 
@@ -91,10 +93,16 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
         viewModelScope.launch {
             val inicio = System.currentTimeMillis()
             try {
-                val perfil = repo.cargarPerfil()
-                val pedidos = repo.cargarPedidos(_simularError.value)
+                val (perfil, pedidos) = withTimeout(TIEMPO_MAXIMO_MS) {
+                    val p = repo.cargarPerfil()
+                    val t = repo.cargarPedidos(_simularError.value)
+                    p to t
+                }
                 val ms = System.currentTimeMillis() - inicio
                 _carga.value = CargaUi.Exito("Una por una", perfil, pedidos.size, ms)
+            } catch (e: TimeoutCancellationException) {
+                // Mejora 2: se superó el tiempo máximo de espera
+                _carga.value = CargaUi.Error("Tardó demasiado (máximo $TIEMPO_MAXIMO_MS ms)")
             } catch (e: CancellationException) {
                 throw e // la cancelación se relanza siempre
             } catch (e: Exception) {
@@ -110,13 +118,18 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
         viewModelScope.launch {
             val inicio = System.currentTimeMillis()
             try {
-                val (perfil, pedidos) = coroutineScope {
-                    val perfilDeferred = async { repo.cargarPerfil() }
-                    val pedidosDeferred = async { repo.cargarPedidos(_simularError.value) }
-                    perfilDeferred.await() to pedidosDeferred.await()
+                val (perfil, pedidos) = withTimeout(TIEMPO_MAXIMO_MS) {
+                    coroutineScope {
+                        val perfilDeferred = async { repo.cargarPerfil() }
+                        val pedidosDeferred = async { repo.cargarPedidos(_simularError.value) }
+                        perfilDeferred.await() to pedidosDeferred.await()
+                    }
                 }
                 val ms = System.currentTimeMillis() - inicio
                 _carga.value = CargaUi.Exito("A la vez", perfil, pedidos.size, ms)
+            } catch (e: TimeoutCancellationException) {
+                // Mejora 2: se superó el tiempo máximo de espera
+                _carga.value = CargaUi.Error("Tardó demasiado (máximo $TIEMPO_MAXIMO_MS ms)")
             } catch (e: CancellationException) {
                 throw e // la cancelación se relanza siempre
             } catch (e: Exception) {
@@ -130,5 +143,12 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
 
     fun cambiarSimularError(valor: Boolean) {
         _simularError.value = valor
+    }
+
+    private companion object {
+        // Mejora 2: límite de espera de las cargas.
+        // 4 s deja terminar "A la vez" (≈ 3 s) y dispara "Tardó demasiado" en
+        // "Una por una" (≈ 5 s); sube a 6_000L si quieres que ambas terminen en verde.
+        const val TIEMPO_MAXIMO_MS = 4_000L
     }
 }
