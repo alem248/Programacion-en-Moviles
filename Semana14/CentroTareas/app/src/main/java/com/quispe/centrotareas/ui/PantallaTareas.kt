@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +36,7 @@ import com.quispe.centrotareas.viewmodel.TareasViewModelFactory
 fun PantallaTareas(modifier: Modifier = Modifier) {
     val vm: TareasViewModel = viewModel(factory = TareasViewModelFactory())
     val mensaje by vm.mensaje.collectAsState()
+    val progreso by vm.progreso.collectAsState()
     var toques by remember { mutableIntStateOf(0) }
 
     Scaffold(
@@ -77,11 +79,16 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
                             Text("Tócame: $toques")
                         }
                         Button(onClick = { vm.tareaLarga() }) {
-                            Text("Tarea larga")
+                            Text("Iniciar")
                         }
                     }
+                    LinearProgressIndicator(
+                        progress = { progreso },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(text = "${(progreso * 100).toInt()} %")
                     Text(text = mensaje)
-                    // TODO Pasos 2 a 4: botones Iniciar/Cancelar, progreso y mensaje
+                    // TODO Paso 4: botón Cancelar (OutlinedButton) habilitado mientras corre
                 }
             }
 
