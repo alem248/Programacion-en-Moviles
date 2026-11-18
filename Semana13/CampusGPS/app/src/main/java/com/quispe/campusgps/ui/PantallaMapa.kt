@@ -16,6 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import com.quispe.campusgps.model.UbicacionUi
+import com.quispe.campusgps.util.formatearDistancia
 import com.quispe.campusgps.viewmodel.MapaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +37,11 @@ fun PantallaMapa(vm: MapaViewModel) {
     val estado by vm.estado.collectAsState()
     val lugares by vm.lugares.collectAsState()
     val seleccionado by vm.seleccionado.collectAsState()
+    val masCercano by vm.masCercano.collectAsState()
+    val distanciaMasCercano = lugares.firstOrNull { it.lugar.id == masCercano?.id }?.metros
+    val textoMasCercano = masCercano?.let { lugar ->
+        distanciaMasCercano?.let { "Más cercano: ${lugar.nombre} (${formatearDistancia(it)})" }
+    } ?: "Más cercano: aún sin calcular"
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
@@ -57,10 +64,17 @@ fun PantallaMapa(vm: MapaViewModel) {
             Button(onClick = ::alPulsar, enabled = estado !is UbicacionUi.Buscando, modifier = Modifier.fillMaxWidth()) {
                 Text("Obtener mi ubicación")
             }
+            OutlinedButton(
+                onClick = { masCercano?.let { vm.seleccionar(it.id) } },
+                enabled = masCercano != null,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Ir al más cercano") }
+            Text(text = textoMasCercano, modifier = Modifier.fillMaxWidth())
             MapaUbicacion(
                 estado = estado,
                 lugares = lugares,
                 seleccionado = seleccionado,
+                masCercano = masCercano,
                 modifier = Modifier.weight(1f)
             )
             ListaLugares(

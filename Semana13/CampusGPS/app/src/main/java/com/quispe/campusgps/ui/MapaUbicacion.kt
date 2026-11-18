@@ -12,6 +12,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import com.quispe.campusgps.model.LugarConDistancia
+import com.quispe.campusgps.model.Lugar
 import com.quispe.campusgps.model.UbicacionUi
 
 private val Lima = LatLng(-12.0464, -77.0428)
@@ -21,6 +22,7 @@ fun MapaUbicacion(
     estado: UbicacionUi,
     lugares: List<LugarConDistancia>,
     seleccionado: Int?,
+    masCercano: Lugar?,
     modifier: Modifier = Modifier
 ) {
     val camera = rememberCameraPositionState {
@@ -54,7 +56,10 @@ fun MapaUbicacion(
                     state = rememberMarkerState(LatLng(item.lugar.latitud, item.lugar.longitud)),
                     title = item.lugar.nombre,
                     snippet = item.lugar.categoria,
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                    icon = BitmapDescriptorFactory.defaultMarker(
+                        if (item.lugar.id == masCercano?.id) BitmapDescriptorFactory.HUE_GREEN
+                        else BitmapDescriptorFactory.HUE_AZURE
+                    )
                 )
             }
         }
