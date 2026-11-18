@@ -1,6 +1,9 @@
 package com.quispe.campusgps.ui
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -90,7 +93,18 @@ fun PantallaMapa(vm: MapaViewModel) {
                     "Latitud: ${current.posicion.latitud}  ·  Longitud: ${current.posicion.longitud}",
                     modifier = Modifier.height(48.dp)
                 )
-                is UbicacionUi.Error -> Text(current.mensaje, modifier = Modifier.height(48.dp))
+                is UbicacionUi.Error -> MensajeError(
+                    error = current,
+                    onOpenSettings = {
+                        val intent = Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.fromParts("package", context.packageName, null)
+                        )
+                        context.startActivity(intent)
+                    },
+                    onRetry = vm::buscar,
+                    modifier = Modifier.height(96.dp)
+                )
             }
         }
     }
