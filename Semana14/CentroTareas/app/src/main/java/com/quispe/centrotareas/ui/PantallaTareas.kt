@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -52,6 +53,7 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
     val corriendo by vm.corriendo.collectAsState()
     val primos by vm.primos.collectAsState()
     val carga by vm.carga.collectAsState()
+    val simularError by vm.simularError.collectAsState()
     var toques by remember { mutableIntStateOf(0) }
     var nTexto by remember { mutableStateOf("1000") }
 
@@ -184,6 +186,17 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
+                    // Paso 7: interruptor para provocar un error simulado
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Switch(
+                            checked = simularError,
+                            onCheckedChange = { vm.cambiarSimularError(it) }
+                        )
+                        Text("Simular error")
+                    }
                     // Pasos 6 y 7: comparar carga secuencial contra paralela
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
@@ -222,8 +235,26 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
                             )
                         }
 
-                        // TODO Paso 7: recuadro de error con botón Reintentar
-                        is CargaUi.Error -> Unit
+                        // Paso 7: error con recuadro rojo y botón de reintento
+                        is CargaUi.Error -> Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.errorContainer)
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = c.mensaje,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                            Button(onClick = { vm.cargarALaVez() }) {
+                                Text("Reintentar")
+                            }
+                        }
+
                         CargaUi.Inicial -> Unit
                     }
                 }
