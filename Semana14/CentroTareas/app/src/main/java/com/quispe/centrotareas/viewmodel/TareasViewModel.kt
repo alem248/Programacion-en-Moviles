@@ -7,16 +7,13 @@ import com.quispe.centrotareas.data.TareasRepository
 import com.quispe.centrotareas.model.CargaUi
 import com.quispe.centrotareas.model.PrimosUi
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
 
@@ -34,7 +31,7 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
     private val _corriendo = MutableStateFlow(false)
     val corriendo: StateFlow<Boolean> = _corriendo.asStateFlow()
 
-    // Pasos 3 y 4: la tarea avanza por una corrutina cancelable sin bloquear el hilo principal
+    // Mejora 1: la tarea simulada corre en el Repository; aquí solo se recoge el Flow
     fun tareaLarga() {
         if (_corriendo.value) return // doble inicio prevenido
         trabajo = viewModelScope.launch {
@@ -43,13 +40,7 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
             _mensaje.value = "Trabajando..."
             Log.d("HILO", "Antes: ${Thread.currentThread().name}")
             try {
-                withContext(Dispatchers.Default) {
-                    Log.d("HILO", "Dentro: ${Thread.currentThread().name}")
-                    for (i in 1..100) {
-                        delay(40) // 100 vueltas x 40 ms ≈ 4 s
-                        _progreso.value = i / 100f
-                    }
-                }
+                repo.progresoTarea().collect { valor -> _progreso.value = valor }
                 Log.d("HILO", "Despues: ${Thread.currentThread().name}")
                 _mensaje.value = "Terminó"
             } finally {
