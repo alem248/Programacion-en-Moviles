@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.quispe.centrotareas.model.CargaUi
 import com.quispe.centrotareas.model.PrimosUi
 import com.quispe.centrotareas.viewmodel.TareasViewModel
 import com.quispe.centrotareas.viewmodel.TareasViewModelFactory
@@ -48,6 +51,7 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
     val progreso by vm.progreso.collectAsState()
     val corriendo by vm.corriendo.collectAsState()
     val primos by vm.primos.collectAsState()
+    val carga by vm.carga.collectAsState()
     var toques by remember { mutableIntStateOf(0) }
     var nTexto by remember { mutableStateOf("1000") }
 
@@ -180,7 +184,48 @@ fun PantallaTareas(modifier: Modifier = Modifier) {
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
-                    // TODO Pasos 6 y 7: botones de carga, interruptor de error y resultado
+                    // Pasos 6 y 7: comparar carga secuencial contra paralela
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { vm.cargarUnaPorUna() },
+                            enabled = carga !is CargaUi.Cargando
+                        ) {
+                            Text("Una por una")
+                        }
+                        Button(
+                            onClick = { vm.cargarALaVez() },
+                            enabled = carga !is CargaUi.Cargando
+                        ) {
+                            Text("A la vez")
+                        }
+                    }
+                    when (val c = carga) {
+                        is CargaUi.Cargando -> Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            Text("Cargando...")
+                        }
+
+                        is CargaUi.Exito -> Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF2E7D32))
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = "${c.modo} · ${c.perfil} · " +
+                                    "${c.pedidos} pedidos · ${c.milisegundos} ms",
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        // TODO Paso 7: recuadro de error con botón Reintentar
+                        is CargaUi.Error -> Unit
+                        CargaUi.Inicial -> Unit
+                    }
                 }
             }
         }

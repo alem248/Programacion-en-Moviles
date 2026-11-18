@@ -9,6 +9,8 @@ import com.quispe.centrotareas.model.PrimosUi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -91,6 +93,33 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
     // ----- Dos cargas (pasos 6 y 7)
     private val _carga = MutableStateFlow<CargaUi>(CargaUi.Inicial)
     val carga: StateFlow<CargaUi> = _carga.asStateFlow()
-    // TODO Paso 6: fun cargarUnaPorUna() y fun cargarALaVez()
+    // Paso 6: cargar los datos una por una (secuencial, ≈ 5 s)
+    fun cargarUnaPorUna() {
+        if (_carga.value is CargaUi.Cargando) return // doble inicio prevenido
+        _carga.value = CargaUi.Cargando
+        viewModelScope.launch {
+            val inicio = System.currentTimeMillis()
+            val perfil = repo.cargarPerfil()
+            val pedidos = repo.cargarPedidos(false)
+            val ms = System.currentTimeMillis() - inicio
+            _carga.value = CargaUi.Exito("Una por una", perfil, pedidos.size, ms)
+        }
+    }
+
+    // Paso 6: cargar los datos a la vez con async (≈ 3 s)
+    fun cargarALaVez() {
+        if (_carga.value is CargaUi.Cargando) return // doble inicio prevenido
+        _carga.value = CargaUi.Cargando
+        viewModelScope.launch {
+            val inicio = System.currentTimeMillis()
+            val (perfil, pedidos) = coroutineScope {
+                val perfilDeferred = async { repo.cargarPerfil() }
+                val pedidosDeferred = async { repo.cargarPedidos(false) }
+                perfilDeferred.await() to pedidosDeferred.await()
+            }
+            val ms = System.currentTimeMillis() - inicio
+            _carga.value = CargaUi.Exito("A la vez", perfil, pedidos.size, ms)
+        }
+    }
     // TODO Paso 7: simularError y manejo de errores
 }
