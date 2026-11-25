@@ -15,6 +15,12 @@ object RetrofitClient {
             level = HttpLoggingInterceptor.Level.BODY
         }
         OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("Accept", "application/json")
+                    .build()
+                chain.proceed(request)
+            }
             .addInterceptor(logging)
             .build()
     }
