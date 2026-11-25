@@ -48,6 +48,12 @@ fun PantallaAvisos(
         }
     }
 
+    LaunchedEffect(vm) {
+        vm.eventos.collect { aviso ->
+            Notificador.mostrar(contexto, aviso)
+        }
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -101,7 +107,21 @@ fun PantallaAvisos(
                     }
                 }
             }
-            TarjetaBase("Avisos")
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Avisos",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Button(onClick = vm::avisarAhora) {
+                        Text("Mostrar aviso")
+                    }
+                }
+            }
             TarjetaBase("Recordatorio")
             TarjetaBase("Receptor de anuncios")
             TarjetaBase("Historial")
