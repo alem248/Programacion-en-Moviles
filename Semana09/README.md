@@ -98,3 +98,7 @@ lifecycleScope.launch {
 ```
 
 Elimina ese bloque y sus imports temporales al terminar la prueba, antes de crear el commit `feat(red): crea RetrofitClient con OkHttp y conversor JSON`.
+
+## Fase 2 en mejora-ia
+
+La rama `mejora-ia` agrega búsqueda local por título, edición con PUT, eliminación con DELETE y el encabezado `Accept: application/json`. JSONPlaceholder simula escrituras y borrados, por lo que los cambios se reflejan en la lista en memoria pero no persisten al recargar desde el servidor.

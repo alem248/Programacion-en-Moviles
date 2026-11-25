@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,8 +21,17 @@ fun MuroCampusApp(viewModel: PostsViewModel) {
     val usuarioFiltro by viewModel.usuarioFiltro.collectAsStateWithLifecycle()
     val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
     val publicacion by viewModel.publicacion.collectAsStateWithLifecycle()
+    val actualizacion by viewModel.actualizacion.collectAsStateWithLifecycle()
+    val eliminacion by viewModel.eliminacion.collectAsStateWithLifecycle()
     var idSeleccionado by remember { mutableStateOf<Int?>(null) }
     var creando by remember { mutableStateOf(false) }
+
+    LaunchedEffect(eliminacion) {
+        if (eliminacion is UiState.Exito) {
+            idSeleccionado = null
+            viewModel.limpiarResultadoEliminacion()
+        }
+    }
 
     BackHandler(enabled = idSeleccionado != null || creando) {
         if (idSeleccionado != null) idSeleccionado = null else creando = false
@@ -33,8 +43,13 @@ fun MuroCampusApp(viewModel: PostsViewModel) {
                 val id = idSeleccionado!!
                 PantallaDetalle(
                     state = detalle,
+                    actualizacion = actualizacion,
+                    eliminacion = eliminacion,
                     onVolver = { idSeleccionado = null },
                     onReintentar = { viewModel.abrir(id) },
+                    onEditarTitulo = viewModel::actualizarTitulo,
+                    onLimpiarResultadoActualizacion = viewModel::limpiarResultadoActualizacion,
+                    onEliminar = viewModel::eliminar,
                 )
             }
             creando -> PantallaCrear(

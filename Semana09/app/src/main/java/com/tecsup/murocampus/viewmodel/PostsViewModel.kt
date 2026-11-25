@@ -3,6 +3,7 @@ package com.tecsup.murocampus.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tecsup.murocampus.data.PostRepository
+import com.tecsup.murocampus.model.ActualizacionPost
 import com.tecsup.murocampus.model.Comentario
 import com.tecsup.murocampus.model.NuevoPost
 import com.tecsup.murocampus.model.Post
@@ -33,6 +34,11 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
 
     private val _publicacion = MutableStateFlow<UiState<Post>?>(null)
     val publicacion: StateFlow<UiState<Post>?> = _publicacion.asStateFlow()
+
+    private val _actualizacion = MutableStateFlow<UiState<Post>?>(null)
+    val actualizacion: StateFlow<UiState<Post>?> = _actualizacion.asStateFlow()
+    private val _eliminacion = MutableStateFlow<UiState<Unit>?>(null)
+    val eliminacion: StateFlow<UiState<Unit>?> = _eliminacion.asStateFlow()
 
     init { cargar() }
 
@@ -90,6 +96,46 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     }
 
     fun limpiarResultadoPublicacion() { _publicacion.value = null }
+
+    fun actualizarTitulo(titulo: String) {
+        val detalleActual = _detalle.value as? UiState.Exito<DetalleUi> ?: return
+        val post = detalleActual.dato.post
+        viewModelScope.launch {
+            _actualizacion.value = UiState.Cargando
+            val resultado = repo.actualizar(post.id, ActualizacionPost(post.userId, titulo.trim(), post.body))
+            _actualizacion.value = resultado.fold(
+                onSuccess = { actualizado ->
+                    reemplazarEnMemoria(actualizado)
+                    _detalle.value = UiState.Exito(detalleActual.dato.copy(post = actualizado))
+                    UiState.Exito(actualizado)
+                },
+                onFailure = { UiState.Error(it.message ?: "No se pudo actualizar la publicación") },
+            )
+        }
+    }
+
+    fun eliminar(id: Int) {
+        viewModelScope.launch {
+            _eliminacion.value = UiState.Cargando
+            val resultado = repo.eliminar(id)
+            _eliminacion.value = resultado.fold(
+                onSuccess = {
+                    publicacionesCargadas = publicacionesCargadas.filterNot { it.id == id }
+                    if (_posts.value is UiState.Exito) _posts.value = UiState.Exito(listaVisible())
+                    UiState.Exito(Unit)
+                },
+                onFailure = { UiState.Error(it.message ?: "No se pudo eliminar la publicación") },
+            )
+        }
+    }
+
+    fun limpiarResultadoActualizacion() { _actualizacion.value = null }
+    fun limpiarResultadoEliminacion() { _eliminacion.value = null }
+
+    private fun reemplazarEnMemoria(actualizado: Post) {
+        publicacionesCargadas = publicacionesCargadas.map { if (it.id == actualizado.id) actualizado else it }
+        if (_posts.value is UiState.Exito) _posts.value = UiState.Exito(listaVisible())
+    }
 
     private fun listaVisible(): List<Post> {
         val consulta = _busqueda.value.trim()
