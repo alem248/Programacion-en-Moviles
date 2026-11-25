@@ -18,6 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -37,8 +38,10 @@ import com.tecsup.murocampus.model.Post
 fun PantallaLista(
     state: UiState<List<Post>>,
     usuarioFiltro: Int?,
+    busqueda: String,
     onCargar: () -> Unit,
     onFiltrar: (Int?) -> Unit,
+    onBuscar: (String) -> Unit,
     onAbrir: (Int) -> Unit,
     onCrear: () -> Unit,
 ) {
@@ -68,6 +71,13 @@ fun PantallaLista(
                     )
                 }
             }
+            OutlinedTextField(
+                value = busqueda,
+                onValueChange = onBuscar,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                label = { Text("Buscar por título") },
+                singleLine = true,
+            )
             when (state) {
                 UiState.Cargando -> Column(
                     Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
@@ -84,7 +94,7 @@ fun PantallaLista(
                 is UiState.Exito -> if (state.dato.isEmpty()) {
                     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center) {
-                        Text("Sin publicaciones")
+                        Text(if (busqueda.isBlank()) "Sin publicaciones" else "Sin coincidencias para \"$busqueda\"")
                     }
                 } else {
                     LazyColumn(

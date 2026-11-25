@@ -27,6 +27,10 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     private val _usuarioFiltro = MutableStateFlow<Int?>(null)
     val usuarioFiltro: StateFlow<Int?> = _usuarioFiltro.asStateFlow()
 
+    private val _busqueda = MutableStateFlow("")
+    val busqueda: StateFlow<String> = _busqueda.asStateFlow()
+    private var publicacionesCargadas: List<Post> = emptyList()
+
     private val _publicacion = MutableStateFlow<UiState<Post>?>(null)
     val publicacion: StateFlow<UiState<Post>?> = _publicacion.asStateFlow()
 
@@ -37,7 +41,10 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
             _posts.value = UiState.Cargando
             val resultado = _usuarioFiltro.value?.let { repo.porUsuario(it) } ?: repo.listar()
             _posts.value = resultado.fold(
-                onSuccess = { UiState.Exito(it) },
+                onSuccess = {
+                    publicacionesCargadas = it
+                    UiState.Exito(listaVisible())
+                },
                 onFailure = { UiState.Error(it.message ?: "No se pudieron cargar las publicaciones") },
             )
         }
@@ -46,6 +53,11 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     fun filtrar(userId: Int?) {
         _usuarioFiltro.value = userId
         cargar()
+    }
+
+    fun buscar(texto: String) {
+        _busqueda.value = texto
+        if (_posts.value is UiState.Exito) _posts.value = UiState.Exito(listaVisible())
     }
 
     fun abrir(id: Int) {
@@ -78,4 +90,10 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     }
 
     fun limpiarResultadoPublicacion() { _publicacion.value = null }
+
+    private fun listaVisible(): List<Post> {
+        val consulta = _busqueda.value.trim()
+        return if (consulta.isEmpty()) publicacionesCargadas
+        else publicacionesCargadas.filter { it.title.contains(consulta, ignoreCase = true) }
+    }
 }

@@ -18,6 +18,7 @@ fun MuroCampusApp(viewModel: PostsViewModel) {
     val posts by viewModel.posts.collectAsStateWithLifecycle()
     val detalle by viewModel.detalle.collectAsStateWithLifecycle()
     val usuarioFiltro by viewModel.usuarioFiltro.collectAsStateWithLifecycle()
+    val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
     val publicacion by viewModel.publicacion.collectAsStateWithLifecycle()
     var idSeleccionado by remember { mutableStateOf<Int?>(null) }
     var creando by remember { mutableStateOf(false) }
@@ -45,8 +46,10 @@ fun MuroCampusApp(viewModel: PostsViewModel) {
             else -> PantallaLista(
                 state = posts,
                 usuarioFiltro = usuarioFiltro,
+                busqueda = busqueda,
                 onCargar = viewModel::cargar,
                 onFiltrar = viewModel::filtrar,
+                onBuscar = viewModel::buscar,
                 onAbrir = { id -> idSeleccionado = id; viewModel.abrir(id) },
                 onCrear = { creando = true; viewModel.limpiarResultadoPublicacion() },
             )
