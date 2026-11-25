@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tecsup.murocampus.viewmodel.DetalleUi
 
 @Composable
 fun PantallaDetalle(state: UiState<DetalleUi>, onVolver: () -> Unit, onReintentar: () -> Unit) {
