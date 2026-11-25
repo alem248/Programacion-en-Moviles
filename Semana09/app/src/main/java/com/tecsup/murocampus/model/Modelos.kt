@@ -26,3 +26,10 @@ data class NuevoPost(
     val body: String,
 )
 
+@Serializable
+data class ActualizacionPost(
+    val userId: Int,
+    val title: String,
+    val body: String,
+)
+
