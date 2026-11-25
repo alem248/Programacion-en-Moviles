@@ -12,7 +12,11 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 
 class AvisosViewModel(private val repo: AvisosRepository) : ViewModel() {
     val avisos: StateFlow<List<Aviso>> = repo.avisos
@@ -25,6 +29,10 @@ class AvisosViewModel(private val repo: AvisosRepository) : ViewModel() {
 
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
+
+    private var trabajo: Job? = null
+    private val _faltan = MutableStateFlow<Int?>(null)
+    val faltan: StateFlow<Int?> = _faltan.asStateFlow()
 
     fun permisoRespondido(concedido: Boolean) {
         _permiso.value = if (concedido) {
@@ -47,5 +55,43 @@ class AvisosViewModel(private val repo: AvisosRepository) : ViewModel() {
             )
             _eventos.emit(aviso)
         }
+    }
+
+    fun recordarEn(segundos: Int = 10) {
+        if (trabajo?.isActive == true) return
+
+        val nuevoTrabajo = viewModelScope.launch(start = CoroutineStart.LAZY) {
+            val trabajoActual = coroutineContext[Job]
+
+            try {
+                for (segundo in segundos downTo 1) {
+                    _faltan.value = segundo
+                    delay(1_000)
+                }
+
+                _faltan.value = 0
+                val aviso = repo.registrar(
+                    titulo = "Recordatorio",
+                    texto = "Revisa tu laboratorio pendiente",
+                    origen = Origen.RECORDATORIO
+                )
+                _eventos.emit(aviso)
+            } finally {
+                if (trabajo === trabajoActual) {
+                    _faltan.value = null
+                    trabajo = null
+                }
+            }
+        }
+
+        trabajo = nuevoTrabajo
+        nuevoTrabajo.start()
+    }
+
+    fun cancelarRecordatorio() {
+        val trabajoActual = trabajo
+        trabajo = null
+        _faltan.value = null
+        trabajoActual?.cancel()
     }
 }

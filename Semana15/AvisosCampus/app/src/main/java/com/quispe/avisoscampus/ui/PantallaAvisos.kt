@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,6 +37,7 @@ fun PantallaAvisos(
 ) {
     val contexto = LocalContext.current
     val permiso by vm.permiso.collectAsState()
+    val faltan by vm.faltan.collectAsState()
     val lanzadorPermiso = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { concedido ->
@@ -122,7 +124,33 @@ fun PantallaAvisos(
                     }
                 }
             }
-            TarjetaBase("Recordatorio")
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Recordatorio",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Button(
+                        enabled = faltan == null,
+                        onClick = { vm.recordarEn(10) }
+                    ) {
+                        Text("Recordar en 10s")
+                    }
+                    OutlinedButton(
+                        enabled = faltan != null,
+                        onClick = vm::cancelarRecordatorio
+                    ) {
+                        Text("Cancelar")
+                    }
+                    faltan?.let { segundos ->
+                        Text("Faltan ${segundos}s")
+                    }
+                }
+            }
             TarjetaBase("Receptor de anuncios")
             TarjetaBase("Historial")
         }
